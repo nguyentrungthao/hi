@@ -53,7 +53,8 @@
         "forward_list": "cpp",
         "stdint.h": "c",
         "thuviendinhnghia.h": "c",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "ratio": "cpp"
     },
     
 }

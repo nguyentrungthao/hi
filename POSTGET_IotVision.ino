@@ -28,7 +28,7 @@ uint8_t CuongDoWiFi;
 String TachChuoi(String data, char separator, int index)
 {
     int found = 0;
-    int strIndex[] = {0, -1};
+    int strIndex[] = { 0, -1 };
     int maxIndex = data.length() - 1;
 
     for (int i = 0; i <= maxIndex && found <= index; i++)
@@ -54,7 +54,7 @@ void ThucThiTacVuTheoCODE(void)
         Serial.println("User bam 'xem'");
         _POSTGET.CapNhatCODETrongDatabaseTrenServer(_LenhGuiXuongBoard + "20");
         // String Data2 = MatKhau + ";" + String(HeSoCalib, 1) + ";" + String(Setpoint, 1) + ";" + String(ThoiGianTat) + ";" + "20:06:13 18/08/2024";
-        snprintf(DuLieuXem, sizeof(DuLieuXem), "%s;%0.1f;%0.1f;%d;20:06:12 02/12/2024", "LABone@2024", HeSoCalib, BaseProgram.programData.setPoint, ThoiGianTat);
+        snprintf(DuLieuXem, sizeof(DuLieuXem), "%s;%0.1f;%0.1f;%d;20:06:12 02/12/2024", "LABone@2024", HeSoCalib, BaseProgram.programData.setPointTemp, ThoiGianTat);
 #if defined(debug)
         Serial.println(DuLieuXem);
 #endif
@@ -74,13 +74,13 @@ void ThucThiTacVuTheoCODE(void)
         Setpoint = TachChuoi(Data1, ';', 2).toFloat();
         ThoiGianTat = TachChuoi(Data1, ';', 3).toInt();
 
-        if (Setpoint != BaseProgram.programData.setPoint)
+        if (Setpoint != BaseProgram.programData.setPointTemp)
         {
-            event.type = HMI_SET_SETPOINT;
+            event.type = HMI_SET_SETPOINT_TEMP;
             event.f_value = Setpoint;
-            BaseProgram.programData.setPoint = Setpoint;
+            BaseProgram.programData.setPointTemp = Setpoint;
             hmiSetEvent(event);
-            _dwin.HienThiSetpoint(BaseProgram.programData.setPoint);
+            _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
         }
 
         if (ThoiGianTat != 0)
@@ -88,7 +88,7 @@ void ThucThiTacVuTheoCODE(void)
             event.type = HMI_SET_DELAYOFF;
             event.u32_value = ThoiGianTat * 60;
             hmiSetEvent(event);
-            _dwin.HienThiSetpoint(BaseProgram.programData.setPoint);
+            _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
             if (BaseProgram.delayOffState == false)
             {
                 event.type = HMI_SET_DELAYOFF_ONOFF;
@@ -194,7 +194,7 @@ void loop_PostGet()
 #pragma region Lấy lệnh gửi từ app xuống board thành công
 
             JSONVar json = JSON.parse(LenhGuiXuongBoard);
-            String S = (const char *)json["S"];
+            String S = (const char*)json["S"];
             _LenhGuiXuongBoard = S.substring(0, 1);
 
 #if defined(debug) && defined(DEBUG_POST_GET)
@@ -249,20 +249,20 @@ void loop_PostGet()
             {
                 ThoiGianTat = 0;
                 // _time.getRemainingTime();
-                snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPoint, BaseProgram.temperature, ThoiGianTat, (uint32_t)_time.getElapsedTime() / 60, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
+                snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat, (uint32_t)_time.getElapsedTime() / 60, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
             }
             else
             {
-                ThoiGianTat = BaseProgram.programData.delayOffDay*1440 + BaseProgram.programData.delayOffHour * 60 + BaseProgram.programData.delayOffMinute;
+                ThoiGianTat = BaseProgram.programData.delayOffDay * 1440 + BaseProgram.programData.delayOffHour * 60 + BaseProgram.programData.delayOffMinute;
                 Serial.print("ThoiGianTat ");
                 Serial.println(ThoiGianTat);
-                if(FlagNhietDoXacLap) 
+                if (FlagNhietDoXacLap)
                 {
-                    snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPoint, BaseProgram.temperature, ThoiGianTat, (uint32_t)_time.getRemainingTime() / 60, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
+                    snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat, (uint32_t)_time.getRemainingTime() / 60, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
                 }
-                else 
+                else
                 {
-                    snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPoint, BaseProgram.temperature, ThoiGianTat, ThoiGianTat, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
+                    snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat, ThoiGianTat, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
                 }
 
                 Serial.print("ThoiGianChayConLai ");
@@ -271,7 +271,7 @@ void loop_PostGet()
             // Serial.println(data);
             _POSTGET.POSTDuLieuBoard(data);
 
-            // snprintf(data, sizeof(data), "%s;%0.1f;%0.1f;%d;20:06:12 02/12/2024", "LABone@2024", HeSoCalib, BaseProgram.programData.setPoint, ThoiGianTat);
+            // snprintf(data, sizeof(data), "%s;%0.1f;%0.1f;%d;20:06:12 02/12/2024", "LABone@2024", HeSoCalib, BaseProgram.programData.setPointTemp, ThoiGianTat);
             // if (_POSTGET.POSTThongSoBoard(data)) {
 
             // }

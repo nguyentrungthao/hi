@@ -8,7 +8,7 @@ static int recordCount = 0; // Số lượng bản ghi đã ghi trong file hiệ
 #define LOG_STATE_DIR_PATH "/state"
 
 // Kiểm tra và cập nhật fileIndex và recordCount khi hệ thống khởi động
-void initLogFileState(fs::FS &fs)
+void initLogFileState(fs::FS& fs)
 {
   // Tải trạng thái từ file lưu trữ trạng thái
   char filename[20];
@@ -16,8 +16,8 @@ void initLogFileState(fs::FS &fs)
   File stateFile = fs.open(filename, FILE_READ);
   if (stateFile)
   {
-    stateFile.read((uint8_t *)&fileIndex, sizeof(fileIndex));
-    stateFile.read((uint8_t *)&recordCount, sizeof(recordCount));
+    stateFile.read((uint8_t*)&fileIndex, sizeof(fileIndex));
+    stateFile.read((uint8_t*)&recordCount, sizeof(recordCount));
     stateFile.close();
     Serial.printf("Resuming from saved state: fileIndex=%d, recordCount=%d\n", fileIndex, recordCount);
 
@@ -73,7 +73,7 @@ void initLogFileState(fs::FS &fs)
 }
 
 // Lưu trạng thái sau mỗi lần ghi thành công
-void saveState(fs::FS &fs)
+void saveState(fs::FS& fs)
 {
   char filename[20];
   snprintf(filename, sizeof(filename), "%s/state.bin", LOG_STATE_DIR_PATH);
@@ -83,10 +83,10 @@ void saveState(fs::FS &fs)
     if (strchr(filename, '/'))
     {
       Serial.printf("Create missing folders of: %s\r\n", filename);
-      char *pathStr = strdup(filename);
+      char* pathStr = strdup(filename);
       if (pathStr)
       {
-        char *ptr = strchr(pathStr, '/');
+        char* ptr = strchr(pathStr, '/');
         while (ptr)
         {
           *ptr = 0;
@@ -102,15 +102,15 @@ void saveState(fs::FS &fs)
   File stateFile = fs.open(filename, FILE_WRITE);
   if (stateFile)
   {
-    stateFile.write((const uint8_t *)&fileIndex, sizeof(fileIndex));
-    stateFile.write((const uint8_t *)&recordCount, sizeof(recordCount));
+    stateFile.write((const uint8_t*)&fileIndex, sizeof(fileIndex));
+    stateFile.write((const uint8_t*)&recordCount, sizeof(recordCount));
     stateFile.close();
     Serial.printf("State saved: fileIndex=%d, recordCount=%d\n", fileIndex, recordCount);
   }
 }
 
 // Xóa file cũ nếu tồn tại trước khi ghi file mới
-void deleteExistingFile(fs::FS &fs, int index)
+void deleteExistingFile(fs::FS& fs, int index)
 {
   char filename[20];
   snprintf(filename, sizeof(filename), "%s/data%d.csv", LOG_DIR_PATH, index);
@@ -122,7 +122,7 @@ void deleteExistingFile(fs::FS &fs, int index)
 }
 
 // Ghi bản ghi và lưu trạng thái
-void writeRecord(fs::FS &fs, RecordData_t record)
+void writeRecord(fs::FS& fs, RecordData_t record)
 {
   char filename[20];
   char strData[64];
@@ -149,7 +149,7 @@ void writeRecord(fs::FS &fs, RecordData_t record)
     file = fs.open(filename, FILE_APPEND);
     if (file)
     {
-      file.write((const uint8_t *)strData, strlen(strData));
+      file.write((const uint8_t*)strData, strlen(strData));
       file.close();
     }
     else
@@ -167,10 +167,13 @@ void writeRecord(fs::FS &fs, RecordData_t record)
   }
 
   // Ghi dữ liệu bản ghi vào file
-  sprintf(strData, "%02u/%02u/%4u %02u:%02u:%02u,%.1f,%.1f,%u,%u,\n",
-          record.day, record.month, record.year + 2000, record.hour, record.minute, record.second,
-          record.setpoint, record.value, record.fan, record.flap);
-  recordCount += file.write((const uint8_t *)strData, strlen(strData));
+  // sprintf(strData, "%02u/%02u/%4u %02u:%02u:%02u,%.1f,%.1f,%u,%u,\n",
+  //   record.day, record.month, record.year + 2000, record.hour, record.minute, record.second,
+  //   record.setpointTemp, record.valueTemp, record.fan, record.flap);
+  sprintf(strData, "%02u/%02u/%4u %02u:%02u:%02u,%.1f,%.1f,%u,\n",
+    record.day, record.month, record.year + 2000, record.hour, record.minute, record.second,
+    record.setpointTemp, record.valueTemp, record.fan);
+  recordCount += file.write((const uint8_t*)strData, strlen(strData));
 
   file.close();
 
@@ -189,7 +192,7 @@ void writeRecord(fs::FS &fs, RecordData_t record)
   }
 }
 
-uint32_t getDirectorySize(fs::FS &fs, const char *path)
+uint32_t getDirectorySize(fs::FS& fs, const char* path)
 {
   uint32_t totalSize = 0;
   File root = fs.open(path);
@@ -210,7 +213,7 @@ uint32_t getDirectorySize(fs::FS &fs, const char *path)
   return totalSize;
 }
 
-void copyFiles(fs::FS &destFS, fs::FS &srcFS)
+void copyFiles(fs::FS& destFS, fs::FS& srcFS)
 {
   char strData[64];
   char strPath[50];
@@ -258,8 +261,8 @@ void copyFiles(fs::FS &destFS, fs::FS &srcFS)
     {
       uint8_t data[8];
       uint8_t dataLen = 0;
-      dataLen = srcFile.read((uint8_t *)data, sizeof(data));
-      destFile.write((const uint8_t *)data, dataLen);
+      dataLen = srcFile.read((uint8_t*)data, sizeof(data));
+      destFile.write((const uint8_t*)data, dataLen);
       totalSize += dataLen;
       _dwin.HienThiThanhLoading(totalSize * 99 / dirSize);
       _dwin.HienThiPhanTramThanhLoading(totalSize * 100 / dirSize);

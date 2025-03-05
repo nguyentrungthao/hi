@@ -25,7 +25,7 @@
 #define _WiFiPage 94
 #define _TempNumericKeypadPage 95
 #define _FanNumericKeypadPage 96
-#define _FlapNumericKeypadPage 97
+#define _CO2NumericKeypadPage 97
 #define _AdminPasswordPage     98
 #define _InfoPage 100
 #define _CalibChoosePage 101
@@ -73,7 +73,7 @@
 #define _KeyValueWifi 0x19 // truc them
 #define _KeyValueAdminPassword 0x1A
 //---
-#define _KeyValueSetopintCO2 0x1B
+#define _KeyValueSetSetpointCO2 0x1B
 #define _KeyValueSwapGraph 0x1C
 #define _KeyValueSetAlarmUnderCO2 0x1F
 #define _KeyValueSetAlarmOverCO2 0x20

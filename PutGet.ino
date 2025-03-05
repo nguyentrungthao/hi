@@ -33,9 +33,9 @@ void sendPostRequest() {
     StaticJsonDocument<200> jsonDoc;
     jsonDoc["name"] = "AnhIncu";
     jsonDoc["state"] = BaseProgram.machineState;
-    jsonDoc["setpoint"] = BaseProgram.programData.setPoint;
+    jsonDoc["setpoint"] = BaseProgram.programData.setPointTemp;
     jsonDoc["value"] = BaseProgram.temperature;
-    jsonDoc["flap"] = BaseProgram.programData.flap;
+    // jsonDoc["flap"] = BaseProgram.programData.flap;
     jsonDoc["fan"] = BaseProgram.programData.fanSpeed;
     jsonDoc["time"] = now();
 
@@ -55,7 +55,8 @@ void sendPostRequest() {
         Serial.println(httpResponseCode);
         Serial.print("Response: ");
         Serial.println(http.getString());
-    } else {
+    }
+    else {
         Serial.print("Error on sending POST: ");
         Serial.println(http.errorToString(httpResponseCode).c_str());
     }
@@ -85,21 +86,21 @@ void sendGetRequest() {
         DeserializationError error = deserializeJson(jsonDoc, response);
         bool machineState = false;
         float setPoint;
-        float flap;
+        // float flap;
         float fanSpeed;
         hmi_set_event_t event;
         if (!error) {
             const char* name = jsonDoc["name"];
             machineState = jsonDoc["state"];
             setPoint = jsonDoc["setpoint"];
-            flap = jsonDoc["flap"];
+            // flap = jsonDoc["flap"];
             fanSpeed = jsonDoc["fan"];
 
             Serial.print("Name: ");
             Serial.println(name);
             Serial.print("State: ");
             Serial.println(machineState);
-            if(machineState != BaseProgram.machineState) {
+            if (machineState != BaseProgram.machineState) {
                 event.type = HMI_SET_RUN_ONOFF;
                 hmiSetEvent(event);
                 _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
@@ -116,8 +117,8 @@ void sendGetRequest() {
             // }
 
             Serial.print("fan: ");
-            Serial.println(BaseProgram.programData.fanSpeed); 
-            if(fanSpeed != BaseProgram.programData.fanSpeed)
+            Serial.println(BaseProgram.programData.fanSpeed);
+            if (fanSpeed != BaseProgram.programData.fanSpeed)
             {
                 event.type = HMI_SET_FAN;
                 event.f_value = fanSpeed;
@@ -125,20 +126,22 @@ void sendGetRequest() {
                 _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
             }
             Serial.print("setpoint: ");
-            Serial.println(setPoint); 
-            if(setPoint != BaseProgram.programData.setPoint)
+            Serial.println(setPoint);
+            if (setPoint != BaseProgram.programData.setPointTemp)
             {
-                event.type = HMI_SET_SETPOINT;
+                event.type = HMI_SET_SETPOINT_TEMP;
                 event.f_value = setPoint;
                 hmiSetEvent(event);
-                _dwin.HienThiSetpoint(BaseProgram.programData.setPoint);
-            }         
+                _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
+            }
 
-        } else {
+        }
+        else {
             Serial.print("deserializeJson() failed: ");
             Serial.println(error.f_str());
         }
-    } else {
+    }
+    else {
         Serial.print("Error on sending GET: ");
         Serial.println(http.errorToString(httpResponseCode).c_str());
     }
@@ -146,22 +149,24 @@ void sendGetRequest() {
 }
 
 // Task để quản lý POST và GET tuần tự
-void httpTask(void *parameter) {
+void httpTask(void* parameter) {
     uint8_t count = 0;
     while (true) {
         if (WiFi.status() == WL_CONNECTED) {
             if (doPost) {
-                if(count % 10 == 0) {
+                if (count % 10 == 0) {
                     sendPostRequest();
                     count = 0;
-                } 
-            } else {
+                }
+            }
+            else {
                 sendGetRequest();
             }
             count++;
             // Đổi trạng thái để lần tiếp theo sẽ thực hiện GET nếu vừa POST và ngược lại
-            doPost = !doPost;  
-        } else {
+            doPost = !doPost;
+        }
+        else {
             Serial.println("WiFi Disconnected");
             connectWiFi();
         }

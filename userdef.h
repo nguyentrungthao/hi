@@ -15,11 +15,14 @@ typedef enum
 
 typedef struct 
 {
-    float setPoint;
+    float setPointTemp;
     float tempMax;
     float tempMin;
+    float setPointCO2;
+    float CO2Max;
+    float CO2Min;
     int8_t fanSpeed;
-    int8_t flap;
+    // int8_t flap;
     int8_t delayOffDay;
     int8_t delayOffHour;
     int8_t delayOffMinute;
@@ -29,6 +32,7 @@ typedef struct
 {
     Program_t programData;
     float temperature;
+    float CO2;
     bool machineState;
     bool delayOffState;
 } BaseProgram_t;
@@ -41,10 +45,12 @@ typedef struct
 
 typedef struct 
 {
-    float setpoint;
-    float value;
+    float setpointTemp;
+    float valueTemp;
+    float setpointCO2;
+    float valueCO2;
     uint8_t fan;
-    uint8_t flap;
+    // uint8_t flap;
     uint8_t day;
     uint8_t month;
     uint8_t year;

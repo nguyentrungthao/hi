@@ -3,20 +3,21 @@
 #include "HeaterControl.h"
 
 // Define the global objects
-SERVO _Servo;
+// SERVO _Servo;
 HEATER _Heater;
 DOOR _Door;
 
 void CaiDatHeater() {
   if (BaseProgram.machineState == true) {
     _Heater.BatDieuKhienNhietDo();
-  } else if (BaseProgram.machineState == false) {
+  }
+  else if (BaseProgram.machineState == false) {
     _Heater.TatDieuKhienNhietDo();
   }
-  _Heater.CaiDatNhietDo(BaseProgram.programData.setPoint);
+  _Heater.CaiDatNhietDo(BaseProgram.programData.setPointTemp);
   _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
-  _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPoint));
-  _Servo.MoCuaXa(BaseProgram.programData.flap);
+  _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
+  // _Servo.MoCuaXa(BaseProgram.programData.flap);
 }
 
 void CapNhatTrangThaiHeater() {
@@ -29,7 +30,8 @@ void CapNhatTrangThaiHeater() {
     BaseProgram.temperature = _Heater.LayNhietDoLoc();
     if (BaseProgram.temperature > -10 && BaseProgram.temperature < 350) {
       _dwin.HienThiNhietDo(BaseProgram.temperature);
-    } else {
+    }
+    else {
       _dwin.HienThiNhietDo("err");
     }
     Serial.println("Gui nhiet do len HMI");
@@ -43,7 +45,8 @@ void CapNhatTrangThaiHeater() {
       _dwin.HienThiIconQuat(FanState);
       Serial.println("DoorState 1, FanState 0");
     }
-  } else if (BaseProgram.machineState == true) {
+  }
+  else if (BaseProgram.machineState == true) {
     if ((DoorState == 1 || FanState == 0)) {
       DoorState = 0;
       FanState = 1;
@@ -51,7 +54,8 @@ void CapNhatTrangThaiHeater() {
       _dwin.HienThiIconQuat(FanState);
       Serial.println("DoorState 0, FanState 1");
     }
-  } else if (BaseProgram.machineState == false) {
+  }
+  else if (BaseProgram.machineState == false) {
     if (DoorState == 1 || FanState == 1) {
       DoorState = 0;
       FanState = 0;
@@ -67,7 +71,8 @@ void CapNhatTrangThaiHeater() {
       _dwin.HienThiIconGiaNhiet(HeaterState);
       Serial.println("HeaterState");
     }
-  } else {
+  }
+  else {
     if (HeaterState == 1) {
       HeaterState = 0;
       _dwin.HienThiIconGiaNhiet(HeaterState);
@@ -78,7 +83,8 @@ void CapNhatTrangThaiHeater() {
   if (_Heater.CheckAcdet() == false && AcdetState == true) {
     AcdetState = false;
     _dwin.HienThiWarning("Power supply error", _HomePage);
-  } else if (_Heater.CheckAcdet() == true) {
+  }
+  else if (_Heater.CheckAcdet() == true) {
     AcdetState = true;
   }
 }
@@ -86,7 +92,7 @@ void CapNhatTrangThaiHeater() {
 void KhoiTaoHeater() {
   _Door.KhoiTao();
   _Heater.KhoiTao();
-  _Servo.KhoiTao();
+  // _Servo.KhoiTao();
   _Heater.TatDieuKhienNhietDo();
 }
 
