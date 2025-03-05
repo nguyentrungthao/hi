@@ -9,7 +9,7 @@
 #define _SterilizationPage 75
 #define _TrangCaiThoiGianTietTrung 76
 #define _RTCPage 77
-#define _CalibHeaterPage 78
+#define _CalibTempPage 78
 #define _ProgramPage 79
 #define _AlarmPage 80
 #define _SegmentAdjPage 81
@@ -40,37 +40,47 @@
 #define _VPAddressCacNutNhan 0x5000
 
 // Keyvalue của từng loại nút nhấn Menu hoặc nút nhấn cài đặt giá trị TRỪ nút Enter
-#define _KeyValueSetSetpoint 1
-#define _KeyValueSetFanSpeed 2
-#define _KeyValueSetDelayOff 3
-#define _KeyValueZoomGraph 4
-#define _KeyValueSettings 5
-#define _KeyValueProgram 6
-#define _KeyValueAlarm 7
-#define _KeyValueSterilization 8
-#define _KeyValueDataRecord 9
-#define _KeyValueCalib 10
-#define _KeyValueSetTimeRTC 11
-#define _KeyValueInformation 12
+#define _KeyValueSetSetpoint 0x01
+#define _KeyValueSetFanSpeed 0x02
+#define _KeyValueSetDelayOff 0x03
+#define _KeyValueZoomGraph 0x04
+#define _KeyValueSettings 0x05
+#define _KeyValueProgram 0x06
+#define _KeyValueAlarm 0x07
+#define _KeyValueSterilization 0x08
+#define _KeyValueDataRecord 0x09
+#define _KeyValueCalib 0x0A
+#define _KeyValueSetTimeRTC 0x0B
+#define _KeyValueInformation 0x0C
+//* key trong trang _CalibTempPage
+#define _KeyValueEditCalibTemp 0x0D
+#define _KeyValueEnterCalibTemp 0x0E
 
-#define _KeyValueEditCalib 13
-#define _KeyValueEnterCalib 14
-#define _KeyValueSetFlap 15
-#define _KeyValueEnterFlap 16
-#define _KeyValueEnterSetRTC 17
-#define _KeyValueEnterSetAlarm 18
-#define _KeyValueSetAlarmBelow 19
-#define _KeyValueSetAlarmAbove 20
+// #define _KeyValueSetFlap 0x0F
+// #define _KeyValueEnterFlap 0x10
+#define _KeyValueEnterSetRTC 0x11
+#define _KeyValueEnterSetAlarm 0x12
+#define _KeyValueSetAlarmBelow 0x13
+#define _KeyValueSetAlarmAbove 0x14
 
-#define _KeyValueRunButton 21
-#define _KeyValueResetCalib 22
+#define _KeyValueRunButton 0x15
+#define _KeyValueResetCalibTemp 0x16
 
-#define _KeyValueExport 23
+#define _KeyValueExport 0x17
 
-#define _KeyValueUpdate 24
+#define _KeyValueUpdate 0x18
 
-#define _KeyValueWifi 25 // truc them
-#define _KeyValueAdminPassword 26
+#define _KeyValueWifi 0x19 // truc them
+#define _KeyValueAdminPassword 0x1A
+
+#define _KeyValueSetopintCO2 0x1B
+#define _KeyValueSwapGraph 0x1C
+#define _KeyValueSetAlarmUnderCO2 0x1F
+#define _KeyValueSetAlarmOverCO2 0x20
+#define _KeyValueEditCalibCO2
+#define _KeyValueResetCalibTemp 0x16
+#define _KeyValueChooseCalibCO2 0x1D
+#define _KeyValueChooseCalibTemp 0x1E
 
 #pragma region VP các nút  Segment
 
@@ -78,9 +88,13 @@
 #define _VPAddressSegmentSetpointButton 0x5002
 #define _VPAddressSegmentDelayOffButton 0x5003
 #define _VPAddressSegmentFanSpeedButton 0x5004
-#define _VPAddressSegmentFlapButton 0x5005
+// #define _VPAddressSegmentFlapButton 0x5005
+#define _VPAddressSegmentCO2Button 0x5005
 #define _VPAddressSegmentTempMinButton 0x5006
 #define _VPAddressSegmentTempMaxButton 0x5007
+#define _VPAddressSegmentCO2MinButton 0x501E
+#define _VPAddressSegmentCO2MaxButton 0x501F
+
 
 #define _VPAddressSegmentFunctionButton 0x5009
 #define _KeyValueSegmentAddButton 1
