@@ -546,7 +546,7 @@ void hmiSetEvent(const hmi_set_event_t &event)
         _dwin.HienThiSetpoint(BaseProgram.programData.setPoint);
         _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
         _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
-        _dwin.HienThiGocFlap(BaseProgram.programData.flap);
+        // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
         _dwin.HienThiThoiGianChay(BaseProgram.programData.delayOffDay, BaseProgram.programData.delayOffHour, BaseProgram.programData.delayOffMinute, 0);
         _dwin.HienThiSegmentDangChay("");
         _dwin.HienThiIconSegment(false);
@@ -576,7 +576,7 @@ void hmiSetEvent(const hmi_set_event_t &event)
             BaseProgram.programData.flap = 0;
             _dwin.HienThiSetpoint(BaseProgram.programData.setPoint);
             _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
-            _dwin.HienThiGocFlap(BaseProgram.programData.flap);
+            // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
         }
         break;
     case HMI_SET_STER_TIME:
@@ -687,9 +687,9 @@ bool hmiGetEvent(hmi_get_type_t event, void *args)
             return 0;
         }
         break;
-    case HMI_GET_FLAP:
-        _dwin.HienThiGocFlap(BaseProgram.programData.flap);
-        break;
+    // case HMI_GET_FLAP:
+    //     // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
+    //     break;
     case HMI_GET_RTC:
         // timeNow = now();
         _dwin.HienThiNgay(_time.getDay());
@@ -1588,7 +1588,7 @@ void TaskMain(void *)
                     _dwin.HienThiSetpoint(BaseProgram.programData.setPoint);
                     _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
                     _dwin.HienThiThoiGianChay(BaseProgram.programData.delayOffDay, BaseProgram.programData.delayOffHour, BaseProgram.programData.delayOffMinute, 0);
-                    _dwin.HienThiGocFlap(BaseProgram.programData.flap);
+                    // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
                     _dwin.HienThiSegmentDangChay(RunningSegmentIndex + 1, CurrentProgram.size());
                     _dwin.HienThiIconSegment(true);
                     if (BaseProgram.programData.delayOffDay == 0 && BaseProgram.programData.delayOffHour == 0 && BaseProgram.programData.delayOffMinute == 0)
@@ -1818,7 +1818,7 @@ void setup()
     BaseProgram.delayOffState = false;
     _dwin.HienThiSetpoint(BaseProgram.programData.setPoint);
     _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
-    _dwin.HienThiGocFlap(BaseProgram.programData.flap);
+    // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
     _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
     _dwin.HienThiIconGiaNhiet(false);
     _dwin.HienThiChuongTrinhDangChay("Quick");

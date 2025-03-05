@@ -143,7 +143,7 @@ public:
     void HienThiNhietDo(String text);
     void HienThiSetpoint(float GiaTri);
     void HienThiTocDoQuat(int GiaTri);
-    void HienThiGocFlap(int GiaTri);
+    // void HienThiGocFlap(int GiaTri);
     void HienThiThoiGianChay(int ngay, int gio, int phut, int giay);
     void HienThiThoiGianChay(String text);
     void HienThiThoiGianRTC(int ngay, int thang, int nam, int gio, int phut, int giay);
@@ -252,7 +252,7 @@ protected:
 
     static void _NutEditSetpointTrangSegment_(int32_t lastBytes, void *args);
     static void _NutEditTocDoQuatTrangSegment_(int32_t lastBytes, void *args);
-    static void _NutEditFlapTrangSegment_(int32_t lastBytes, void *args);
+    // static void _NutEditFlapTrangSegment_(int32_t lastBytes, void *args);
     static void _NutEditTempMinTrangSegment_(int32_t lastBytes, void *args);
     static void _NutEditTempMaxTrangSegment_(int32_t lastBytes, void *args);
     static void _NutEditThoiGianTatTrangSegment_(int32_t lastBytes, void *args);

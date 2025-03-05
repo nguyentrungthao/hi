@@ -105,15 +105,15 @@ void sendGetRequest() {
                 _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
             }
 
-            Serial.print("flap: ");
-            Serial.println(BaseProgram.programData.flap);
-            if(flap != BaseProgram.programData.flap)
-            {
-                event.type = HMI_SET_FLAP;
-                event.f_value = flap;
-                hmiSetEvent(event);
-                _dwin.HienThiGocFlap(BaseProgram.programData.flap);
-            }
+            // Serial.print("flap: ");
+            // Serial.println(BaseProgram.programData.flap);
+            // if(flap != BaseProgram.programData.flap)
+            // {
+            //     event.type = HMI_SET_FLAP;
+            //     event.f_value = flap;
+            //     hmiSetEvent(event);
+            //     _dwin.HienThiGocFlap(BaseProgram.programData.flap);
+            // }
 
             Serial.print("fan: ");
             Serial.println(BaseProgram.programData.fanSpeed); 

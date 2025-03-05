@@ -40,7 +40,7 @@
 #define _VPAddressCacNutNhan 0x5000
 
 // Keyvalue của từng loại nút nhấn Menu hoặc nút nhấn cài đặt giá trị TRỪ nút Enter
-#define _KeyValueSetSetpoint 0x01
+#define _KeyValueSetSetpointTemp 0x01
 #define _KeyValueSetFanSpeed 0x02
 #define _KeyValueSetDelayOff 0x03
 #define _KeyValueZoomGraph 0x04
@@ -72,15 +72,18 @@
 
 #define _KeyValueWifi 0x19 // truc them
 #define _KeyValueAdminPassword 0x1A
-
+//---
 #define _KeyValueSetopintCO2 0x1B
 #define _KeyValueSwapGraph 0x1C
 #define _KeyValueSetAlarmUnderCO2 0x1F
 #define _KeyValueSetAlarmOverCO2 0x20
-#define _KeyValueEditCalibCO2
-#define _KeyValueResetCalibTemp 0x16
+#define _KeyValueEditCalibCO2 0x21
+#define _KeyValueResetCalibCO2 0x22
 #define _KeyValueChooseCalibCO2 0x1D
 #define _KeyValueChooseCalibTemp 0x1E
+#define _KeyValueEnterCalibCO2 0x23
+
+
 
 #pragma region VP các nút  Segment
 
@@ -203,7 +206,7 @@
 
 #pragma region Địa chỉ TEXT
 
-#define _VPAddressSetpointText 0x8000    // Length text 5
+#define _VPAddressSetpointTempText 0x8000    // Length text 5
 #define _VPAddressFanSpeedText 0x8005    // Length text 5
 #define _VPAddressDelayOffText 0x800A    // Length text 15
 #define _VPAddressTemperatureText 0x8019 // Length text 5
@@ -215,12 +218,12 @@
 #define _VPAddressMinuteText 0x802A // length text 2
 
 #define _VPAddressStdTempText 0x8100
-#define _VPAddressFlapText 0x8105
-#define _VPAddressAlarmBelowText 0x810A
-#define _VPAddressAlarmAboveText 0x810F
+// #define _VPAddressFlapText 0x8105
+#define _VPAddressAlarmBelowTempText 0x810A
+#define _VPAddressAlarmAboveTempText 0x810F
 #define _VPAddressProgramNumText 0x8120
 #define _VPAddressSegmentNumText 0x8130
-#define _VPAddressCalibText 0x8140
+#define _VPAddressCalibTempText 0x8140
 
 #define _VPAddressProgramNameText1 0x8200
 #define _VPAddressProgramNameText2 _VPAddressProgramNameText1 + 20 // 8214
@@ -275,11 +278,11 @@
 #define _VPAddressSegmentFanSpeedText4 _VPAddressSegmentFanSpeedText3 + 5
 #define _VPAddressSegmentFanSpeedText5 _VPAddressSegmentFanSpeedText4 + 5
 
-#define _VPAddressSegmentAirFlapText1 0x90A0
-#define _VPAddressSegmentAirFlapText2 _VPAddressSegmentAirFlapText1 + 5
-#define _VPAddressSegmentAirFlapText3 _VPAddressSegmentAirFlapText2 + 5
-#define _VPAddressSegmentAirFlapText4 _VPAddressSegmentAirFlapText3 + 5
-#define _VPAddressSegmentAirFlapText5 _VPAddressSegmentAirFlapText4 + 5
+// #define _VPAddressSegmentAirFlapText1 0x90A0
+// #define _VPAddressSegmentAirFlapText2 _VPAddressSegmentAirFlapText1 + 5
+// #define _VPAddressSegmentAirFlapText3 _VPAddressSegmentAirFlapText2 + 5
+// #define _VPAddressSegmentAirFlapText4 _VPAddressSegmentAirFlapText3 + 5
+// #define _VPAddressSegmentAirFlapText5 _VPAddressSegmentAirFlapText4 + 5
 
 #define _VPAddressSegmentTempMinText1 0x90B9 // Có 5 ô, mỗi ô tối đa 5 ký tự
 #define _VPAddressSegmentTempMinText2 _VPAddressSegmentTempMinText1 + 5
@@ -329,6 +332,32 @@
 #define _VPAddressTextPasswordCheckState 0xA13C      // 40 ky tu truc them
 
 #define _VPAddressTextVersion 0xAFF0 // 15 ky tu
+//---
+#define _VPAddressCO2Text 0xAFFF // 5 ky tu
+#define _VPAddressSetpointCO2Text 0xB005 // 5 ký tự 
+#define _VPAddressAlarmBelowCO2Text 0xB00A // 5 ký tự 
+#define _VPAddressAlarmAboveCO2Text 0xB00F // 5 ký tự 
+
+#define _VPAddressSegmentCO2Text1 0xB014
+#define _VPAddressSegmentCO2Text2 (_VPAddressSegmentCO2Text1 + 5)
+#define _VPAddressSegmentCO2Text3 (_VPAddressSegmentCO2Text2 + 5)
+#define _VPAddressSegmentCO2Text4 (_VPAddressSegmentCO2Text3 + 5)
+#define _VPAddressSegmentCO2Text5 (_VPAddressSegmentCO2Text4 + 5)
+
+#define _VPAddressSegmentCO2MinText1 (_VPAddressSegmentCO2Text5 + 5)
+#define _VPAddressSegmentCO2MinText2 (_VPAddressSegmentCO2MinText1 + 5)
+#define _VPAddressSegmentCO2MinText3 (_VPAddressSegmentCO2MinText2 + 5)
+#define _VPAddressSegmentCO2MinText4 (_VPAddressSegmentCO2MinText3 + 5)
+#define _VPAddressSegmentCO2MinText5 (_VPAddressSegmentCO2MinText4 + 5)
+
+#define _VPAddressSegmentCO2MaxText1 (_VPAddressSegmentCO2MinText5 + 5) // Có 5 ô, mỗi ô tối đa 5 ký tự
+#define _VPAddressSegmentCO2MaxText2 (_VPAddressSegmentCO2MaxText1 + 5)
+#define _VPAddressSegmentCO2MaxText3 (_VPAddressSegmentCO2MaxText2 + 5)
+#define _VPAddressSegmentCO2MaxText4 (_VPAddressSegmentCO2MaxText3 + 5)
+#define _VPAddressSegmentCO2MaxText5 (_VPAddressSegmentCO2MaxText4 + 5)
+
+#define _VPAddressCalibCO2Text 0xB05F // 5 ký tự
+#define _VPAddressStdCO2Text 0xB064 // 5 ký tự
 
 #pragma region SP Address
 
@@ -341,7 +370,7 @@
 #define _SPAddressSmallGraph1 0xB100
 #define _SPAddressLargeGraph 0xB110
 #define _SPAddressSmallGraph2 0xB120
-#define _VPAddressThanhCuonDoThi 0xB130
+#define _SPAddressSmallGraphCO2 0xB130
 
 #pragma region Mã màu
 
