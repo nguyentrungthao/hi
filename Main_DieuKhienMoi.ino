@@ -27,6 +27,7 @@
 #include "driver/temperature_sensor.h"
 
 #include "HeaterControl.h"
+#include "09_concentration.h"
 
 #include "RTC_Timer.h"
 RTC_Timer _time;
@@ -64,6 +65,8 @@ std::vector<Program_t> ProgramList(30);
 std::vector<Program_t> CurrentProgram(30);
 std::vector<CalibData_t> DanhSachHeSoCalib;
 DateTime RTCnow;
+
+Concentration _CO2;
 
 RunMode_t RunMode = QUICK_MODE;
 static int listPageStartPosition = 0;
@@ -212,7 +215,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         if (RunMode == QUICK_MODE) {
             SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
         }
-        FlagNhietDoXacLap = false;
+        FlagCO2XacLap = false;
         xSemaphoreGive(SemaCaiDatHeater);
         break;
     case HMI_SET_FAN:
@@ -295,16 +298,30 @@ void hmiSetEvent(const hmi_set_event_t& event) {
     }
     Serial.printf("Unix time: %d\n", (uint32_t)event.u32_value);
     break;
-    case HMI_SET_ALARM_BELOW:
-        Serial.printf("HMI_SET_ALARM_BELOW: %.1f\n", event.f_value);
+    case HMI_SET_ALARM_TEMP_BELOW:
+        Serial.printf("HMI_SET_ALARM_TEMP_BELOW: %.1f\n", event.f_value);
         BaseProgram.programData.tempMin = event.f_value;
         if (RunMode == QUICK_MODE) {
             SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
         }
         break;
-    case HMI_SET_ALARM_ABOVE:
-        Serial.printf("HMI_SET_ALARM_ABOVE: %.1f\n", event.f_value);
+    case HMI_SET_ALARM_TEMP_ABOVE:
+        Serial.printf("HMI_SET_ALARM_TEMP_ABOVE: %.1f\n", event.f_value);
         BaseProgram.programData.tempMax = event.f_value;
+        if (RunMode == QUICK_MODE) {
+            SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
+        }
+        break;
+    case HMI_SET_ALARM_CO2_BELOW:
+        Serial.printf("HMI_SET_ALARM_CO2_BELOW: %.1f\n", event.f_value);
+        BaseProgram.programData.CO2Min = event.f_value;
+        if (RunMode == QUICK_MODE) {
+            SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
+        }
+        break;
+    case HMI_SET_ALARM_CO2_ABOVE:
+        Serial.printf("HMI_SET_ALARM_CO2_ABOVE: %.1f\n", event.f_value);
+        BaseProgram.programData.CO2Max = event.f_value;
         if (RunMode == QUICK_MODE) {
             SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
         }
@@ -665,6 +682,7 @@ bool hmiGetEvent(hmi_get_type_t event, void* args) {
         break;
     case HMI_GET_ALARM:
         _dwin.HienThiNhietDoCanhBao(BaseProgram.programData.tempMin, BaseProgram.programData.tempMax);
+        _dwin.HienThiCO2CanhBao(BaseProgram.programData.CO2Min, BaseProgram.programData.CO2Max);
         break;
     case HMI_GET_PROGRAM_LIST:
         programListIndex = 0;
@@ -1178,6 +1196,15 @@ void TaskXuLyCanhBao(void*) {
             }
         }
         CapNhatTrangThaiHeater();
+
+        //xuất hiện CO2
+        BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
+        if (BaseProgram.CO2 >= -0.5f) {
+            _dwin.HienThiCO2(BaseProgram.CO2);
+        }
+        else {
+            _dwin.HienThiCO2("err");
+        }
         delay(100);
     }
 }
@@ -1563,6 +1590,8 @@ void setup() {
     // }
 
     KhoiTaoHeater();
+    delay(10);
+    _CO2.KhoiTaoCO2();
     delay(10);
 
     // Khôi phục thông số hệ thống

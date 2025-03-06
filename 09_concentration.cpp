@@ -1,0 +1,141 @@
+#include "09_concentration.h"
+
+/*
+    @brief:     khởi tạo các  constructor
+*/
+Concentration::Concentration(void)
+  : IRCO2(), HRTOnOffPin() {
+};
+
+
+/*
+    @brief:     khởi tạo cảm biến CO2 và khởi tạo cả 2 van khí
+*/
+void Concentration::KhoiTaoCO2() {
+
+  // khởi tạo cảm biến CO2
+  IRCO2::init();
+
+  nongDoThucCO2 = this->LayGiaTriTuCamBien();
+
+  HRTOnOffPin::init();
+
+  this->TatDieuKhienCO2();
+  //khởi tạo task tính toán thời gian điều khiển van khí
+  xTaskCreate(taskTinhToanCO2, "tính CO2", 3072, (void*)this, 2, &taskTinhToan);
+  delay(1000);
+}
+
+//* cài giá trị setpoint cho CO2
+void Concentration::CaiNongDoCO2(float giaTriDat) {
+  // giới hạn điều khiển từ 0 đến 20%
+  //if (0.0f <= giaTriDat && giaTriDat <= 20.0f) {
+  this->nongDoDat = giaTriDat;
+  //}
+}
+
+//*lấy giá trị setpoint của CO2
+float Concentration::LayNongDoDatCO2() {
+  return this->nongDoDat;
+}
+//*lấy trạng thái valve
+bool Concentration::LayTrangThaiVan() {
+  return this->getStatusPin();  // lấy từ class Valve
+}
+void Concentration::BatDieuKhienCO2() {
+  this->coChayBoDieuKhienCO2 = BAT_CO2;
+}
+void Concentration::TatDieuKhienCO2() {
+  this->coChayBoDieuKhienCO2 = TAT_CO2;
+  this->turnOffPin();
+}
+
+void Concentration::taskTinhToanCO2(void* ptr) {
+  Concentration* pClass = static_cast<Concentration*>(ptr);
+  TickType_t xLastWakeTime;
+  const TickType_t xFrequency = 10;
+  xLastWakeTime = xTaskGetTickCount();
+  float SaiSo = 0;
+  int i = 0;
+  while (1) {
+    pClass->nongDoThucCO2 = pClass->LayGiaTriTuCamBien();
+    //! kiểm tra giá trị đọc về từ cảm biến
+    if (pClass->nongDoThucCO2 >= -0.5f) {
+      SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
+    }
+    else {
+      SaiSo = 0.0f;
+    }
+
+    Serial.printf("CO2: %0.2f\n", pClass->nongDoThucCO2);
+    vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
+  }
+}
+
+/*
+    @brief:     lấy giá trị thực tế từ cảm biến CO2
+
+    @return:    nồng độ CO2 (đơn vị %)
+*/
+float Concentration::LayGiaTriTuCamBien() {
+  if (IRCO2::ReadData() == IRCO2_OK) {
+    return IRCO2::GetCO2Concentration();
+  }
+  return LOI_GIAO_TIEP;  // giá trị báo lỗi giao tiếp
+}
+
+
+float Concentration::LayNongDoCO2Thuc() {
+  return this->nongDoThucCO2;
+}
+//* lấy thời gian kích van được tính toán
+uint32_t Concentration::LayThoiGianKichVan() {
+  return static_cast<uint32_t>(Concentration::thoiGianMoVan);
+}
+//* hiển thị giá trị điều khiển
+void Concentration::logDEBUG() {
+  CO2_SerialPrintf(CoChoPhepLogDebug, "CO2-SP( %0.2f )-đo( %0.3f )-ĐKhiển( %u )-tgChờ( %u )-TrạngThái( %u )\r\n",
+                   this->LayNongDoDatCO2(), this->nongDoThucCO2, this->LayThoiGianKichVan(), this->thoiGianCho, (uint8_t)this->coChayBoDieuKhienCO2);
+}
+
+//* khởi động lại cảm biến
+//* sau khi khởi động lại cảm biến trả về giá trị âm -2
+void Concentration::KhoiDongLaiCamBien() {
+  this->SensorReset();
+}
+//* xóa hết các giá trị calib, đưa các giá trị calib về gốc
+void Concentration::XoaToanBoGiaTriCalib() {
+  this->SetFactoryDefault();
+}
+//* gửi giá trị để cảm biến tự động điều chỉnh
+IRCO2_StatusTydef Concentration::CalibGiaTriThuc(float giaTriChuan) {
+  if (giaTriChuan < 0.5f && giaTriChuan > 20.0f) {
+    return IRCO2_ERR_VAL;
+  }
+  uint32_t _giaTriChuan = giaTriChuan * 1000.0f;
+
+  for (uint8_t i = 0; i < 5; i++) {
+    // giá trị gửi từ 0 đến 0.5 tương ứng 500 đến 20000
+    if (this->SpanPointAdjustment(_giaTriChuan) == IRCO2_OK) {
+      Serial.println("CALIB OKE");
+      return IRCO2_OK;
+    }
+    delay(10);
+  }
+
+  return IRCO2_ERR_VAL;
+}
+//* gửi giá trị để cảm biến tự động điều chỉnh điểm Zero vì lượng CO2 mỗi nơi có thể khác nhau giá trị từ
+IRCO2_StatusTydef Concentration::CalibDiem0(float giaTri0Chuan) {
+  if (giaTri0Chuan < 0.0f && giaTri0Chuan > 0.5f) {
+    return IRCO2_ERR_VAL;
+  }
+  uint32_t _giaTriChuan = giaTri0Chuan * 1000.0f;
+  // giá trị gửi từ 0 đến 0.5 tương ứng 0 đến 500
+  return this->ZeroPointAdjustment(_giaTriChuan);
+}
+//calib áp suất khi xả khí là 0.1Mpa lưu lượng đi vào 1 (lít/min)
+void Concentration::CalibApSuat(uint32_t thoiGianMoVan) {
+  if (thoiGianMoVan < 10) return;
+  this->turnOnPinAndDelayOff(thoiGianMoVan);
+}

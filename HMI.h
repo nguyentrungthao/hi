@@ -23,8 +23,10 @@ typedef enum
     HMI_SET_TEMPMAX,
     HMI_SET_TEMPMIN,
     HMI_SET_RTC,
-    HMI_SET_ALARM_BELOW,
-    HMI_SET_ALARM_ABOVE,
+    HMI_SET_ALARM_TEMP_BELOW,
+    HMI_SET_ALARM_TEMP_ABOVE,
+    HMI_SET_ALARM_CO2_BELOW,
+    HMI_SET_ALARM_CO2_ABOVE,
     HMI_SET_TEXT,
     HMI_EDIT_SEG_SETPOINT,
     HMI_EDIT_SEG_FANSPEED,
@@ -133,6 +135,7 @@ public:
     void HienThiPhut(int phut);
 
     void HienThiNhietDoCanhBao(float NhietDuoi, float NhietTren);
+    void HienThiCO2CanhBao(float CO2Duoi, float CO2Tren);
 
     void HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg);
     void XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row);
@@ -142,6 +145,8 @@ public:
 
     void HienThiNhietDo(float GiaTri);
     void HienThiNhietDo(String text);
+    void HienThiCO2(float GiaTri);
+    void HienThiCO2(String text);
     void HienThiSetpointTemp(float GiaTri);
     void HienThiSetpointCO2(float GiaTri);
     void HienThiTocDoQuat(int GiaTri);
@@ -238,6 +243,8 @@ protected:
     static void _NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void* args);
     static void _NutCaiCanhBaoNhietDoThap_(int32_t lastBytes, void* args);
     static void _NutCaiCanhBaoNhietDoCao_(int32_t lastBytes, void* args);
+    static void _NutCaiCanhBaoCO2Thap_(int32_t lastBytes, void* args);
+    static void _NutCaiCanhBaoCO2Cao_(int32_t lastBytes, void* args);
 
     static void _NutVaoChucNangProgram_(int32_t lastBytes, void* args);
     static void _NutChonProgram_(int32_t lastBytes, void* args);

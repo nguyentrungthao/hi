@@ -97,6 +97,8 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterSetAlarm, _NutEnterTrangCaiCanhBaoNhietDo_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetAlarmBelow, _NutCaiCanhBaoNhietDoThap_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetAlarmAbove, _NutCaiCanhBaoNhietDoCao_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetAlarmUnderCO2, _NutCaiCanhBaoCO2Thap_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetAlarmOverCO2, _NutCaiCanhBaoCO2Cao_, this);
 
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueProgram, _NutVaoChucNangProgram_, this);
     DWIN::addButtonEvent(_VPAddressSelectProgram, _AllKeyValue, _NutChonProgram_, this);
@@ -1061,6 +1063,18 @@ void HMI::HienThiNhietDoCanhBao(float NhietDuoi, float NhietTren)
     }
     this->setText(_VPAddressAlarmAboveTempText, "+" + String(NhietTren, 1));
 }
+void HMI::HienThiCO2CanhBao(float CO2Duoi, float CO2Tren)
+{
+    if (String(CO2Duoi).indexOf('-') >= 0)
+    {
+        this->setText(_VPAddressAlarmBelowCO2Text, String(CO2Duoi, 1));
+    }
+    else
+    {
+        this->setText(_VPAddressAlarmBelowCO2Text, "-" + String(CO2Duoi, 1));
+    }
+    this->setText(_VPAddressAlarmAboveCO2Text, "+" + String(CO2Tren, 1));
+}
 
 void HMI::_NutCaiCanhBaoNhietDoThap_(int32_t lastBytes, void* args)
 {
@@ -1098,17 +1112,63 @@ void HMI::_NutCaiCanhBaoNhietDoCao_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_NumericKeypadPage);
 }
 
+void HMI::_NutCaiCanhBaoCO2Thap_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = UNDEFINED;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.minValue = -99;
+    hmiPtr->_set_event.maxValue = -0.1;
+    hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = _AlarmPage;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressAlarmBelowCO2Text;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    // Serial.println("Below" + hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->setPage(_NumericKeypadPage);
+}
+
+void HMI::_NutCaiCanhBaoCO2Cao_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = UNDEFINED;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.minValue = 0.1;
+    hmiPtr->_set_event.maxValue = 99;
+    hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = _AlarmPage;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressAlarmAboveCO2Text;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    // Serial.println("Above" + hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->setPage(_NumericKeypadPage);
+}
+
 void HMI::_NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
 
     float value = hmiPtr->getText(_VPAddressAlarmBelowTempText, 5).toFloat();
-    hmiPtr->_set_event.type = HMI_SET_ALARM_BELOW;
+    hmiPtr->_set_event.type = HMI_SET_ALARM_TEMP_BELOW;
     hmiPtr->_set_event.f_value = value;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 
     value = hmiPtr->getText(_VPAddressAlarmAboveTempText, 5).toFloat();
-    hmiPtr->_set_event.type = HMI_SET_ALARM_ABOVE;
+    hmiPtr->_set_event.type = HMI_SET_ALARM_TEMP_ABOVE;
+    hmiPtr->_set_event.f_value = value;
+    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+
+    value = hmiPtr->getText(_VPAddressAlarmAboveCO2Text, 5).toFloat();
+    hmiPtr->_set_event.type = HMI_SET_ALARM_CO2_ABOVE;
+    hmiPtr->_set_event.f_value = value;
+    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+
+    value = hmiPtr->getText(_VPAddressAlarmBelowCO2Text, 5).toFloat();
+    hmiPtr->_set_event.type = HMI_SET_ALARM_CO2_BELOW;
     hmiPtr->_set_event.f_value = value;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 
@@ -1377,6 +1437,15 @@ void HMI::HienThiNhietDo(String text)
     setText(_VPAddressTemperatureText, text);
 }
 
+void HMI::HienThiCO2(float GiaTri)
+{
+    setText(_VPAddressCO2Text, String(GiaTri, 1));
+}
+
+void HMI::HienThiCO2(String text)
+{
+    setText(_VPAddressCO2Text, text);
+}
 void HMI::HienThiSetpointTemp(float GiaTri)
 {
     setText(_VPAddressSetpointTempText, String(GiaTri, 1));
