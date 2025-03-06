@@ -199,10 +199,10 @@ void hmiSetEvent(const hmi_set_event_t& event) {
             _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
             xSemaphoreGive(SemaCaiDatHeater);
         }
+        Serial.printf("HMI_SET_RUN_ONOFF\n");
         break;
     case HMI_SET_SETPOINT_TEMP:
         Serial.printf("Set setpoint temp: %.1f\n", event.f_value);
-        BaseProgram.programData.setPointTemp = event.f_value;
         if (RunMode == QUICK_MODE) {
             SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
         }
@@ -361,19 +361,18 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         sprintf(filePath, "/program/%s", event.text.c_str());
         SDMMCFile.deleteFile(filePath);
         break;
-    case HMI_EDIT_SEG_SETPOINT:
+    case HMI_EDIT_SEG_SETPOINT_TEMP:
         if (ProgramList.size() > event.indexList + listPageStartPosition) {
             ProgramList.at(event.indexList + listPageStartPosition).setPointTemp = event.f_value;
             Serial.printf("Set segment setpoint %u: %.1f\n", event.indexList + listPageStartPosition, ProgramList[event.indexList + listPageStartPosition].setPointTemp);
         }
         break;
-        // case HMI_EDIT_SEG_SETPOINT:
-        //     if (ProgramList.size() > event.indexList + listPageStartPosition)
-        //     {
-        //         ProgramList.at(event.indexList + listPageStartPosition).setPointCO2 = event.f_value;
-        //         Serial.printf("Set segment setpoint %u: %.1f\n", event.indexList + listPageStartPosition, ProgramList[event.indexList + listPageStartPosition].setPointCO2);
-        //     }
-        //     break;
+    case HMI_EDIT_SEG_SETPOINT_CO2:
+        if (ProgramList.size() > event.indexList + listPageStartPosition) {
+            ProgramList.at(event.indexList + listPageStartPosition).setPointCO2 = event.f_value;
+            Serial.printf("Set segment setpoint CO2 %u: %.1f\n", event.indexList + listPageStartPosition, ProgramList[event.indexList + listPageStartPosition].setPointCO2);
+        }
+        break;
     case HMI_EDIT_SEG_FANSPEED:
         if (ProgramList.size() > event.indexList + listPageStartPosition) {
             ProgramList.at(event.indexList + listPageStartPosition).fanSpeed = event.f_value;
@@ -397,6 +396,18 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         if (ProgramList.size() > event.indexList + listPageStartPosition) {
             ProgramList.at(event.indexList + listPageStartPosition).tempMax = event.f_value;
             Serial.printf("Set segment temp pro max %u: %.1f\n", event.indexList + listPageStartPosition, ProgramList[event.indexList + listPageStartPosition].tempMax);
+        }
+        break;
+    case HMI_EDIT_SEG_CO2MIN:
+        if (ProgramList.size() > event.indexList + listPageStartPosition) {
+            ProgramList.at(event.indexList + listPageStartPosition).CO2Min = event.f_value;
+            Serial.printf("Set segment CO2 pro min %u: %.1f\n", event.indexList + listPageStartPosition, ProgramList[event.indexList + listPageStartPosition].CO2Min);
+        }
+        break;
+    case HMI_EDIT_SEG_CO2MAX:
+        if (ProgramList.size() > event.indexList + listPageStartPosition) {
+            ProgramList.at(event.indexList + listPageStartPosition).CO2Max = event.f_value;
+            Serial.printf("Set segment CO2 pro max %u: %.1f\n", event.indexList + listPageStartPosition, ProgramList[event.indexList + listPageStartPosition].CO2Max);
         }
         break;
     case HMI_ADD_SEG:
@@ -699,8 +710,9 @@ bool hmiGetEvent(hmi_get_type_t event, void* args) {
         programStart = 0;
         while (file) {
             Serial.print("File: ");
-            Serial.println(file.name());
-            _dwin.HienThiTenChuongTrinhTrenHang(programListIndex, programListIndex + 1, file.name(), file.size() / sizeof(Program_t));
+            String name = file.name();
+            Serial.println(name);
+            _dwin.HienThiTenChuongTrinhTrenHang(programListIndex, programListIndex + 1, name, file.size() / sizeof(Program_t), __func__);
             file = root.openNextFile();
             programListIndex++;
             if (programListIndex % 4 == 0) {
@@ -738,7 +750,7 @@ bool hmiGetEvent(hmi_get_type_t event, void* args) {
             Serial.print("File: ");
             Serial.println(file.name());
             if (programListIndex >= programStart) {
-                _dwin.HienThiTenChuongTrinhTrenHang(programListIndex - programStart, programListIndex + 1, file.name(), file.size() / sizeof(Program_t));
+                _dwin.HienThiTenChuongTrinhTrenHang(programListIndex - programStart, programListIndex + 1, file.name(), file.size() / sizeof(Program_t), __func__);
                 file.close();
             }
             file = root.openNextFile();
@@ -779,7 +791,7 @@ bool hmiGetEvent(hmi_get_type_t event, void* args) {
             Serial.print("File: ");
             Serial.println(file.name());
             if (programListIndex >= programStart) {
-                _dwin.HienThiTenChuongTrinhTrenHang(programListIndex - programStart, programListIndex + 1, file.name(), file.size() / sizeof(Program_t));
+                _dwin.HienThiTenChuongTrinhTrenHang(programListIndex - programStart, programListIndex + 1, file.name(), file.size() / sizeof(Program_t), __func__);
                 file.close();
             }
             file = root.openNextFile();
@@ -862,7 +874,7 @@ bool hmiGetEvent(hmi_get_type_t event, void* args) {
         break;
     }
     return 1;
-    
+
 HienThiSegmentList:
     for (i = listPageStartPosition; i < 5 + listPageStartPosition; i++) {
         if (i < listLength + listPageStartPosition) {
@@ -948,7 +960,7 @@ void TaskHienThiNhietDoVaVeDoThi(void*) {
     xLastWakeTime = xTaskGetTickCount();
     for (;;) {
         // if (millis() - preTime >= 1000) {
-            // preTime = millis();
+        // preTime = millis();
         RTCnow = _time.getCurrentTime();
         _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
         if (countTime % BUOC_NHAY_DO_THI == 0) {
@@ -1196,14 +1208,14 @@ void TaskXuLyCanhBao(void*) {
         }
         CapNhatTrangThaiHeater();
 
-        //hiện CO2
-        BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
-        if (BaseProgram.CO2 >= -0.5f) {
-            _dwin.HienThiCO2(BaseProgram.CO2);
-        }
-        else {
-            _dwin.HienThiCO2("err");
-        }
+        // //hiện CO2
+        // BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
+        // if (BaseProgram.CO2 >= -0.5f) {
+        //     _dwin.HienThiCO2(BaseProgram.CO2);
+        // }
+        // else {
+        //     _dwin.HienThiCO2("err");
+        // }
         delay(100);
     }
 }
@@ -1717,27 +1729,12 @@ void setup() {
 }
 
 void loop() {
-    // Nếu RAM còn trống 70000 byte thì mới thực hiện GET POST
-    // if (esp_get_free_heap_size() > 20000)
-    // {
-    // loop_PostGet();
-    // loopMQTT();
-    // if(WiFi.status() == WL_CONNECTED) {
-    //     http.begin()
-    // }
-    // delay(1000);
-    //     if (dataQueue != NULL)
-    //     {
-    //         PIDData data;
-    //         if (xQueueReceive(dataQueue, &data, 0) == pdTRUE)
-    //         {
-    //             sendData(&data);
-    //         }
-    //     }
-    // }
-    // else {
-    //     delay(10);
-    // }
+
+    // _dwin.setText(_VPAddressProgramNameText1 + 0 * 20, "a");
+    // _dwin.setText(_VPAddressNumProgramText1 + 0 * 20, "b");
+    // _dwin.setText(_VPAddressTotalNumOfSegmentsText1 + 0 * 20, "c");
+
+    delay(1000);
 }
 
 // void sendData(PIDData *data)

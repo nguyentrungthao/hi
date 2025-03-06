@@ -28,11 +28,14 @@ typedef enum
     HMI_SET_ALARM_CO2_BELOW,
     HMI_SET_ALARM_CO2_ABOVE,
     HMI_SET_TEXT,
-    HMI_EDIT_SEG_SETPOINT,
+    HMI_EDIT_SEG_SETPOINT_TEMP,
+    HMI_EDIT_SEG_SETPOINT_CO2,
     HMI_EDIT_SEG_FANSPEED,
     HMI_EDIT_SEG_AIRFLAP,
     HMI_EDIT_SEG_TEMPMIN,
     HMI_EDIT_SEG_TEMPMAX,
+    HMI_EDIT_SEG_CO2MIN,
+    HMI_EDIT_SEG_CO2MAX,
     HMI_EDIT_SEG_DELAYOFF_DAY,
     HMI_EDIT_SEG_DELAYOFF_HOUR,
     HMI_EDIT_SEG_DELAYOFF_MINUTE,
@@ -137,7 +140,7 @@ public:
     void HienThiNhietDoCanhBao(float NhietDuoi, float NhietTren);
     void HienThiCO2CanhBao(float CO2Duoi, float CO2Tren);
 
-    void HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg);
+    void HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char *func = "");
     void XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row);
 
     void VeDoThi(float value, time_t time, int offset);
@@ -261,10 +264,15 @@ protected:
     // static void _SegmentButton_(int32_t lastBytes, void *args);
 
     static void _NutEditSetpointTrangSegment_(int32_t lastBytes, void* args);
+    static void _NutEditSetpointCO2TrangSegment_(int32_t lastBytes, void* args);
+
     static void _NutEditTocDoQuatTrangSegment_(int32_t lastBytes, void* args);
     // static void _NutEditFlapTrangSegment_(int32_t lastBytes, void *args);
     static void _NutEditTempMinTrangSegment_(int32_t lastBytes, void* args);
     static void _NutEditTempMaxTrangSegment_(int32_t lastBytes, void* args);
+    static void _NutEditCO2MinTrangSegment_(int32_t lastBytes, void* args);
+    static void _NutEditCO2MaxTrangSegment_(int32_t lastBytes, void* args);
+    
     static void _NutEditThoiGianTatTrangSegment_(int32_t lastBytes, void* args);
     static void _NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void* args);
     static void _CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void* args);

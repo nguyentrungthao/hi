@@ -92,7 +92,7 @@
 #define _VPAddressSegmentDelayOffButton 0x5003
 #define _VPAddressSegmentFanSpeedButton 0x5004
 // #define _VPAddressSegmentFlapButton 0x5005
-#define _VPAddressSegmentCO2Button 0x5005
+#define _VPAddressSegmentSetpointCO2Button 0x5005
 #define _VPAddressSegmentTempMinButton 0x5006
 #define _VPAddressSegmentTempMaxButton 0x5007
 #define _VPAddressSegmentCO2MinButton 0x501E
@@ -260,6 +260,12 @@
 #define _VPAddressNumSegmentText4 _VPAddressNumSegmentText3 + 2
 #define _VPAddressNumSegmentText5 _VPAddressNumSegmentText4 + 2
 
+#define _VPAddressTotalNumOfSegmentsText1 0x9101
+#define _VPAddressTotalNumOfSegmentsText2 _VPAddressTotalNumOfSegmentsText1 + 2
+#define _VPAddressTotalNumOfSegmentsText3 _VPAddressTotalNumOfSegmentsText2 + 2
+#define _VPAddressTotalNumOfSegmentsText4 _VPAddressTotalNumOfSegmentsText3 + 2
+#define _VPAddressTotalNumOfSegmentsText5 _VPAddressTotalNumOfSegmentsText4 + 2
+
 #define _VPAddressSegmentSetpointText1 0x900A // Có 5 ô, mỗi ô tối đa 5 ký tự
 #define _VPAddressSegmentSetpointText2 _VPAddressSegmentSetpointText1 + 5
 #define _VPAddressSegmentSetpointText3 _VPAddressSegmentSetpointText2 + 5
@@ -302,11 +308,7 @@
 #define _VPAddressNumProgramText4 _VPAddressNumProgramText3 + 2
 #define _VPAddressNumProgramText5 _VPAddressNumProgramText4 + 2
 
-#define _VPAddressTotalNumOfSegmentsText1 0x9101
-#define _VPAddressTotalNumOfSegmentsText2 _VPAddressTotalNumOfSegmentsText1 + 2
-#define _VPAddressTotalNumOfSegmentsText3 _VPAddressTotalNumOfSegmentsText2 + 2
-#define _VPAddressTotalNumOfSegmentsText4 _VPAddressTotalNumOfSegmentsText3 + 2
-#define _VPAddressTotalNumOfSegmentsText5 _VPAddressTotalNumOfSegmentsText4 + 2
+
 
 #define _VPAddressKeyboardWarningText 0xA010
 #define _VPAddressWarningText 0xA020            // 50 ky tu
@@ -344,13 +346,13 @@
 #define _VPAddressSegmentSetpointCO2Text4 (_VPAddressSegmentSetpointCO2Text3 + 5)
 #define _VPAddressSegmentSetpointCO2Text5 (_VPAddressSegmentSetpointCO2Text4 + 5)
 
-#define _VPAddressSegmentCO2MinText1 (_VPAddressSegmentSetpointCO2Text5 + 5)
+#define _VPAddressSegmentCO2MinText1 0xB02D
 #define _VPAddressSegmentCO2MinText2 (_VPAddressSegmentCO2MinText1 + 5)
 #define _VPAddressSegmentCO2MinText3 (_VPAddressSegmentCO2MinText2 + 5)
 #define _VPAddressSegmentCO2MinText4 (_VPAddressSegmentCO2MinText3 + 5)
 #define _VPAddressSegmentCO2MinText5 (_VPAddressSegmentCO2MinText4 + 5)
 
-#define _VPAddressSegmentCO2MaxText1 (_VPAddressSegmentCO2MinText5 + 5) // Có 5 ô, mỗi ô tối đa 5 ký tự
+#define _VPAddressSegmentCO2MaxText1 0xB046
 #define _VPAddressSegmentCO2MaxText2 (_VPAddressSegmentCO2MaxText1 + 5)
 #define _VPAddressSegmentCO2MaxText3 (_VPAddressSegmentCO2MaxText2 + 5)
 #define _VPAddressSegmentCO2MaxText4 (_VPAddressSegmentCO2MaxText3 + 5)
@@ -361,16 +363,16 @@
 
 #pragma region SP Address
 
-#define _SPAddressProgramNameText1 0xB000
-#define _SPAddressProgramNameText2 0xB010
-#define _SPAddressProgramNameText3 0xB020
-#define _SPAddressProgramNameText4 0xB030
-#define _SPAddressProgramNameText5 0xB040
+#define _SPAddressProgramNameText1 0xC000
+#define _SPAddressProgramNameText2 0xC100
+#define _SPAddressProgramNameText3 0xC200
+#define _SPAddressProgramNameText4 0xC300
+#define _SPAddressProgramNameText5 0xC400
 
-#define _SPAddressSmallGraph1 0xB100
-#define _SPAddressLargeGraph 0xB110
-#define _SPAddressSmallGraph2 0xB120
-#define _SPAddressSmallGraphCO2 0xB130
+#define _SPAddressSmallGraph1 0xC500
+#define _SPAddressLargeGraph 0xC600
+#define _SPAddressSmallGraph2 0xC700
+#define _SPAddressSmallGraphCO2 0xC800
 
 #pragma region Mã màu
 

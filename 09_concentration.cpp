@@ -67,7 +67,7 @@ void Concentration::taskTinhToanCO2(void* ptr) {
       SaiSo = 0.0f;
     }
 
-    Serial.printf("CO2: %0.2f\n", pClass->nongDoThucCO2);
+    // Serial.printf("CO2: %0.2f\n", pClass->nongDoThucCO2);
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
 }

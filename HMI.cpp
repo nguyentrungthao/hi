@@ -65,10 +65,13 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetSetpointCO2, _NutCaiCO2Setpoint_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetFanSpeed, _NutCaiTocDoQuat_, this);
     DWIN::addButtonEvent(_VPAddressSegmentSetpointButton, _AllKeyValue, _NutEditSetpointTrangSegment_, this);
+    DWIN::addButtonEvent(_VPAddressSegmentSetpointCO2Button, _AllKeyValue, _NutEditSetpointCO2TrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentFanSpeedButton, _AllKeyValue, _NutEditTocDoQuatTrangSegment_, this);
     // DWIN::addButtonEvent(_VPAddressSegmentFlapButton, _AllKeyValue, _NutEditFlapTrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentTempMinButton, _AllKeyValue, _NutEditTempMinTrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentTempMaxButton, _AllKeyValue, _NutEditTempMaxTrangSegment_, this);
+    DWIN::addButtonEvent(_VPAddressSegmentCO2MinButton, _AllKeyValue, _NutEditCO2MinTrangSegment_, this);
+    DWIN::addButtonEvent(_VPAddressSegmentCO2MaxButton, _AllKeyValue, _NutEditCO2MaxTrangSegment_, this);
 
     // DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSegment, _SegmentButton_, this);
     DWIN::addButtonEvent(_VPAddressSegmentFunctionButton, _AllKeyValue, _CacNutThaoTacTrongTrangEditSegment_, this);
@@ -437,7 +440,7 @@ void HMI::_NutCaiNhietDoSetpoint_(int32_t lastBytes, void* args)
 void HMI::_NutCaiCO2Setpoint_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
-    hmiPtr->_set_event.type = HMI_SET_SETPOINT_TEMP;
+    hmiPtr->_set_event.type = HMI_SET_SETPOINT_CO2;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _HomePage;
     hmiPtr->_set_event.pageAfterEnter = _HomePage;
@@ -494,7 +497,7 @@ void HMI::_NutEditSetpointTrangSegment_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
-    hmiPtr->_set_event.type = HMI_EDIT_SEG_SETPOINT;
+    hmiPtr->_set_event.type = HMI_EDIT_SEG_SETPOINT_TEMP;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
     hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
@@ -510,6 +513,28 @@ void HMI::_NutEditSetpointTrangSegment_(int32_t lastBytes, void* args)
     if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
     {
         hmiPtr->DWIN::setPage(_TempNumericKeypadPage);
+    }
+}
+void HMI::_NutEditSetpointCO2TrangSegment_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    ESP_LOGI(TAG, "Select %d\n", lastBytes);
+    hmiPtr->_set_event.type = HMI_EDIT_SEG_SETPOINT_CO2;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
+    hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
+    hmiPtr->_set_event.maxValue = 20;
+    hmiPtr->_set_event.minValue = 0;
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentSetpointCO2Text1 + lastBytes * 5;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.indexList = lastBytes;
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    {
+        hmiPtr->DWIN::setPage(_CO2NumericKeypadPage);
     }
 }
 
@@ -570,6 +595,50 @@ void HMI::_NutEditTempMinTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.minValue = -99;
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentTempMinText1 + lastBytes * 5;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.indexList = lastBytes;
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    {
+        hmiPtr->DWIN::setPage(_NumericKeypadPage);
+    }
+}
+void HMI::_NutEditCO2MinTrangSegment_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    ESP_LOGI(TAG, "Select %d\n", lastBytes);
+    hmiPtr->_set_event.type = HMI_EDIT_SEG_CO2MIN;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
+    hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
+    hmiPtr->_set_event.maxValue = -0.1;
+    hmiPtr->_set_event.minValue = -99;
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentCO2MinText1 + lastBytes * 5;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.indexList = lastBytes;
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    {
+        hmiPtr->DWIN::setPage(_NumericKeypadPage);
+    }
+}
+void HMI::_NutEditCO2MaxTrangSegment_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    ESP_LOGI(TAG, "Select %d\n", lastBytes);
+    hmiPtr->_set_event.type = HMI_EDIT_SEG_CO2MAX;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
+    hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
+    hmiPtr->_set_event.maxValue = 99;
+    hmiPtr->_set_event.minValue = 0.1;
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentCO2MaxText1 + lastBytes * 5;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
     hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
@@ -688,7 +757,7 @@ void HMI::_CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void* args)
     return;
 }
 
-void HMI::HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoint, float setpointCO2,int delayOffDay, int delayOffHour, int delayOffMinute,
+void HMI::HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoint, float setpointCO2, int delayOffDay, int delayOffHour, int delayOffMinute,
     int fanSpeed, float tempMin, float tempMax, float CO2Min, float CO2Max)
 {
     this->setText(_VPAddressNumSegmentText1 + row * 2, String(index));
@@ -1182,10 +1251,11 @@ void HMI::_NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_SettingsPage);
 }
 
-void HMI::HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg)
+void HMI::HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char * func)
 {
+    Serial.printf("%s\n", func);
     this->setText(_VPAddressNumProgramText1 + row * 2, String(index));
-    this->setText(_VPAddressProgramNameText1 + row * 20, "hello");
+    this->setText(_VPAddressProgramNameText1 + row * 20, name);
     this->setTextColor(_SPAddressProgramNameText1 + row * 0x0010, 0x03, _BlueColor);
     this->setText(_VPAddressTotalNumOfSegmentsText1 + row * 2, String(TotalSeg));
     this->_TenChuongTrinh = "";
