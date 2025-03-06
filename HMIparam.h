@@ -338,13 +338,13 @@
 #define _VPAddressAlarmBelowCO2Text 0xB00A // 5 ký tự 
 #define _VPAddressAlarmAboveCO2Text 0xB00F // 5 ký tự 
 
-#define _VPAddressSegmentCO2Text1 0xB014
-#define _VPAddressSegmentCO2Text2 (_VPAddressSegmentCO2Text1 + 5)
-#define _VPAddressSegmentCO2Text3 (_VPAddressSegmentCO2Text2 + 5)
-#define _VPAddressSegmentCO2Text4 (_VPAddressSegmentCO2Text3 + 5)
-#define _VPAddressSegmentCO2Text5 (_VPAddressSegmentCO2Text4 + 5)
+#define _VPAddressSegmentSetpointCO2Text1 0xB014
+#define _VPAddressSegmentSetpointCO2Text2 (_VPAddressSegmentSetpointCO2Text1 + 5)
+#define _VPAddressSegmentSetpointCO2Text3 (_VPAddressSegmentSetpointCO2Text2 + 5)
+#define _VPAddressSegmentSetpointCO2Text4 (_VPAddressSegmentSetpointCO2Text3 + 5)
+#define _VPAddressSegmentSetpointCO2Text5 (_VPAddressSegmentSetpointCO2Text4 + 5)
 
-#define _VPAddressSegmentCO2MinText1 (_VPAddressSegmentCO2Text5 + 5)
+#define _VPAddressSegmentCO2MinText1 (_VPAddressSegmentSetpointCO2Text5 + 5)
 #define _VPAddressSegmentCO2MinText2 (_VPAddressSegmentCO2MinText1 + 5)
 #define _VPAddressSegmentCO2MinText3 (_VPAddressSegmentCO2MinText2 + 5)
 #define _VPAddressSegmentCO2MinText4 (_VPAddressSegmentCO2MinText3 + 5)

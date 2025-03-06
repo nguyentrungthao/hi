@@ -124,8 +124,8 @@ public:
     void DangKyHamSetCallback(hmiSetData_t function);
     void DangKyHamGetCallback(hmiGetData_t function);
 
-    void HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoint, int delayOffDay, int delayOffHour, int delayOffMinute, int fanSpeed, float tempMin, float tempMax);
-
+    void HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoint, float setpointCO2, int delayOffDay, int delayOffHour, int delayOffMinute,
+        int fanSpeed, float tempMin, float tempMax, float CO2Min, float CO2Max);
     void XoaDuLieuHienThiSegmentTrenHang(uint8_t row);
 
     void HienThiNgay(int ngay);

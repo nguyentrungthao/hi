@@ -688,10 +688,12 @@ void HMI::_CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void* args)
     return;
 }
 
-void HMI::HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoint, int delayOffDay, int delayOffHour, int delayOffMinute, int fanSpeed, float tempMin, float tempMax)
+void HMI::HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoint, float setpointCO2,int delayOffDay, int delayOffHour, int delayOffMinute,
+    int fanSpeed, float tempMin, float tempMax, float CO2Min, float CO2Max)
 {
     this->setText(_VPAddressNumSegmentText1 + row * 2, String(index));
     this->setText(_VPAddressSegmentSetpointText1 + row * 5, String(setpoint, 1));
+    this->setText(_VPAddressSegmentSetpointCO2Text1 + row * 5, String(setpointCO2, 1));
     char timeString[20];
     sprintf(timeString, "%02dd-%02d:%02d", delayOffDay, delayOffHour, delayOffMinute);
     this->setText(_VPAddressSegmentDelayOffText1 + row * 20, String(timeString));
@@ -699,6 +701,8 @@ void HMI::HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoin
     // this->setText(_VPAddressSegmentAirFlapText1 + row * 5, String(flap));
     this->setText(_VPAddressSegmentTempMinText1 + row * 5, String(tempMin, 1));
     this->setText(_VPAddressSegmentTempMaxText1 + row * 5, String(tempMax, 1));
+    this->setText(_VPAddressSegmentCO2MinText1 + row * 5, String(CO2Min, 1));
+    this->setText(_VPAddressSegmentCO2MaxText1 + row * 5, String(CO2Max, 1));
     this->setVP(_VPAddressSegmentIconTick1 + row, false);
     this->_ChiMucPhanDoanTruocDo = 0xffff;
 }
@@ -707,11 +711,14 @@ void HMI::XoaDuLieuHienThiSegmentTrenHang(uint8_t row)
 {
     this->setText(_VPAddressNumSegmentText1 + row * 2, "");
     this->setText(_VPAddressSegmentSetpointText1 + row * 5, "");
+    this->setText(_VPAddressSegmentSetpointCO2Text1 + row * 5, "");
     this->setText(_VPAddressSegmentDelayOffText1 + row * 20, "");
     this->setText(_VPAddressSegmentFanSpeedText1 + row * 5, "");
     // this->setText(_VPAddressSegmentAirFlapText1 + row * 5, "");
     this->setText(_VPAddressSegmentTempMinText1 + row * 5, "");
     this->setText(_VPAddressSegmentTempMaxText1 + row * 5, "");
+    this->setText(_VPAddressSegmentCO2MinText1 + row * 5, "");
+    this->setText(_VPAddressSegmentCO2MaxText1 + row * 5, "");
     this->setVP(_VPAddressSegmentIconTick1 + row, false);
     this->_ChiMucPhanDoanTruocDo = 0xffff;
 }
@@ -1178,7 +1185,7 @@ void HMI::_NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void* args)
 void HMI::HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg)
 {
     this->setText(_VPAddressNumProgramText1 + row * 2, String(index));
-    this->setText(_VPAddressProgramNameText1 + row * 20, name);
+    this->setText(_VPAddressProgramNameText1 + row * 20, "hello");
     this->setTextColor(_SPAddressProgramNameText1 + row * 0x0010, 0x03, _BlueColor);
     this->setText(_VPAddressTotalNumOfSegmentsText1 + row * 2, String(TotalSeg));
     this->_TenChuongTrinh = "";

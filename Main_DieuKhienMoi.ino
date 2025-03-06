@@ -862,6 +862,7 @@ bool hmiGetEvent(hmi_get_type_t event, void* args) {
         break;
     }
     return 1;
+    
 HienThiSegmentList:
     for (i = listPageStartPosition; i < 5 + listPageStartPosition; i++) {
         if (i < listLength + listPageStartPosition) {
@@ -869,13 +870,16 @@ HienThiSegmentList:
             _dwin.HienThiDuLieuSegmentTrenHang((i - listPageStartPosition),
                 i + 1,
                 programData.setPointTemp,
+                programData.setPointCO2,
                 programData.delayOffDay,
                 programData.delayOffHour,
                 programData.delayOffMinute,
                 programData.fanSpeed,
                 // programData.flap,
                 programData.tempMin,
-                programData.tempMax);
+                programData.tempMax,
+                programData.CO2Min,
+                programData.CO2Max);
         }
         else {
             _dwin.XoaDuLieuHienThiSegmentTrenHang(i - listPageStartPosition);
@@ -927,13 +931,6 @@ bool DemThoiGianChay(bool reset, bool DemXuong) {
 //     return 0;
 // }
 
-void TaskGuiDuLieuEspNow(void*) {
-    for (;;) {
-        xSemaphoreTake(SemaCaiDatHeater, 10000 / portTICK_PERIOD_MS);
-        CaiDatHeater();
-    }
-}
-
 int values[500];
 void TaskHienThiNhietDoVaVeDoThi(void*) {
     TickType_t xLastWakeTime;
@@ -947,69 +944,71 @@ void TaskHienThiNhietDoVaVeDoThi(void*) {
     int LogFileSize;
     RecordData_t data;
 
+    // Initialise the xLastWakeTime variable with the current time.
+    xLastWakeTime = xTaskGetTickCount();
     for (;;) {
-        if (millis() - preTime >= 1000) {
-            preTime = millis();
-            RTCnow = _time.getCurrentTime();
-            _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
-            if (countTime % BUOC_NHAY_DO_THI == 0) {
-                // BaseProgram.temperature = random(50, 51);
-                if (FlagVeDoThi) {
-                    _dwin.VeDoThi(BaseProgram.temperature, RTCnow.unixtime(), BUOC_NHAY_DO_THI);
-                    //     valueIdx++;
-                    //     if (valueIdx >= 270)
-                    //     {
-                    //         for (int i = 0; i < 9; i++)
-                    //         {
-                    //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30 + valueIdx - 270) * sizeof(RecordData_t));
-                    //             snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
-                    //             _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-                    //         }
-                    //     }
-                    //     else
-                    //     {
-                    //         for (int i = 0; i < valueIdx / 30; i++)
-                    //         {
-                    //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30) * sizeof(RecordData_t));
-                    //             snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
-                    //             _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-                    //         }
-                    //     }
-                }
-                // // countTime = 0;
-                // RecordData_t record;
-                // record.setpointTemp = BaseProgram.programData.setPointTemp;
-                // record.valueTemp = BaseProgram.temperature;
-                // record.fan = BaseProgram.programData.fanSpeed;
-                // record.flap = BaseProgram.programData.flap;
-                // record.day = RTCnow.day();
-                // record.month = RTCnow.month();
-                // record.year = RTCnow.year() % 2000;
-                // record.hour = RTCnow.hour();
-                // record.minute = RTCnow.minute();
-                // record.second = RTCnow.second();
-                // writeRecord(SD_MMC, record); // Test
-                // SDMMCFile.appendFile("/TestDothi1.dat", (uint8_t *)&record, sizeof(record));
+        // if (millis() - preTime >= 1000) {
+            // preTime = millis();
+        RTCnow = _time.getCurrentTime();
+        _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
+        if (countTime % BUOC_NHAY_DO_THI == 0) {
+            // BaseProgram.temperature = random(50, 51);
+            if (FlagVeDoThi) {
+                _dwin.VeDoThi(BaseProgram.temperature, RTCnow.unixtime(), BUOC_NHAY_DO_THI);
+                //     valueIdx++;
+                //     if (valueIdx >= 270)
+                //     {
+                //         for (int i = 0; i < 9; i++)
+                //         {
+                //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30 + valueIdx - 270) * sizeof(RecordData_t));
+                //             snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
+                //             _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
+                //         }
+                //     }
+                //     else
+                //     {
+                //         for (int i = 0; i < valueIdx / 30; i++)
+                //         {
+                //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30) * sizeof(RecordData_t));
+                //             snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
+                //             _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
+                //         }
+                //     }
             }
-            if (countTime % 60 == 0) {
-                countTime = 0;
-                RecordData_t record;
-                record.setpointTemp = BaseProgram.programData.setPointTemp;
-                record.setpointCO2 = BaseProgram.programData.setPointCO2;
-                record.valueTemp = BaseProgram.temperature;
-                record.fan = BaseProgram.programData.fanSpeed;
-                // record.flap = BaseProgram.programData.flap;
-                record.day = RTCnow.day();
-                record.month = RTCnow.month();
-                record.year = RTCnow.year() % 2000;
-                record.hour = RTCnow.hour();
-                record.minute = RTCnow.minute();
-                record.second = RTCnow.second();
-                writeRecord(SD_MMC, record);  // Test
-                // SDMMCFile.appendFile("/TestDothi1.dat", (uint8_t *)&record, sizeof(record));
-            }
-            countTime++;
+            // // countTime = 0;
+            // RecordData_t record;
+            // record.setpointTemp = BaseProgram.programData.setPointTemp;
+            // record.valueTemp = BaseProgram.temperature;
+            // record.fan = BaseProgram.programData.fanSpeed;
+            // record.flap = BaseProgram.programData.flap;
+            // record.day = RTCnow.day();
+            // record.month = RTCnow.month();
+            // record.year = RTCnow.year() % 2000;
+            // record.hour = RTCnow.hour();
+            // record.minute = RTCnow.minute();
+            // record.second = RTCnow.second();
+            // writeRecord(SD_MMC, record); // Test
+            // SDMMCFile.appendFile("/TestDothi1.dat", (uint8_t *)&record, sizeof(record));
         }
+        if (countTime % 60 == 0) {
+            countTime = 0;
+            RecordData_t record;
+            record.setpointTemp = BaseProgram.programData.setPointTemp;
+            record.setpointCO2 = BaseProgram.programData.setPointCO2;
+            record.valueTemp = BaseProgram.temperature;
+            record.fan = BaseProgram.programData.fanSpeed;
+            // record.flap = BaseProgram.programData.flap;
+            record.day = RTCnow.day();
+            record.month = RTCnow.month();
+            record.year = RTCnow.year() % 2000;
+            record.hour = RTCnow.hour();
+            record.minute = RTCnow.minute();
+            record.second = RTCnow.second();
+            writeRecord(SD_MMC, record);  // Test
+            // SDMMCFile.appendFile("/TestDothi1.dat", (uint8_t *)&record, sizeof(record));
+        }
+        countTime++;
+        // }
 
         // if (countTest == 0 && TrangThaiThanhCuon)
         // {
@@ -1160,7 +1159,7 @@ void TaskHienThiNhietDoVaVeDoThi(void*) {
         //     countTest = 0;
         // }
         // delay(100);
-        delay(1);
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
     }
 }
 
@@ -1197,7 +1196,7 @@ void TaskXuLyCanhBao(void*) {
         }
         CapNhatTrangThaiHeater();
 
-        //xuất hiện CO2
+        //hiện CO2
         BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
         if (BaseProgram.CO2 >= -0.5f) {
             _dwin.HienThiCO2(BaseProgram.CO2);
@@ -1687,8 +1686,6 @@ void setup() {
     initLogFileState(SD_MMC);
     _dwin.HienThiThongTinVersion(__TIME__);
 
-    BaseType_t xTaskEspNowReturn = xTaskCreateUniversal(TaskGuiDuLieuEspNow, "Task gui du lieu", 3072, NULL, 5, &TaskEspnowHdl, -1);
-    delay(5);
     BaseType_t xTaskExportData = xTaskCreateUniversal(TaskExportData, "Task Export data", 5120, NULL, 6, &TaskCanhBaoHdl, -1);
     delay(5);
     // BaseType_t xTaskUpdateFirmware = xTaskCreateUniversal(TaskUpdateFirmware, "Task update firmware", 8192, NULL, 4, &TaskUpdateFirmwareHdl, -1);
