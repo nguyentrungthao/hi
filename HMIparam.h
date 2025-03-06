@@ -364,15 +364,15 @@
 #pragma region SP Address
 
 #define _SPAddressProgramNameText1 0xC000
-#define _SPAddressProgramNameText2 0xC100
-#define _SPAddressProgramNameText3 0xC200
-#define _SPAddressProgramNameText4 0xC300
-#define _SPAddressProgramNameText5 0xC400
+#define _SPAddressProgramNameText2 0xC010
+#define _SPAddressProgramNameText3 0xC020
+#define _SPAddressProgramNameText4 0xC030
+#define _SPAddressProgramNameText5 0xC040
 
-#define _SPAddressSmallGraph1 0xC500
-#define _SPAddressLargeGraph 0xC600
-#define _SPAddressSmallGraph2 0xC700
-#define _SPAddressSmallGraphCO2 0xC800
+#define _SPAddressSmallGraph1 0xC050
+#define _SPAddressLargeGraph 0xC060
+#define _SPAddressSmallGraph2 0xC070
+#define _SPAddressSmallGraphCO2 0xC080
 
 #pragma region Mã màu
 

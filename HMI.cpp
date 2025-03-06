@@ -426,7 +426,7 @@ void HMI::_NutCaiNhietDoSetpoint_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _HomePage;
     hmiPtr->_set_event.pageAfterEnter = _HomePage;
-    hmiPtr->_set_event.maxValue = 100;
+    hmiPtr->_set_event.maxValue = 60;
     hmiPtr->_set_event.minValue = 20;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSetpointTempText;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -501,7 +501,7 @@ void HMI::_NutEditSetpointTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
     hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
-    hmiPtr->_set_event.maxValue = 100;
+    hmiPtr->_set_event.maxValue = 60;
     hmiPtr->_set_event.minValue = 20;
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentSetpointText1 + lastBytes * 5;
@@ -592,7 +592,7 @@ void HMI::_NutEditTempMinTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
     hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
     hmiPtr->_set_event.maxValue = -0.1;
-    hmiPtr->_set_event.minValue = -99;
+    hmiPtr->_set_event.minValue = -10;
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentTempMinText1 + lastBytes * 5;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -614,7 +614,7 @@ void HMI::_NutEditCO2MinTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
     hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
     hmiPtr->_set_event.maxValue = -0.1;
-    hmiPtr->_set_event.minValue = -99;
+    hmiPtr->_set_event.minValue = -10;
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentCO2MinText1 + lastBytes * 5;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -635,7 +635,7 @@ void HMI::_NutEditCO2MaxTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
     hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
-    hmiPtr->_set_event.maxValue = 99;
+    hmiPtr->_set_event.maxValue = 10;
     hmiPtr->_set_event.minValue = 0.1;
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentCO2MaxText1 + lastBytes * 5;
@@ -657,7 +657,7 @@ void HMI::_NutEditTempMaxTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
     hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
-    hmiPtr->_set_event.maxValue = 99;
+    hmiPtr->_set_event.maxValue = 10;
     hmiPtr->_set_event.minValue = 0.1;
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentTempMaxText1 + lastBytes * 5;
@@ -1157,7 +1157,7 @@ void HMI::_NutCaiCanhBaoNhietDoThap_(int32_t lastBytes, void* args)
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
-    hmiPtr->_set_event.minValue = -99;
+    hmiPtr->_set_event.minValue = -10;
     hmiPtr->_set_event.maxValue = -0.1;
     hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = _AlarmPage;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressAlarmBelowTempText;
@@ -1176,7 +1176,7 @@ void HMI::_NutCaiCanhBaoNhietDoCao_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.minValue = 0.1;
-    hmiPtr->_set_event.maxValue = 99;
+    hmiPtr->_set_event.maxValue = 10;
     hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = _AlarmPage;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressAlarmAboveTempText;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -1193,7 +1193,7 @@ void HMI::_NutCaiCanhBaoCO2Thap_(int32_t lastBytes, void* args)
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
-    hmiPtr->_set_event.minValue = -99;
+    hmiPtr->_set_event.minValue = -10;
     hmiPtr->_set_event.maxValue = -0.1;
     hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = _AlarmPage;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressAlarmBelowCO2Text;
@@ -1212,7 +1212,7 @@ void HMI::_NutCaiCanhBaoCO2Cao_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.minValue = 0.1;
-    hmiPtr->_set_event.maxValue = 99;
+    hmiPtr->_set_event.maxValue = 10;
     hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = _AlarmPage;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressAlarmAboveCO2Text;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -1387,10 +1387,10 @@ void HMI::VeDoThi(float value, time_t time, int offset)
     char timeText[10];
     if (_DuLieuDoThiNhietDo.minValue > value)
     {
-        _DuLieuDoThiNhietDo.minValue = value;
+        _DuLieuDoThiNhietDo.minValue = value - 10;
         _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
 
-        _DuLieuDoThiNhietDo.MulY = 150 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
+        _DuLieuDoThiNhietDo.MulY = 116 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
         setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
         setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
 
@@ -1407,10 +1407,11 @@ void HMI::VeDoThi(float value, time_t time, int offset)
     }
     else if (_DuLieuDoThiNhietDo.maxValue < value)
     {
-        _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue) * 1.25 + _DuLieuDoThiNhietDo.minValue;
+        _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue + 10) * 1.25 + _DuLieuDoThiNhietDo.minValue + 10;
+        // _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue) * 1.25 + _DuLieuDoThiNhietDo.minValue;
         _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
 
-        _DuLieuDoThiNhietDo.MulY = 150 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
+        _DuLieuDoThiNhietDo.MulY = 116 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
         setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
         setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
 
@@ -1434,18 +1435,6 @@ void HMI::VeDoThi(float value, time_t time, int offset)
             sprintf(timeText, "%02u:%02u:%02u", hour(time), minute(time), second(time));
             setText(_VPAddressGraphXValueText1 + 10 * (_DuLieuDoThiNhietDo.count / 30 - 1), timeText);
         }
-        // else if (flag == 1)
-        // {
-        //     for(int8_t i=0; i<8; i++)
-        //     {
-        //         timeArr[i] = timeArr[i+1];
-        //         sprintf(timeText, "%02u:%02u:%02u", hour(timeArr[i]), minute(timeArr[i]), second(timeArr[i]));
-        //         setText(_VPAddressGraphXValueText1 + 10*i, timeText);
-        //     }
-        //     timeArr[8] = time;
-        //     sprintf(timeText, "%02u:%02u:%02u", hour(timeArr[8]), minute(timeArr[8]), second(timeArr[8]));
-        //     setText(_VPAddressGraphXValueText1 + 10*8, timeText);
-        // }
     }
     else if (_DuLieuDoThiNhietDo.flag == 1)
     {
@@ -1895,6 +1884,7 @@ void HMI::_NutEnterCaiTietTrung_(int32_t lastBytes, void* args)
         hmiPtr->_set_event.type = HMI_SET_STER_TEMP;
         hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressTextNhietDoTietTrung, 5).toFloat();
         hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+
         hmiPtr->_set_event.type = HMI_SET_STER_TIME;
         if (hmiPtr->_GioTietTrung >= 2 && hmiPtr->_PhutTietTrung > 0)
         {

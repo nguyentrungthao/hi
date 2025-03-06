@@ -34,7 +34,7 @@ void CapNhatTrangThaiHeater() {
     else {
       _dwin.HienThiNhietDo("err");
     }
-    // Serial.println("Gui nhiet do len HMI");
+    Serial.println("Gui nhiet do len HMI");
   }
 
   if (_Door.TrangThai() == true) {  // 1 Mở

@@ -203,6 +203,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         break;
     case HMI_SET_SETPOINT_TEMP:
         Serial.printf("Set setpoint temp: %.1f\n", event.f_value);
+        BaseProgram.programData.setPointTemp = event.f_value;
         if (RunMode == QUICK_MODE) {
             SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
         }
@@ -573,6 +574,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
             Serial.printf("tiet trung temp: %.1f\n", (float)event.f_value);
             BaseProgram.programData.setPointTemp = (float)event.f_value;
             BaseProgram.programData.fanSpeed = 100;
+            BaseProgram.programData.setPointCO2 = 0;
             // BaseProgram.programData.flap = 0;
             _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
             _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
@@ -1171,7 +1173,7 @@ void TaskHienThiNhietDoVaVeDoThi(void*) {
         //     countTest = 0;
         // }
         // delay(100);
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(100));
     }
 }
 
@@ -1208,14 +1210,14 @@ void TaskXuLyCanhBao(void*) {
         }
         CapNhatTrangThaiHeater();
 
-        // //hiện CO2
-        // BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
-        // if (BaseProgram.CO2 >= -0.5f) {
-        //     _dwin.HienThiCO2(BaseProgram.CO2);
-        // }
-        // else {
-        //     _dwin.HienThiCO2("err");
-        // }
+        //hiện CO2
+        BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
+        if (BaseProgram.CO2 >= -0.5f) {
+            _dwin.HienThiCO2(BaseProgram.CO2);
+        }
+        else {
+            _dwin.HienThiCO2("err");
+        }
         delay(100);
     }
 }
@@ -1679,6 +1681,7 @@ void setup() {
     RunMode = QUICK_MODE;
     BaseProgram.machineState = false;
     BaseProgram.delayOffState = false;
+    Serial.println(BaseProgram.programData.setPointTemp);
     _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
     _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
     _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
@@ -1733,7 +1736,7 @@ void loop() {
     // _dwin.setText(_VPAddressProgramNameText1 + 0 * 20, "a");
     // _dwin.setText(_VPAddressNumProgramText1 + 0 * 20, "b");
     // _dwin.setText(_VPAddressTotalNumOfSegmentsText1 + 0 * 20, "c");
-
+    CaiDatHeater();
     delay(1000);
 }
 
