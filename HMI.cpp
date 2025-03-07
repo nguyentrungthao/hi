@@ -85,9 +85,13 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressSetTimeButton, _KeyValueEnterSegmentDelayOff, _NutEnterTrongCaiDatThoiGianTatCuaSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentSelectButton, _AllKeyValue, _NutChonSegment_, this);
 
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueCalib, _NutVaoChucNangCalib_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEditCalibTemp, _NutEditCalib_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibTemp, _NutEnterTrangCalib_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueCalib, _NutVaoChucNangChonCalib_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueChooseCalibTemp, _NutVaoChucNangCalibNhiet_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueChooseCalibCO2, _NutVaoChucNangCalibCO2_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEditCalibTemp, _NutEditCalibTemp_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEditCalibCO2, _NutEditCalibCO2_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibTemp, _NutEnterTrangCalibNhiet_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibCO2, _NutEnterTrangCalibCO2_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibTemp, _NutResetHeSoCalib_, this);
 
     // DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetFlap, _NutSetFlap_, this);
@@ -1013,12 +1017,11 @@ void HMI::_NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void* ar
     hmiPtr->setPage(_SegmentAdjPage);
 }
 
-void HMI::_NutVaoChucNangCalib_(int32_t lastBytes, void* args)
-{
+void HMI::_NutVaoChucNangChonCalib_(int32_t lastBytes, void* args) {
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_PASSWORD;
-    hmiPtr->_set_event.pageAfterEnter = _CalibTempPage;
+    hmiPtr->_set_event.pageAfterEnter = _CalibChoosePage;
     hmiPtr->_set_event.pageAfterReturn = _CalibChoosePage;
     hmiPtr->_set_event.textLen = 10;
     hmiPtr->_ChuoiBanPhimDangNhap = "";
@@ -1030,22 +1033,34 @@ void HMI::_NutVaoChucNangCalib_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_KeyboardPage);
 }
 
+void HMI::_NutVaoChucNangCalibNhiet_(int32_t lastBytes, void* args) {
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
+    hmiPtr->setPage(_CalibTempPage);
+}
+void HMI::_NutVaoChucNangCalibCO2_(int32_t lastBytes, void* args) {
+    HMI* hmiPtr = (HMI*)args;
+    // hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
+    hmiPtr->setPage(_CalibCO2Page);
+}
+
+
 void HMI::_NutResetHeSoCalib_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = HMI_RESET_CALIB;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
-    hmiPtr->setPage(_HomePage);
+    // hmiPtr->setPage(_HomePage);
 }
 
-void HMI::_NutEditCalib_(int32_t lastBytes, void* args)
+void HMI::_NutEditCalibTemp_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterEnter = _CalibTempPage;
-    hmiPtr->_set_event.pageAfterReturn = _CalibChoosePage;
+    hmiPtr->_set_event.pageAfterReturn = _CalibTempPage;
     hmiPtr->_set_event.maxValue = 900;
     hmiPtr->_set_event.minValue = 0;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressStdTempText;
@@ -1056,15 +1071,43 @@ void HMI::_NutEditCalib_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->setPage(_NumericKeypadPage);
 }
-
-void HMI::_NutEnterTrangCalib_(int32_t lastBytes, void* args)
+void HMI::_NutEditCalibCO2_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
-    hmiPtr->_set_event.type = HMI_SET_CALIB;
+    hmiPtr->_set_event.type = UNDEFINED;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.pageAfterEnter = _CalibCO2Page;
+    hmiPtr->_set_event.pageAfterReturn = _CalibCO2Page;
+    hmiPtr->_set_event.maxValue = 30;
+    hmiPtr->_set_event.minValue = -0.5;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressStdCO2Text;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->setPage(_NumericKeypadPage);
+}
+
+void HMI::_NutEnterTrangCalibNhiet_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = HMI_SET_CALIB_NHIET;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressStdTempText, 6).toFloat();
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
-    hmiPtr->setPage(_SettingsPage);
+    hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
+    // hmiPtr->setPage(_SettingsPage);
+}
+
+void HMI::_NutEnterTrangCalibCO2_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = HMI_SET_CALIB_CO2;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressStdCO2Text, 6).toFloat();
+    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+    // hmiPtr->setPage(_SettingsPage);
 }
 
 // void HMI::_NutSetFlap_(int32_t lastBytes, void* args)
@@ -1251,7 +1294,7 @@ void HMI::_NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_SettingsPage);
 }
 
-void HMI::HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char * func)
+void HMI::HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char* func)
 {
     Serial.printf("%s\n", func);
     this->setText(_VPAddressNumProgramText1 + row * 2, String(index));

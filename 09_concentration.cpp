@@ -109,7 +109,7 @@ void Concentration::XoaToanBoGiaTriCalib() {
 }
 //* gửi giá trị để cảm biến tự động điều chỉnh
 IRCO2_StatusTydef Concentration::CalibGiaTriThuc(float giaTriChuan) {
-  if (giaTriChuan < 0.5f && giaTriChuan > 20.0f) {
+  if (giaTriChuan < -0.5f && giaTriChuan > 20.0f) {
     return IRCO2_ERR_VAL;
   }
   uint32_t _giaTriChuan = giaTriChuan * 1000.0f;
@@ -117,7 +117,7 @@ IRCO2_StatusTydef Concentration::CalibGiaTriThuc(float giaTriChuan) {
   for (uint8_t i = 0; i < 5; i++) {
     // giá trị gửi từ 0 đến 0.5 tương ứng 500 đến 20000
     if (this->SpanPointAdjustment(_giaTriChuan) == IRCO2_OK) {
-      Serial.println("CALIB OKE");
+      Serial.println("CALIB CO2 OKE");
       return IRCO2_OK;
     }
     delay(10);

@@ -15,7 +15,8 @@ typedef enum
     HMI_SET_FAN,
     HMI_SET_SETPOINT_TEMP,
     HMI_SET_SETPOINT_CO2,
-    HMI_SET_CALIB,
+    HMI_SET_CALIB_NHIET,
+    HMI_SET_CALIB_CO2,
     HMI_RESET_CALIB,
     // HMI_SET_FLAP,
     HMI_SET_DELAYOFF,
@@ -140,7 +141,7 @@ public:
     void HienThiNhietDoCanhBao(float NhietDuoi, float NhietTren);
     void HienThiCO2CanhBao(float CO2Duoi, float CO2Tren);
 
-    void HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char *func = "");
+    void HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char* func = "");
     void XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row);
 
     void VeDoThi(float value, time_t time, int offset);
@@ -231,9 +232,13 @@ protected:
     static void _hmiListenTask(void* args);
     static void _hmiUartEvent(void);
 
-    static void _NutVaoChucNangCalib_(int32_t lastBytes, void* args);
-    static void _NutEditCalib_(int32_t lastBytes, void* args);
-    static void _NutEnterTrangCalib_(int32_t lastBytes, void* args);
+    static void _NutVaoChucNangChonCalib_(int32_t lastBytes, void* args);
+    static void _NutVaoChucNangCalibNhiet_(int32_t lastBytes, void* args);
+    static void _NutVaoChucNangCalibCO2_(int32_t lastBytes, void* args);
+    static void _NutEditCalibTemp_(int32_t lastBytes, void* args);
+    static void _NutEditCalibCO2_(int32_t lastBytes, void* args);
+    static void _NutEnterTrangCalibNhiet_(int32_t lastBytes, void* args);
+    static void _NutEnterTrangCalibCO2_(int32_t lastBytes, void* args);
     static void _NutResetHeSoCalib_(int32_t lastBytes, void* args);
 
     // static void _NutSetFlap_(int32_t lastBytes, void* args);
@@ -272,7 +277,7 @@ protected:
     static void _NutEditTempMaxTrangSegment_(int32_t lastBytes, void* args);
     static void _NutEditCO2MinTrangSegment_(int32_t lastBytes, void* args);
     static void _NutEditCO2MaxTrangSegment_(int32_t lastBytes, void* args);
-    
+
     static void _NutEditThoiGianTatTrangSegment_(int32_t lastBytes, void* args);
     static void _NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void* args);
     static void _CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void* args);

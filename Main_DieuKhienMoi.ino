@@ -227,7 +227,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         }
         xSemaphoreGive(SemaCaiDatHeater);
         break;
-    case HMI_SET_CALIB:
+    case HMI_SET_CALIB_NHIET:
     {
         Serial.printf("Set calib: %.1f\n", event.f_value);
         // Kiểm tra đã có hệ số calib cũ chưa nếu có thì cập nhật lại hệ số calib
@@ -260,6 +260,12 @@ void hmiSetEvent(const hmi_set_event_t& event) {
                 return;
             }
         }
+        break;
+    }
+    case HMI_SET_CALIB_CO2:
+    {
+        Serial.printf("Set calib: %.1f\n", event.f_value);
+        _CO2.CalibGiaTriThuc(event.f_value);
         break;
     }
     // case HMI_SET_FLAP:
