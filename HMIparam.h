@@ -361,6 +361,13 @@
 #define _VPAddressCalibCO2Text 0xB05F // 5 ký tự
 #define _VPAddressStdCO2Text 0xB064 // 5 ký tự
 
+#define _VPAddressGraphY_R_ValueText1 0xB069
+#define _VPAddressGraphY_R_ValueText2 0xB06E
+#define _VPAddressGraphY_R_ValueText3 0xB073
+#define _VPAddressGraphY_R_ValueText4 0xB078
+#define _VPAddressGraphY_R_ValueText5 0xB07D
+#define _VPAddressGraphY_R_ValueText6 0xB082
+
 #pragma region SP Address
 
 #define _SPAddressProgramNameText1 0xC000
@@ -373,6 +380,7 @@
 #define _SPAddressLargeGraph 0xC060
 #define _SPAddressSmallGraph2 0xC070
 #define _SPAddressSmallGraphCO2 0xC080
+#define _SPAddressLargeGraphCO2 0xC090
 
 #pragma region Mã màu
 

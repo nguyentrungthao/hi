@@ -22,7 +22,7 @@
 #define CAM_BIEN_DANG_KHOI_TAO -2.0f
 #define VUOT_NGUONG_GIA_TRI_DO_CAM_BIEN -3.0f
 //* giá trị báo lỗi giao tiếp. Tự quy định
-#define LOI_GIAO_TIEP -1.5f
+#define LOI_GIAO_TIEP 999.0f
 //* giá trị sai số mong muốn của bộ điều khiển 
 #define SAI_SO_MONG_MUON 0.1f
 

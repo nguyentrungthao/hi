@@ -971,10 +971,12 @@ void TaskHienThiNhietDoVaVeDoThi(void*) {
         // preTime = millis();
         RTCnow = _time.getCurrentTime();
         _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
+        _dwin.VeDoThiBase(BaseProgram);
         if (countTime % BUOC_NHAY_DO_THI == 0) {
             // BaseProgram.temperature = random(50, 51);
             if (FlagVeDoThi) {
-                _dwin.VeDoThi(BaseProgram.temperature, RTCnow.unixtime(), BUOC_NHAY_DO_THI);
+                // _dwin.VeDoThi(BaseProgram.temperature, RTCnow.unixtime(), BUOC_NHAY_DO_THI);
+
                 //     valueIdx++;
                 //     if (valueIdx >= 270)
                 //     {
@@ -1735,6 +1737,8 @@ void setup() {
         }
     }
     // _dwin.echoEnabled(true);
+    delay(1000);
+    _dwin.SetupDoThiNho(BaseProgram);
 }
 
 void loop() {

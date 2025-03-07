@@ -5,6 +5,7 @@
 #include "freertos/queue.h"
 #include <vector>
 #include <TimeLib.h>
+#include <userdef.h>
 
 #define MANUFACTURER_PASSWORD "LABone2025"
 
@@ -145,6 +146,10 @@ public:
     void XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row);
 
     void VeDoThi(float value, time_t time, int offset);
+    void VeDoThiNhiet(float value, time_t time, int offset);
+    void VeDoThiCO2(float value, time_t time, int offset);
+    void VeDoThiBase(BaseProgram_t data);
+    void SetupDoThiNho(BaseProgram_t data);
     void XoaDoThi(void);
 
     void HienThiNhietDo(float GiaTri);
@@ -215,7 +220,7 @@ protected:
     String _ChuoiPassword;
     uint8_t _TrangSauKhiNhanReturnTrenWarning;
 
-    struct
+    struct DuLieuDoThi_t
     {
         int YCentral;
         int VDCentral;
@@ -224,9 +229,12 @@ protected:
         float minValue = 200;
         float valueStep = 0;
         time_t timeArr[9];
+        uint16_t valueArr[6];
         int16_t count = 0;
         bool flag = 0;
-    } _DuLieuDoThiNhietDo;
+    };
+    DuLieuDoThi_t _DuLieuDoThiNhietDo;
+    DuLieuDoThi_t _DuLieuDoThiCO2;
 
     void _createHmiListenTask(void* args);
     static void _hmiListenTask(void* args);
