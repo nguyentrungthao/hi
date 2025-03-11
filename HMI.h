@@ -6,6 +6,8 @@
 #include <vector>
 #include <TimeLib.h>
 #include <userdef.h>
+#include "HMIparam.h"
+#include <Arduino.h>
 
 #define MANUFACTURER_PASSWORD "LABone2025"
 
@@ -166,6 +168,7 @@ public:
     void HienThiIconQuat(bool TrangThai);
     void HienThiIconCua(bool TrangThai);
     void HienThiIconGiaNhiet(bool TrangThai);
+    void HienThiIconVanCO2(bool TrangThai);
     void HienThiIconTrangThaiRun(bool TrangThai);
     void HienThiIconOnOffDelayOff(bool TrangThai);
     void HienThiChuongTrinhDangChay(String text);

@@ -10,6 +10,18 @@
 #include "Config.h"
 #include "06_SenSorCO2.h"
 #include "OnOffHighResolutionTimer.h"
+#include "08_PID.h"
+
+#define SETPONIT_CO2 5
+#define CO2_KP 1000
+#define CO2_KI 0.005
+#define CO2_KD 0
+#define CO2_KW 0  //0.05
+#define CO2_OUT_MAX 4000
+#define CO2_OUT_MIN 0
+#define CO2_WIN_MAX 1000
+#define CO2_WIN_MIN 0
+#define CO2_SAMPLE_TIME 10000
 
 // #define debug
 #define TU_CO2_CO_QUAT
@@ -61,9 +73,8 @@
 
 #endif
 
-class Concentration : public IRCO2, public HRTOnOffPin {
+class Concentration : public IRCO2, public HRTOnOffPin, public PID {
 public:
-  bool CoChoPhepLogDebug = true; //! cờ cho phép log serial0 để debug         
 
   Concentration(void);
 
@@ -79,7 +90,7 @@ public:
     void BatDieuKhienCO2();//
     void TatDieuKhienCO2();//
 
-    void logDEBUG();
+    // void logDEBUG();
     
     void KhoiDongLaiCamBien();
     void XoaToanBoGiaTriCalib();

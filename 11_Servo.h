@@ -27,6 +27,5 @@ public:
   void MoCuaXa(uint8_t); 
 
   uint8_t PhanTramCuaXaHienTai(void);              
-
 };
 #endif /* __SERVO_H__ */

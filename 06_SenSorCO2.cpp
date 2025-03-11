@@ -40,25 +40,15 @@ IRCO2_StatusTydef IRCO2::init(uint32_t serialBaudRate, uint8_t serialTXPin, uint
     //get ID sensor
     this->SendCommand((const char*)READ_DATA);
     delay(1000);
-
-    while (_serial->available() > 0) {
-      _buffer[i++] = _serial->read();
-    }
-    if (_buffer[i - 1] == ETX) {
-      char* token = strtok(_buffer + 1, " ");
-      _serialIDSensor = atoi(token);
-
-      result = IRCO2_OK;
-      dbSerialPrint("\nID Sensor: ");
-      dbSerialPrintln(_serialIDSensor);
-      dbSerialPrintln("init IRCO2 successfull");
+    result = GetSensorFeedback();
+    if (result == IRCO2_OK) {
       break;
     }
+    delay(100);
   }
-
   //delay before get data
   delay(10);
-
+  Serial.println("Khởi tạo cảm biến CO2 thành công\n");
   return result;
 }
 
@@ -78,15 +68,20 @@ IRCO2_StatusTydef IRCO2::GetSensorFeedback() {
   IRCO2_StatusTydef result = IRCO2_ERR;
   uint16_t i = 0;
   uint8_t c;
-
+  String str;
+  delay(10);
+  // Serial.print("data: ");
   while (_serial->available() > 0) {
-    c = _serial->read();
-    _buffer[i++] = c;
+    str = _serial->readString();
   }
-  // dbSerialPrint("data CO2");
-  // dbSerialPrintln(_buffer);
-  if (_buffer[i - 1] == ETX) {
+  uint8_t length = str.length();
+  memcpy(_buffer, str.c_str(), length);
+  // Serial.println(str);
+  if (_buffer[0] == STX && _buffer[length - 1] == ETX) {
     result = this->ProcessString(_buffer);
+  }
+  else {
+    Serial.printf("CO2 sai frame %x %x\n", _buffer[0], _buffer[length - 1]);
   }
   memset(_buffer, 0, 40);
   return result;
@@ -116,7 +111,7 @@ uint32_t IRCO2::GetTimeStamp() {
 }
 
 IRCO2_StatusTydef IRCO2::ZeroPointAdjustment(uint32_t ZeroPoint) {
-  // wait 15 minute for const thermal and atmosphe 
+  // wait 15 minute for const thermal and atmosphe
   dbSerialPrintln("wait 15 minute for const thermal and atmosphe");
   // delay(15 * 60 * 1000);
 
@@ -193,52 +188,69 @@ IRCO2_StatusTydef IRCO2::HumidityCompensationrHAndTemperature(uint8_t relativeHu
 
 IRCO2_StatusTydef IRCO2::SensorReset() {
   this->SendCommand(SENSOR_RESET);
-  delay(15); // delay before read data
+  delay(15);  // delay before read data
   return CheckReturn(0);
 }
 IRCO2_StatusTydef IRCO2::SetFactoryDefault() {
   this->SendCommand(FACTORY_RESET);
-  delay(15); // delay before read data
+  delay(15);  // delay before read data
   return CheckReturn(0);
 }
 
 IRCO2_StatusTydef IRCO2::ProcessString(char* string) {
   char* localString = string + 1;
+
+  //* chuỗi mẫu trả về khi ra lệnh đọc cảm biến
+  /*STX7 12345 1200 376 980ETX
+    Decoded string : SensorID = 7
+    Timestamp = 12345 => / 2 => 6172.5 s => 1.7 h
+    CO2 concentration = 1.2 Vol. - %
+    Sensor temperature = 37.6 °C
+    Air pressure = 980 hPa*/
+
+    //* chuỗi mẫu trả về khi ra lệnh cài thông số
+    /*STX0ETX (adjustment successful)*/
+
+    //tách số đầu tiên
   char* token = strtok(localString, " ");
-  if (token != NULL) {
-    // check string from sensor have IDsensor
-    uint32_t IDSensor = atoi(token);
-    if (IDSensor == _serialIDSensor) {
-      uint8_t index = 0;
-      token = strtok(NULL, " ");
-      while (token != NULL) {
-        switch (index) {
-        case 0:
-          _timestamp = atoi(token);
-          index = 1;
-          break;
-        case 1:
-          CO2Concentration = atoi(token);
-          index = 2;
-          break;
-        case 2:
-          temperature = atoi(token);
-          index = 3;
-          break;
-        case 3:
-          airPressure = atoi(token);
-          break;
-        }
-        token = strtok(NULL, " ");
-      }
-      returnValue = 0;
-    }
-    else {
-      returnValue = atoi(token);
-    }
+  if (token == NULL) {
+    return IRCO2_ERR;
+  }
+  // Serial.print(token);
+  uint32_t firstReturnToken = atoi(token);
+
+  // tách số thứ 2, nếu có chuỗi tức là lệnh đọc cảm biến, nếu không là giá trị phản hồi, 0 1 hoặc giá trị cài
+  token = strtok(NULL, " ");
+  // Serial.print(token);
+  if (token == NULL) {
+    returnValue = firstReturnToken;
     return IRCO2_OK;
   }
-  return IRCO2_ERR;
+
+  uint8_t index = 0;
+  while (token != NULL) {
+    switch (index) {
+    case 0:
+      _timestamp = atoi(token);
+      index = 1;
+      break;
+    case 1:
+      CO2Concentration = atoi(token);
+      index = 2;
+      break;
+    case 2:
+      temperature = atoi(token);
+      index = 3;
+      break;
+    case 3:
+      airPressure = atoi(token);
+      break;
+    }
+    token = strtok(NULL, " ");
+    // Serial.print(token);
+  }
+  returnValue = 0;
+  return IRCO2_OK;
 }
 
 IRCO2_StatusTydef IRCO2::CheckReturn(uint32_t value) {

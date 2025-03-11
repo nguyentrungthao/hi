@@ -9,37 +9,27 @@
 #include <math.h>
 #include <SimpleKalmanFilter.h>
 #include "08_PID.h"
-#ifdef _CHE_DO_MO_CUA_
 #include "Door.h"
 #include "12_triac.h"
+#include "AnhLABV01HardWare.h"
+#include "OnOffHighResolutionTimer.h"
 
-#endif
+#define MAX31865_DIEN_TRO_THAM_CHIEU 390.0
+#define MAX31865_DIEN_TRO_CAM_BIEN 100.0
+#define MAX31865_NHIET_DO_TOI_DA 500.0
 
-#define RNOMINAL  100
-#define RREF      390 // 430
-
-
-// #define pinACDET  (gpio_num_t)39
-// #define pinHEATER 2
-// #define pinFAN    15
-
-// #define spiCS     14  //SS1
-// // #define spiCS     27   //ss2
-// #define spiMOSI   23
-// #define spiMISO   19
-// #define spiCLK    18
-
-#define pinACDET  (gpio_num_t)12
-#define pinHEATER 45
-#define pinFAN    48
-
-#define spiCS1    39  //SS1
-#define spiCS2    38  //SS2
-#define spiCS3    37  //SS3
-#define spiMOSI   42
-#define spiMISO   41
-#define spiCLK    40
-
+#define KP 5.0f     //8; //8.5
+#define KI 0.001     // 0.01
+#define KD 0        //30.0f
+#define KW 0
+#define OUT_MAX 17  // số chu kỳ kích
+#define OUT_MIN 0
+#define WIN_MAX 10
+#define WIN_MIN 0
+#define SAMPLE_TIME 1000
+#define OUT_MAX_POWER 1000
+#define THOI_GIAN_BAT_TRIAC_CUA 40 // 170
+#define THOI_GIAN_BAT_TRIAC_VANH 200 // 310
 
 #define HEATER_ON   true
 #define HEATER_OFF  false
@@ -53,65 +43,37 @@
 #define HE_SO_NHIEU         1
 #define HE_SO_CHO_PHEP_DAO_DONG_NHIET 0.1f
 
-typedef struct 
+enum triacName {
+  eTriac1 = 0,
+  eTriac3,
+  eTriac4,
+
+  eTriacMax,
+};
+
+typedef struct
 {
-    float Setpoint;
-    float Kp;
-    float Ki;
-    float Kd;
-    float OutMax;
-    float WindupMax;
-    uint8_t ThoiGianOnDinhSauMoCua;
-    uint8_t ThoiGianGiaNhietSauMoCua;
+  float Setpoint;
+  float Kp;
+  float Ki;
+  float Kd;
+  float OutMax;
+  float WindupMax;
+  uint8_t ThoiGianOnDinhSauMoCua;
+  uint8_t ThoiGianGiaNhietSauMoCua;
 } PID_param_t;
 
-#ifdef _CHE_DO_MO_CUA_
-class HEATER : public Adafruit_MAX31865, public PID, public SimpleKalmanFilter, public DOOR, public triac
-#else 
-class HEATER : public Adafruit_MAX31865, public PID, public SimpleKalmanFilter, public triac
-#endif
+
+class HEATER : public PID, public triac
 {
-private:
-// public:
-  uint8_t TocDoQuat = 1;
-  triac triacFan;
-  triac triacHeater;
-  float PIDResult;
-  float ThoiGianKichTriac = 9600;
-  bool  TrangThaiDieuKhienNhiet;
-  float NhietDoCaiDat;
-  float temperature;
-  float NhietDoLoc;
-  float HeSoCalib = 0;
-  uint8_t CoBaoDocNhiet = 1;
-  uint8_t ThoiGianOnDinhSauKhiMoCua = 30;
-  uint8_t ThoiGianGiaNhietSauKhiMoCua = 60;
-  PID_param_t MangCacThongSoPID[7];
 
-  //Mới thêm
-  float SaiSoNhietChoPhep;
-
-  TimerHandle_t timerIncu = NULL;
-  esp_timer_handle_t tTriacHandle;
-  TaskHandle_t taskTriacHandle;
-  TaskHandle_t taskPIDHandle;
-  esp_timer_create_args_t timer_arg;
-
-  void TinhToanPID(float);
-  void TinhToanDieuKhienNhiet(float);
-  static void TaskDieuKhienNhiet(void*);
-  float LayThoiGianKichTriac(void);
-  float TimYc(float x_A, float y_A, float x_B, float y_B, float x_C); // de tim thong so PID tuyen tinh hoa 2 diem
-  PID_param_t TimThongSoPID(float sp, PID_param_t *param, int8_t size);
 public:
   HEATER();
   void KhoiTao(void);                 // Khởi tạo trong setup
-  void KhoiTaoThongSoPID(void);
 
   void CaiDatNhietDo(float);          // Set nhiệt độ setpoint
   void CaiGiaTriOfset(float);         // Gọi trong setup sau khởi tạo, truyền vào giá trị ofset đã được lưu vào epprom
 
-  float LayNhietDoThuc(void);         // Đọc nhiệt độ thực tế
   float LayNhietDoLoc(void);          // Đọc nhiệt độ sau khi lọc dùng để hiển thị
   float LayGiaTriPT100Ofset(void);    // Hàm trả về giá trị ofset nhiệt độ sau khi calib, giá trị này dùng để lưu vào epprom
 
@@ -122,6 +84,49 @@ public:
   void ResetCamBienNhiet(void);              // khởi động lại PT100 khi đọc nhiệt độ bị lỗi
   void CaiTocDoQuat(uint8_t value = 10);
   void KhoiDongQuat(uint16_t);
+
   bool TrangThaiThanhGiaNhiet(void);
+  bool CheckNguonCongSuat();
+private:
+  uint8_t step = 0;
+  uint32_t preOpenDoor = 0;
+  uint32_t preCloseDoor = 0;
+
+  HRTOnOffPin triacBuong = HRTOnOffPin(TRIAC1_PIN);
+  HRTOnOffPin triacCua = HRTOnOffPin(TRIAC3_PIN);
+  HRTOnOffPin triacVanh = HRTOnOffPin(TRIAC4_PIN);
+  Adafruit_MAX31865 PT100_buong = Adafruit_MAX31865(PT100_CS1_PIN, PT100_MOSI_PIN, PT100_MISO_PIN, PT100_SCK_PIN);
+  Adafruit_MAX31865 PT100_2 = Adafruit_MAX31865(PT100_CS2_PIN, PT100_MOSI_PIN, PT100_MISO_PIN, PT100_SCK_PIN);
+  Adafruit_MAX31865 PT100_3 = Adafruit_MAX31865(PT100_CS3_PIN, PT100_MOSI_PIN, PT100_MISO_PIN, PT100_SCK_PIN);
+  SimpleKalmanFilter LocCamBienBuong = SimpleKalmanFilter(SAI_SO_DO, SAI_SO_UOC_LUONG, HE_SO_NHIEU);
+
+  volatile bool isACDET;
+  uint8_t TocDoQuat = 1;
+  bool  TrangThaiDieuKhienNhiet;
+  float NhietDoCaiDat;
+  float temperature;
+  float NhietDoLocBuong;
+  float HeSoCalib = 0;
+  uint8_t CoBaoDocNhiet = 1;
+  uint8_t ThoiGianOnDinhSauKhiMoCua = 30;
+  uint8_t ThoiGianGiaNhietSauKhiMoCua = 60;
+  volatile uint16_t pArru16ThoiGianKichTriac[eTriacMax];
+  HRTOnOffPin* pArrTriac[eTriacMax] = { &triacBuong, &triacCua, &triacVanh };
+
+  //Mới thêm
+  float SaiSoNhietChoPhep;
+
+  TaskHandle_t taskHandleDieuKhienNhiet;
+  TaskHandle_t taskHandleNgatACDET;
+
+  static void TaskDieuKhienNhiet(void* ptr);
+  static void IRAM_ATTR interupt(void* ptr);
+  static void TaskNgatACDET(void* ptr);
+
+  void KhoiTaoThongSoPID(void);
+  void KhoiTaoCamBien();
+  float DocGiaTriCamBien(Adafruit_MAX31865& xPt100);
+  void KhoiTaoTriac(void);
+
 };
 #endif

@@ -185,6 +185,9 @@ void hmiSetEvent(const hmi_set_event_t& event) {
                 DemThoiGianChay(true, DEM_LEN);
                 // _time.reset();
             }
+
+            digitalWrite(RELAY_PIN, HIGH);
+            _CO2.BatDieuKhienCO2();
             _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
             xSemaphoreGive(SemaCaiDatHeater);
         }
@@ -196,6 +199,8 @@ void hmiSetEvent(const hmi_set_event_t& event) {
             else {
                 _dwin.HienThiThoiGianChay("Inf");
             }
+            digitalWrite(RELAY_PIN, LOW);
+            _CO2.TatDieuKhienCO2();
             _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
             xSemaphoreGive(SemaCaiDatHeater);
         }
@@ -973,44 +978,10 @@ void TaskHienThiNhietDoVaVeDoThi(void*) {
         _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
         _dwin.VeDoThiBase(BaseProgram);
         if (countTime % BUOC_NHAY_DO_THI == 0) {
-            // BaseProgram.temperature = random(50, 51);
             if (FlagVeDoThi) {
-                // _dwin.VeDoThi(BaseProgram.temperature, RTCnow.unixtime(), BUOC_NHAY_DO_THI);
 
-                //     valueIdx++;
-                //     if (valueIdx >= 270)
-                //     {
-                //         for (int i = 0; i < 9; i++)
-                //         {
-                //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30 + valueIdx - 270) * sizeof(RecordData_t));
-                //             snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
-                //             _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-                //         }
-                //     }
-                //     else
-                //     {
-                //         for (int i = 0; i < valueIdx / 30; i++)
-                //         {
-                //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30) * sizeof(RecordData_t));
-                //             snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
-                //             _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-                //         }
-                //     }
             }
-            // // countTime = 0;
-            // RecordData_t record;
-            // record.setpointTemp = BaseProgram.programData.setPointTemp;
-            // record.valueTemp = BaseProgram.temperature;
-            // record.fan = BaseProgram.programData.fanSpeed;
-            // record.flap = BaseProgram.programData.flap;
-            // record.day = RTCnow.day();
-            // record.month = RTCnow.month();
-            // record.year = RTCnow.year() % 2000;
-            // record.hour = RTCnow.hour();
-            // record.minute = RTCnow.minute();
-            // record.second = RTCnow.second();
-            // writeRecord(SD_MMC, record); // Test
-            // SDMMCFile.appendFile("/TestDothi1.dat", (uint8_t *)&record, sizeof(record));
+
         }
         if (countTime % 60 == 0) {
             countTime = 0;
@@ -1030,158 +1001,7 @@ void TaskHienThiNhietDoVaVeDoThi(void*) {
             // SDMMCFile.appendFile("/TestDothi1.dat", (uint8_t *)&record, sizeof(record));
         }
         countTime++;
-        // }
-
-        // if (countTest == 0 && TrangThaiThanhCuon)
-        // {
-        //     TrangThaiThanhCuon = false;
-        //     delay(10);
-        //     if (countTest > 0)
-        //     {
-        //         continue;
-        //     }
-        //     Serial.println("Nguoi dung da buong nut: " + String(GiaTriThanhCuon - GiaTriThanhCuonTruocDo));
-        //     FlagVeDoThi = false;
-        //     LogFileSize = SDMMCFile.sizeFile("/TestDothi1.dat");
-        //     if (GiaTriThanhCuon - GiaTriThanhCuonTruocDo > 0)
-        //     {
-        //         length = GiaTriThanhCuon - GiaTriThanhCuonTruocDo;
-        //         GiaTriThanhCuonTruocDo = GiaTriThanhCuon;
-        //         if (valueIdx == LogFileSize / sizeof(RecordData_t))
-        //         {
-        //             FlagVeDoThi = true;
-        //             continue;
-        //         }
-
-        //         if (valueIdx + length > LogFileSize / sizeof(RecordData_t))
-        //         {
-        //             length = LogFileSize / sizeof(RecordData_t) - valueIdx;
-        //         }
-
-        //         if (valueIdx + length >= 270)
-        //         {
-        //             for (int i = 0; i < 9; i++)
-        //             {
-        //                 SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30 + valueIdx - 270 + length) * sizeof(RecordData_t));
-        //                 snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
-        //                 _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-        //             }
-        //         }
-        //         else
-        //         {
-        //             for (int i = 0; i < (valueIdx + length) / 30; i++)
-        //             {
-        //                 SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30) * sizeof(RecordData_t));
-        //                 snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
-        //                 _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-        //             }
-        //         }
-
-        //         delay(1);
-        //         _dwin.sendGraphValue(0, values, length);
-        //         valueIdx += length;
-
-        //         float maxValue, minValue;
-        //         if (valueIdx >= 270)
-        //         {
-        //             length = 270;
-        //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)DuLieuDoThi, length * sizeof(RecordData_t), (valueIdx - 270) * sizeof(RecordData_t));
-        //         }
-        //         else
-        //         {
-        //             length = valueIdx;
-        //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)DuLieuDoThi, length * sizeof(RecordData_t));
-        //         }
-        //         minValue = DuLieuDoThi[0].value * 10;
-        //         maxValue = minValue + 10;
-        //         for (int i = 0; i < length; i++)
-        //         {
-        //             values[i] = DuLieuDoThi[i].value * 10;
-        //             if (maxValue < values[i])
-        //             {
-        //                 maxValue = values[i] + 10;
-        //             }
-        //             else if (minValue > values[i])
-        //             {
-        //                 minValue = values[i];
-        //             }
-        //         }
-
-        //         int VDCentral = (minValue + maxValue) / 2;
-        //         int MulY = 150 * 256 / (maxValue - minValue);
-        //         _dwin.setGraphVDCentral(_SPAddressSmallGraph1, VDCentral);
-        //         _dwin.setGraphMulY(_SPAddressSmallGraph1, MulY);
-
-        //         MulY = 190 * 256 / (maxValue - minValue);
-        //         _dwin.setGraphVDCentral(_SPAddressLargeGraph, VDCentral);
-        //         _dwin.setGraphMulY(_SPAddressLargeGraph, MulY);
-
-        //         float valueStep = (maxValue - minValue) / 5;
-        //         _dwin.setText(_VPAddressGraphYValueText1, String(minValue / 10, 1));
-        //         for (float i = 1; i < 6; i++)
-        //         {
-        //             _dwin.setText(_VPAddressGraphYValueText1 + i * 5, String((minValue + i * valueStep) / 100, 1));
-        //         }
-        //     }
-        //     else if (GiaTriThanhCuon - GiaTriThanhCuonTruocDo < 0)
-        //     {
-        //         if (valueIdx == 271)
-        //         {
-        //             continue;
-        //         }
-        //         length = (GiaTriThanhCuonTruocDo - GiaTriThanhCuon) * 2;
-        //         GiaTriThanhCuonTruocDo = GiaTriThanhCuon;
-        //         valueIdx = valueIdx - 271 - length;
-        //         if (valueIdx < 0)
-        //         {
-        //             valueIdx = 0;
-        //         }
-
-        //         _dwin.resetGraph(0);
-        //         delay(1);
-        //         length = SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)DuLieuDoThi, 271 * sizeof(RecordData_t), valueIdx * sizeof(RecordData_t)) / sizeof(RecordData_t);
-        //         for (int i = 0; i < length / 30; i++)
-        //         {
-        //             SDMMCFile.readFile("/TestDothi1.dat", (uint8_t *)&data, sizeof(RecordData_t), (i * 30 + valueIdx) * sizeof(RecordData_t));
-        //             snprintf(timeText, sizeof(timeText), "%02u:%02u:%02u", data.hour, data.minute, data.second);
-        //             _dwin.setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-        //         }
-        //         delay(5);
-        //         int j;
-        //         for (j = 0; j < length / 100; j++)
-        //         {
-        //             for (int i = valueIdx; i < 100 + valueIdx; i++)
-        //             {
-        //                 values[i - valueIdx] = DuLieuDoThi[i - valueIdx + j * 100].value * 10;
-        //             }
-        //             Serial.println("Ve do thi");
-        //             _dwin.sendGraphValue(0, values, 100);
-        //             valueIdx += 100;
-        //             delay(5);
-        //         }
-
-        //         if (length % 100 == 0)
-        //         {
-        //             continue;
-        //         }
-        //         for (int i = valueIdx; i < (length % 100 + valueIdx); i++)
-        //         {
-        //             // SDMMCFile.readFile("/TestDothi1.dat", (uint8_t*)&data, sizeof(RecordData_t), i*sizeof(RecordData_t));
-        //             values[i - valueIdx] = DuLieuDoThi[i - valueIdx + j * 100].value * 10;
-        //         }
-        //         Serial.println("Ve do thi");
-        //         _dwin.sendGraphValue(0, values, length % 100);
-        //         Serial.println("length: " + String(length));
-        //         valueIdx += length % 100;
-        //         delay(5);
-        //     }
-        // }
-        // else
-        // {
-        //     countTest = 0;
-        // }
-        // delay(100);
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(100));
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10 * 1000));
     }
 }
 
@@ -1220,13 +1040,20 @@ void TaskXuLyCanhBao(void*) {
 
         //hiện CO2
         BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
-        if (BaseProgram.CO2 >= -0.5f) {
+        if (BaseProgram.CO2 >= -0.5f && BaseProgram.CO2 <= 30.0f) {
             _dwin.HienThiCO2(BaseProgram.CO2);
         }
         else {
             _dwin.HienThiCO2("err");
         }
-        delay(100);
+        // cập nhật ICON VAN 
+        if (_CO2.LayTrangThaiVan() == 1) {
+            _dwin.HienThiIconVanCO2(1);
+        }
+        else {
+            _dwin.HienThiIconVanCO2(0);
+        }
+        delay(500);
     }
 }
 
@@ -1431,7 +1258,8 @@ void TaskMain(void*) {
         }
 
         // Phần xác định nhiệt độ đã xác lập hay chưa
-        if (fabs(BaseProgram.temperature - BaseProgram.programData.setPointTemp) <= 0.15) {
+        if (fabs(BaseProgram.temperature - BaseProgram.programData.setPointTemp) <= 0.15 &&
+            fabs(BaseProgram.CO2 - BaseProgram.programData.setPointCO2) <= 0.15) {
             if (FlagNhietDoXacLap == false) {
                 if (BaseProgram.delayOffState) {
                     DemThoiGianChay(true, DEM_XUONG);
@@ -1551,8 +1379,8 @@ void TaoCacThuMucHeThongTrenSD(void) {
 void setup() {
     Serial.begin(115200);
 
-    // pinMode(_HMIPin, OUTPUT);
-    // digitalWrite(_HMIPin, HIGH);
+    pinMode(RELAY_PIN, OUTPUT);
+    digitalWrite(RELAY_PIN, LOW);
     delay(1000);
 
     /*------------------------------------RTC-----------------------------------*/
@@ -1709,18 +1537,17 @@ void setup() {
     initLogFileState(SD_MMC);
     _dwin.HienThiThongTinVersion(__TIME__);
 
-    BaseType_t xTaskExportData = xTaskCreateUniversal(TaskExportData, "Task Export data", 5120, NULL, 6, &TaskCanhBaoHdl, -1);
+    // BaseType_t xTaskExportData = xTaskCreateUniversal(TaskExportData, "Task Export data", 5120, NULL, 1, &TaskCanhBaoHdl, -1);
     delay(5);
     // BaseType_t xTaskUpdateFirmware = xTaskCreateUniversal(TaskUpdateFirmware, "Task update firmware", 8192, NULL, 4, &TaskUpdateFirmwareHdl, -1);
     // delay(5);
-    BaseType_t xTaskKetNoiWiFi = xTaskCreateUniversal(TaskKetNoiWiFi, "Task ket noi wifi", 4096, NULL, 1, &TaskKetNoiWiFiHdl, -1);  // truc them
+    // BaseType_t xTaskKetNoiWiFi = xTaskCreateUniversal(TaskKetNoiWiFi, "Task ket noi wifi", 4096, NULL, 1, &TaskKetNoiWiFiHdl, -1);  // truc them
     delay(5);
-    BaseType_t xTaskMain = xTaskCreateUniversal(TaskMain, "Task main", 3072, NULL, 9, &TaskMainHdl, -1);
+    BaseType_t xTaskMain = xTaskCreateUniversal(TaskMain, "Task main", 3072, NULL, (configMAX_PRIORITIES - 2), &TaskMainHdl, -1);
     delay(5);
-    BaseType_t xTaskVeDoThiReturn = xTaskCreateUniversal(TaskHienThiNhietDoVaVeDoThi, "Task hien thi nhiet va ve do thi", 5120, NULL, 8, &TaskVeDoThiHdl, -1);
+    BaseType_t xTaskVeDoThiReturn = xTaskCreateUniversal(TaskHienThiNhietDoVaVeDoThi, "Task hien thi nhiet va ve do thi", 5120, NULL, 2, &TaskVeDoThiHdl, -1);
     delay(5);
-    _dwin.setPage(_HomePage);
-    BaseType_t xTaskXuLyCanhBaoReturn = xTaskCreateUniversal(TaskXuLyCanhBao, "Task xu ly canh bao", 3072, NULL, 7, &TaskCanhBaoHdl, -1);
+    BaseType_t xTaskXuLyCanhBaoReturn = xTaskCreateUniversal(TaskXuLyCanhBao, "Task xu ly canh bao", 3072, NULL, 1, &TaskCanhBaoHdl, -1);
     delay(5);
 
     if (SDMMCFile.exists(WIFICONFIG_PATH)) {
@@ -1739,6 +1566,8 @@ void setup() {
     // _dwin.echoEnabled(true);
     delay(1000);
     _dwin.SetupDoThiNho(BaseProgram);
+    _dwin.setPage(_HomePage);
+
 }
 
 void loop() {
@@ -1747,6 +1576,7 @@ void loop() {
     // _dwin.setText(_VPAddressNumProgramText1 + 0 * 20, "b");
     // _dwin.setText(_VPAddressTotalNumOfSegmentsText1 + 0 * 20, "c");
     CaiDatHeater();
+    _CO2.CaiNongDoCO2(BaseProgram.programData.setPointCO2);
     delay(1000);
 }
 

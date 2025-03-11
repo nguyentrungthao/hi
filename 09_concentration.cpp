@@ -4,7 +4,7 @@
     @brief:     khởi tạo các  constructor
 */
 Concentration::Concentration(void)
-  : IRCO2(), HRTOnOffPin() {
+  : IRCO2(), HRTOnOffPin(), PID() {
 };
 
 
@@ -14,11 +14,17 @@ Concentration::Concentration(void)
 void Concentration::KhoiTaoCO2() {
 
   // khởi tạo cảm biến CO2
-  IRCO2::init();
+  if (IRCO2::init() != IRCO2_OK) {
+    Serial.printf("init IRCO2 failed\n");
+  }
 
   nongDoThucCO2 = this->LayGiaTriTuCamBien();
 
   HRTOnOffPin::init();
+  PID::setPIDparamters(CO2_KP, CO2_KI, CO2_KD);
+  PID::setWindup(CO2_WIN_MIN, CO2_WIN_MAX, CO2_KW);
+  PID::setOutput(CO2_OUT_MIN, CO2_OUT_MAX);
+  PID::setSampleTime(CO2_SAMPLE_TIME);
 
   this->TatDieuKhienCO2();
   //khởi tạo task tính toán thời gian điều khiển van khí
@@ -29,9 +35,9 @@ void Concentration::KhoiTaoCO2() {
 //* cài giá trị setpoint cho CO2
 void Concentration::CaiNongDoCO2(float giaTriDat) {
   // giới hạn điều khiển từ 0 đến 20%
-  //if (0.0f <= giaTriDat && giaTriDat <= 20.0f) {
-  this->nongDoDat = giaTriDat;
-  //}
+  if (0.0f <= giaTriDat && giaTriDat <= 20.0f) {
+    this->nongDoDat = giaTriDat;
+  }
 }
 
 //*lấy giá trị setpoint của CO2
@@ -57,17 +63,23 @@ void Concentration::taskTinhToanCO2(void* ptr) {
   xLastWakeTime = xTaskGetTickCount();
   float SaiSo = 0;
   int i = 0;
+  uint64_t thoiGianMoVan;
   while (1) {
     pClass->nongDoThucCO2 = pClass->LayGiaTriTuCamBien();
     //! kiểm tra giá trị đọc về từ cảm biến
-    if (pClass->nongDoThucCO2 >= -0.5f) {
-      SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
+    if (pClass->coChayBoDieuKhienCO2  == TAT_CO2 || (pClass->nongDoThucCO2 <= -0.5f && pClass->nongDoThucCO2 >= 30.0f)) {
+      continue;
     }
-    else {
-      SaiSo = 0.0f;
-    }
+    SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
 
-    // Serial.printf("CO2: %0.2f\n", pClass->nongDoThucCO2);
+    if (i >= (CO2_SAMPLE_TIME / 1000)) {
+      thoiGianMoVan = (uint64_t)pClass->getPIDcompute(SaiSo);
+      pClass->turnOnPinAndDelayOff(thoiGianMoVan);
+      i = 0;
+    }
+    i++;
+    // Serial.printf("CO2: %.2f, SaiSo: %.2f, output: %llu\n", pClass->nongDoThucCO2, SaiSo, thoiGianMoVan);
+    thoiGianMoVan = 0;
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
 }
@@ -81,6 +93,9 @@ float Concentration::LayGiaTriTuCamBien() {
   if (IRCO2::ReadData() == IRCO2_OK) {
     return IRCO2::GetCO2Concentration();
   }
+  else {
+    IRCO2::init(); // khởi tạo lại cảm biến
+  }
   return LOI_GIAO_TIEP;  // giá trị báo lỗi giao tiếp
 }
 
@@ -91,11 +106,6 @@ float Concentration::LayNongDoCO2Thuc() {
 //* lấy thời gian kích van được tính toán
 uint32_t Concentration::LayThoiGianKichVan() {
   return static_cast<uint32_t>(Concentration::thoiGianMoVan);
-}
-//* hiển thị giá trị điều khiển
-void Concentration::logDEBUG() {
-  CO2_SerialPrintf(CoChoPhepLogDebug, "CO2-SP( %0.2f )-đo( %0.3f )-ĐKhiển( %u )-tgChờ( %u )-TrạngThái( %u )\r\n",
-                   this->LayNongDoDatCO2(), this->nongDoThucCO2, this->LayThoiGianKichVan(), this->thoiGianCho, (uint8_t)this->coChayBoDieuKhienCO2);
 }
 
 //* khởi động lại cảm biến
@@ -115,9 +125,9 @@ IRCO2_StatusTydef Concentration::CalibGiaTriThuc(float giaTriChuan) {
   uint32_t _giaTriChuan = giaTriChuan * 1000.0f;
 
   for (uint8_t i = 0; i < 5; i++) {
-    // giá trị gửi từ 0 đến 0.5 tương ứng 500 đến 20000
+    // giá trị gửi từ 0.5 đến 20 tương ứng 500 đến 20000
     if (this->SpanPointAdjustment(_giaTriChuan) == IRCO2_OK) {
-      Serial.println("CALIB CO2 OKE");
+      Serial.println("CALIB SPAN CO2 OKE");
       return IRCO2_OK;
     }
     delay(10);
@@ -131,8 +141,16 @@ IRCO2_StatusTydef Concentration::CalibDiem0(float giaTri0Chuan) {
     return IRCO2_ERR_VAL;
   }
   uint32_t _giaTriChuan = giaTri0Chuan * 1000.0f;
-  // giá trị gửi từ 0 đến 0.5 tương ứng 0 đến 500
-  return this->ZeroPointAdjustment(_giaTriChuan);
+
+  for (uint8_t i = 0; i < 5; i++) {
+    // giá trị gửi từ 0 đến 0.5 tương ứng 0 đến 500
+    if (this->ZeroPointAdjustment(_giaTriChuan) == IRCO2_OK) {
+      Serial.println("CALIB ZERO CO2 OKE");
+      return IRCO2_OK;
+    }
+    delay(10);
+  }
+  return IRCO2_ERR_VAL;
 }
 //calib áp suất khi xả khí là 0.1Mpa lưu lượng đi vào 1 (lít/min)
 void Concentration::CalibApSuat(uint32_t thoiGianMoVan) {

@@ -2,34 +2,35 @@
 #define _HMI_PARAM_H_
 
 // Danh sach cac trang
-#define _WarningPage 61
-#define _HomePage 70
-#define _SettingsPage 72
-#define _ProgramLoopPage 74
-#define _SterilizationPage 75
-#define _TrangCaiThoiGianTietTrung 76
-#define _RTCPage 77
-#define _CalibTempPage 78
-#define _ProgramPage 79
-#define _AlarmPage 80
-#define _SegmentAdjPage 81
-#define _SetSegmentDelayOffPage 82
-#define _SetDelayOffPage 83
-#define _SegmentViewPage 84
-#define _NumericKeypadPage 85
-#define _KeyboardPage 86
-#define _DataRecordPage 90
-#define _UpdatePage 91
-#define _FOTAPage 92
-#define _CheckForUpdatePage 93
-#define _WiFiPage 94
-#define _TempNumericKeypadPage 95
-#define _FanNumericKeypadPage 96
-#define _CO2NumericKeypadPage 97
-#define _AdminPasswordPage     98
-#define _InfoPage 100
-#define _CalibChoosePage 101
-#define _CalibCO2Page 102
+#define _WarningPage 0x3D  // 61
+#define _HomePage 0x46  // 70
+#define _SettingsPage 0x48  // 72
+#define _ProgramLoopPage 0x4A  // 74
+#define _SterilizationPage 0x4B  // 75
+#define _TrangCaiThoiGianTietTrung 0x4C  // 76
+#define _RTCPage 0x4D  // 77
+#define _CalibTempPage 0x4E  // 78
+#define _ProgramPage 0x4F  // 79
+#define _AlarmPage 0x50  // 80
+#define _SegmentAdjPage 0x51  // 81
+#define _SetSegmentDelayOffPage 0x52  // 82
+#define _SetDelayOffPage 0x53  // 83
+#define _SegmentViewPage 0x54  // 84
+#define _NumericKeypadPage 0x55  // 85
+#define _KeyboardPage 0x56  // 86
+#define _DataRecordPage 0x5A  // 90
+#define _UpdatePage 0x5B  // 91
+#define _FOTAPage 0x5C  // 92
+#define _CheckForUpdatePage 0x5D  // 93
+#define _WiFiPage 0x5E  // 94
+#define _TempNumericKeypadPage 0x5F  // 95
+#define _FanNumericKeypadPage 0x60  // 96
+#define _CO2NumericKeypadPage 0x61  // 97
+#define _AdminPasswordPage 0x62  // 98
+#define _InfoPage 0x64  // 100
+#define _CalibChoosePage 0x65  // 101
+#define _CalibCO2Page 0x66  // 102
+
 
 /* Sử dụng 0xFFFF để làm mã KeyValue cho việc cấu hình hàm addButtonEvent có nghĩa là với bất kỳ
 /* giá trị KeyValue nào thì hàm đăng ký cũng được gọi
@@ -201,6 +202,8 @@
 #define _VPAddressIconWiFi 0x600C
 #define _VPAddressIconLowercaseKeyboard 0x600D
 #define _VPAddressIconUSB 0x600E
+#define _VPAddressIconVanCO2 0x600F
+
 
 #pragma endregion
 

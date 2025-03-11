@@ -80,12 +80,8 @@ void CapNhatTrangThaiHeater() {
     }
   }
 
-  if (_Heater.CheckAcdet() == false && AcdetState == true) {
-    AcdetState = false;
+  if (_Heater.CheckNguonCongSuat() == false) {
     _dwin.HienThiWarning("Power supply error", _HomePage);
-  }
-  else if (_Heater.CheckAcdet() == true) {
-    AcdetState = true;
   }
 }
 

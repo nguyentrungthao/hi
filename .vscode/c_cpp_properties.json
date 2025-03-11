@@ -8,7 +8,8 @@
             "intelliSenseMode": "",
             "includePath": [
                 "C:/Users/nguye/AppData/Local/Arduino15/packages/esp32/hardware/esp32/2.0.14/**",
-                "C:/Users/nguye/OneDrive/Documents/Arduino/libraries/**"
+                "C:/Users/nguye/OneDrive/Documents/Arduino/libraries/**",
+                "C:\\Users\\nguye\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\**"
             ],
             "forcedInclude": [],
             "cStandard": "",

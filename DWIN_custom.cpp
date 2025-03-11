@@ -534,8 +534,14 @@ bool DWIN::sendArray(uint8_t dwinSendArray[], uint8_t arraySize)
     }
     return 1;
 }
-
-// Send int array to the display we dont need the 5A A5 or size - words only
+/**
+ *@brief Send int array to the display we dont need the 5A A5 or size - words only
+ * 
+ * @param instruction lệnh ghi hay đọc 
+ * @param dwinIntArray mảng dữ liệu
+ * @param arraySize số lượng phần tử trong mảng * 2 (vì mỗi phần tử là 1 word)
+ */
+// 
 void DWIN::sendIntArray(uint16_t instruction, uint16_t dwinIntArray[], uint8_t arraySize)
 {
 
@@ -562,6 +568,12 @@ void DWIN::sendIntArray(uint16_t instruction, uint16_t dwinIntArray[], uint8_t a
         sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
         sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
     }
+    // Serial.print("Sending Array: ");
+    // for(uint8_t i = 0; i < sizeof(sendBuffer); i++) {
+    //     Serial.print(String(sendBuffer[i], HEX) + " ");
+    // }
+    // Serial.println();
+
     _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
 
     // look for the ack. on write

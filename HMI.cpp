@@ -1,6 +1,8 @@
 
 #include "HMI.h"
 #include "esp_log.h"
+#include "freertos/freeRTOS.h"
+#include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "HMIparam.h"
 #include <RTClib.h>
@@ -180,7 +182,7 @@ void HMI::_hmiListenTask(void* args)
 
 void HMI::_createHmiListenTask(void* args)
 {
-    xTaskCreateUniversal(_hmiListenTask, "HMI Task", 5120, this, 15, &_hmiListenTaskHandle, -1);
+    xTaskCreateUniversal(_hmiListenTask, "HMI Task", 5120, this, (configMAX_PRIORITIES - 1), &_hmiListenTaskHandle, -1);
     if (_hmiListenTaskHandle == NULL)
     {
         log_e(" -- HMI Task not Created!");
@@ -1510,8 +1512,13 @@ void HMI::VeDoThiBase(BaseProgram_t data) {
         setText(_VPAddressGraphYValueText1 + i * 5, String(_DuLieuDoThiNhietDo.valueArr[i] / 10.0f, 1));
         setText(_VPAddressGraphY_R_ValueText1 + i * 5, String(_DuLieuDoThiCO2.valueArr[i] / 10.0f, 1));
     }
-    sendGraphValue(2, (int)(data.temperature * 10) - _DuLieuDoThiNhietDo.valueArr[0]); // đồ thị nhiệt
-    sendGraphValue(1, (int)(data.CO2 * 10) - _DuLieuDoThiCO2.valueArr[0] ); // đồ thị CO2
+    // sendGraphValue(1, (int)(data.temperature * 10) - _DuLieuDoThiNhietDo.valueArr[0]); // đồ thị nhiệt
+    // sendGraphValue(2, (int)(data.CO2 * 10) - _DuLieuDoThiCO2.valueArr[0] ); // đồ thị CO2
+
+    uint16_t temp = (uint16_t)(data.temperature * 10) - _DuLieuDoThiNhietDo.valueArr[0];
+    uint16_t CO2 = (uint16_t)(data.CO2 * 10) - _DuLieuDoThiCO2.valueArr[0];
+    uint16_t arrayy[] = { 0x0310, 0x5AA5, 0x0200, 0x0001, temp, 0x0101, CO2 };
+    sendIntArray(0x82, arrayy, 14);
 }
 
 void HMI::SetupDoThiNho(BaseProgram_t data) {
@@ -1539,7 +1546,7 @@ void HMI::SetupDoThiNho(BaseProgram_t data) {
 
     //xử lý thông số cho CO2 
     // thông số cho cột Y 
-    uint16_t YL1 = ((uint16_t)(data.CO2)) ;
+    uint16_t YL1 = ((uint16_t)(data.CO2));
     if (YL1 < 0) YL1 = 0;
     uint16_t stepYL1 = (((uint16_t)(data.programData.setPointCO2)) - YL1) * 10 / 4;
     for (uint8_t i = 0; i < 6; i++) {
@@ -1573,7 +1580,7 @@ void HMI::XoaDoThi(void)
     {
         setText(_VPAddressGraphXValueText1 + 10 * i, "");
     }
-    resetGraph(2);
+    resetGraph(0);
     resetGraph(1);
 
     _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
@@ -1663,6 +1670,12 @@ void HMI::HienThiIconGiaNhiet(bool TrangThai)
 {
     setVP(_VPAddressIconGiaNhiet, TrangThai);
 }
+
+void HMI::HienThiIconVanCO2(bool TrangThai)
+{
+    setVP(_VPAddressIconVanCO2, TrangThai);
+}
+
 void HMI::HienThiIconTrangThaiRun(bool TrangThai)
 {
     setVP(_VPAddressIconRun, TrangThai);
