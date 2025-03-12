@@ -82,6 +82,37 @@ void HRTOnOffPin::setPinAndDelay(int8_t pinStatus, uint64_t time, OnOffType_t ty
   ESP_LOGI(TAG, "%s() call %s Time: %u", funcCall, __func__, time);
 }
 
+void HRTOnOffPin::addCallBackWritePin(CallBack_t func, void* arg) {
+  if (m_pCallBackWritePin == NULL) {
+    m_pCallBackWritePin = func;
+  }
+  else {
+    Serial.println("ERORR: m_pCallBackWritePin is NULL");
+    return;
+  }
+  if (m_pvArgCallBackWritePin == NULL) {
+    m_pvArgCallBackWritePin = arg;
+  }
+  else {
+    Serial.println("Warning: m_pvArgCallBackWritePin is NULL");
+  }
+}
+
+void HRTOnOffPin::addCallBackTimeout(CallBack_t func, void* arg) {
+  if (m_pCallBackTimeout == NULL) {
+    m_pCallBackTimeout = func;
+  }
+  else {
+    Serial.println("ERORR: m_pCallBackTimeout is NULL");
+    return;
+  }
+  if (m_pvArgCallBackTimeout == NULL) {
+    m_pvArgCallBackTimeout = arg;
+  }
+  else {
+    Serial.println("Warning: m_pCallBackTimeout is NULL");
+  }
+}
 
 void HRTOnOffPin::turnOnPinAndDelayOff(uint64_t time, const char* funcCall) {
   setPinAndDelay(1, time, eDELAY_OFF, funcCall);
@@ -105,8 +136,12 @@ void HRTOnOffPin::timerCallBack(void* arg) {
   //thực hiện bật tắt theo yêu cầu trước
   if (pClass->dataTime.typeDelay == eDELAY_ON) {
     pClass->turnOnPin();
-  } else {
+  }
+  else {
     pClass->turnOffPin();
+  }
+  if (pClass->m_pCallBackTimeout != NULL) {
+    pClass->m_pCallBackTimeout(pClass->m_pvArgCallBackTimeout);
   }
 #ifdef QUEUE
   // kiểm tra trong queue có còn lệnh chờ nào không và thực hiện
@@ -115,4 +150,4 @@ void HRTOnOffPin::timerCallBack(void* arg) {
     setPinAndDelay(-1, dataTime.m_u64Time, dataTime.typeDelay, __func__);
   }
 #endif  //QUEUE
-}
+  }

@@ -67,17 +67,19 @@ void Concentration::taskTinhToanCO2(void* ptr) {
   while (1) {
     pClass->nongDoThucCO2 = pClass->LayGiaTriTuCamBien();
     //! kiểm tra giá trị đọc về từ cảm biến
-    if (pClass->coChayBoDieuKhienCO2  == TAT_CO2 || (pClass->nongDoThucCO2 <= -0.5f && pClass->nongDoThucCO2 >= 30.0f)) {
-      continue;
-    }
-    SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
+    if (pClass->coChayBoDieuKhienCO2  == BAT_CO2 && (pClass->nongDoThucCO2 >= -0.5f && pClass->nongDoThucCO2 <= 30.0f)) {
+      SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
 
-    if (i >= (CO2_SAMPLE_TIME / 1000)) {
-      thoiGianMoVan = (uint64_t)pClass->getPIDcompute(SaiSo);
-      pClass->turnOnPinAndDelayOff(thoiGianMoVan);
+      if (i >= (CO2_SAMPLE_TIME / 1000)) {
+        thoiGianMoVan = (uint64_t)pClass->getPIDcompute(SaiSo);
+        pClass->turnOnPinAndDelayOff(thoiGianMoVan);
+        i = 0;
+      }
+      i++;
+    }
+    else {
       i = 0;
     }
-    i++;
     // Serial.printf("CO2: %.2f, SaiSo: %.2f, output: %llu\n", pClass->nongDoThucCO2, SaiSo, thoiGianMoVan);
     thoiGianMoVan = 0;
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));

@@ -52,7 +52,6 @@ static TaskHandle_t _hmiListenTaskHandle;
 
 HMI::HMI(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, long baud) : DWIN(port, receivePin, transmitPin, baud),
 _hmiSerial(&port),
-_ChuoiBanPhimDangNhap(""),
 _TenChuongTrinh(""),
 _ChiMucChuongTrinhTruocDo(0xffff),
 _ChiMucPhanDoanTruocDo(0xffff),

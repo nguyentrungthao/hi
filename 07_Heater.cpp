@@ -62,7 +62,21 @@ bool HEATER::TrangThaiQuat(void) {
 bool HEATER::CheckNguonCongSuat() {
   return isACDET;
 }
-
+void HEATER::addCallBackACDET(CallBackACDET_t pCallBack, void* pArg) {
+  if (pCallBack != NULL) {
+    m_pCallBackACDET = pCallBack;
+  }
+  else {
+    Serial.println("ERORR: m_pCallBackACDET is NULL");
+    return;
+  }
+  if (pArg != NULL) {
+    m_pArgACDET = pArg;
+  }
+  else {
+    Serial.println("Warning: m_pArgACDET is NULL");
+  }
+}
 void HEATER::TaskDieuKhienNhiet(void* ptr) {
   if (ptr == NULL) return;
   HEATER* pHeater = (HEATER*)ptr;
@@ -79,7 +93,7 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
   uint8_t chuKyTheoDoi = 0;  // đếm số lần số để trừ dần cửa và vành
 
   while (1) {
-    
+
     if (pHeater->step != 0 && pHeater->TrangThaiDieuKhienNhiet == HEATER_OFF) {
       pHeater->TurnOffTriac();
       pHeater->triacBuong.turnOffPin();
@@ -208,12 +222,16 @@ void HEATER::TaskNgatACDET(void* ptr) {
       pHeater->isACDET = false;
       continue;
     }
-    pHeater->isACDET = true;
     pHeater->acdet_intr_handler(NULL);
+    pHeater->isACDET = true;
+    if (pHeater->m_pCallBackACDET != NULL) {
+      pHeater->m_pCallBackACDET(pHeater->m_pArgACDET);
+    }
     for (int8_t i = 0; i < eTriacMax; i++) {
       if (!pHeater->pArrTriac[i]->isTimerRunning() && pHeater->pArru16ThoiGianKichTriac[i] > 0) {
         pHeater->pArrTriac[i]->turnOnPinAndDelayOff(pHeater->pArru16ThoiGianKichTriac[i]);
         pHeater->pArru16ThoiGianKichTriac[i] = 0;
+
       }
     }
   }

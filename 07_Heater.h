@@ -63,6 +63,7 @@ typedef struct
   uint8_t ThoiGianGiaNhietSauMoCua;
 } PID_param_t;
 
+typedef void (*CallBackACDET_t)(void*);
 
 class HEATER : public PID, public triac
 {
@@ -88,6 +89,13 @@ public:
   bool TrangThaiThanhGiaNhiet(void);
   bool TrangThaiQuat(void);
   bool CheckNguonCongSuat();
+  void addCallBackACDET(CallBackACDET_t pCallBack, void* pArg = NULL);
+  void addCallBackTimeOutTriacBuong(CallBack_t pCallBack, void* pArg = NULL) {
+    triacBuong.addCallBackTimeout(pCallBack, pArg);
+  }
+  void addCallBackWritePinTriacBuong(CallBack_t pCallBack, void* pArg = NULL) {
+    triacBuong.addCallBackWritePin(pCallBack, pArg);
+  }
 private:
   uint8_t step = 0;
   uint32_t preOpenDoor = 0;
@@ -116,6 +124,9 @@ private:
 
   //Mới thêm
   float SaiSoNhietChoPhep;
+
+  CallBackACDET_t m_pCallBackACDET;
+  void *m_pArgACDET;
 
   TaskHandle_t taskHandleDieuKhienNhiet;
   TaskHandle_t taskHandleNgatACDET;

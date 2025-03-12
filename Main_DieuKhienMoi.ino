@@ -136,9 +136,10 @@ bool DemThoiGianChay(bool reset, bool DemXuong);
 void setTimeFromRTC(int year, int month, int day, int hour, int minute, int second);
 void hmiSetEvent(const hmi_set_event_t& event);
 bool hmiGetEvent(hmi_get_type_t event, void* args);
-void callBackOpenDoor(void* ptr);
-void callBackCloseDoor(void* ptr);
-
+inline void callBackOpenDoor(void* ptr);
+inline void callBackCloseDoor(void* ptr);
+static inline void triggeONICONNhiet(void*);
+static inline void triggeOFFICONNhiet(void*);
 //các task
 void TaskHMI(void*);
 void TaskExportData(void*);
@@ -153,6 +154,11 @@ void setup() {
 
     pinMode(RELAY_PIN, OUTPUT);
     digitalWrite(RELAY_PIN, LOW);
+
+    SemaCaiDatHeater = xSemaphoreCreateBinary();
+    SemaKetNoiWiFi = xSemaphoreCreateBinary();  // truc them
+    QueueUpdateFirmware = xQueueCreate(2, sizeof(MethodUpdates_t));
+    recvHMIQueue = xQueueCreate(10, sizeof(FrameDataQueue_t));
 
     khoiTaoRTC();
     delay(10);
@@ -172,24 +178,10 @@ void setup() {
     khoiTaoCO2();
     delay(10);
 
-    SemaCaiDatHeater = xSemaphoreCreateBinary();
-    SemaKetNoiWiFi = xSemaphoreCreateBinary();  // truc them
-    QueueUpdateFirmware = xQueueCreate(2, sizeof(MethodUpdates_t));
-    recvHMIQueue = xQueueCreate(10, sizeof(FrameDataQueue_t));
 
-    BaseType_t xTaskExportData = xTaskCreateUniversal(TaskExportData, "Task Export data", 5120, NULL, (configMAX_PRIORITIES - 3), &TaskExportDataHdl, -1);
-    delay(5);
-    BaseType_t xTaskUpdateFirmware = xTaskCreateUniversal(TaskUpdateFirmware, "Task update firmware", 8192, NULL, (configMAX_PRIORITIES - 3), &TaskUpdateFirmwareHdl, -1);
-    delay(5);
-    BaseType_t xTaskKetNoiWiFi = xTaskCreateUniversal(TaskKetNoiWiFi, "Task ket noi wifi", 4096, NULL, 1, &TaskKetNoiWiFiHdl, -1);  // truc them
-    delay(5);
-    BaseType_t xTaskMain = xTaskCreateUniversal(TaskMain, "Task main", 4096, NULL, 3 , &TaskMainHdl, -1);
-    delay(5);
-    BaseType_t xTaskVeDoThiReturn = xTaskCreateUniversal(TaskHMI, "Task HMI", 8000, NULL, 2, &TaskHMIHdl, -1);
-    delay(5);
 
     delay(1000);
-    _dwin.echoEnabled(true);
+    // _dwin.echoEnabled(true);
     RunMode = QUICK_MODE;
     BaseProgram.machineState = false;
     BaseProgram.delayOffState = false;
@@ -213,33 +205,31 @@ void setup() {
     delay(1000);
     _dwin.setPage(_HomePage);
 
+    BaseType_t xTaskExportData = xTaskCreateUniversal(TaskExportData, "Task Export data", 8192, NULL, 4, &TaskExportDataHdl, -1);
+    delay(5);
+    BaseType_t xTaskUpdateFirmware = xTaskCreateUniversal(TaskUpdateFirmware, "Task update firmware", 8192, NULL, 5, &TaskUpdateFirmwareHdl, -1);
+    delay(5);
+    BaseType_t xTaskKetNoiWiFi = xTaskCreateUniversal(TaskKetNoiWiFi, "Task ket noi wifi", 8192, NULL, 1, &TaskKetNoiWiFiHdl, -1);  // truc them
+    delay(5);
+    BaseType_t xTaskMain = xTaskCreateUniversal(TaskMain, "Task main", 8192, NULL, 3, &TaskMainHdl, -1);
+    delay(5);
+    BaseType_t xTaskVeDoThiReturn = xTaskCreateUniversal(TaskHMI, "Task HMI", 8192, NULL, 2, &TaskHMIHdl, -1);
+    delay(5);
+
 }
 
 void loop() {
 
-    delay(1000);
-
     // Nếu RAM còn trống 70000 byte thì mới thực hiện GET POST
-    // if (esp_get_free_heap_size() > 20000)
-    // {
-    // loop_PostGet();
-    // loopMQTT();
-    // if(WiFi.status() == WL_CONNECTED) {
-    //     http.begin()
-    // }
-    // delay(1000);
-    //     if (dataQueue != NULL)
-    //     {
-    //         PIDData data;
-    //         if (xQueueReceive(dataQueue, &data, 0) == pdTRUE)
-    //         {
-    //             sendData(&data);
-    //         }
-    //     }
-    // }
-    // else {
-    //     delay(10);
-    // }
+    if (esp_get_free_heap_size() > 20000)
+    {
+        // loop_PostGet();
+        // loopMQTT();
+        // if (WiFi.status() == WL_CONNECTED) {
+        //     http.begin();
+        // }
+    }
+    delay(1);
 }
 
 void khoiTaoRTC() {
@@ -358,8 +348,8 @@ void khoiTaoSDCARD() {
         WifiPassword = String(WiFiConfig.password);
         _dwin.HienThiSSIDWiFi(WifiSSID);
         _dwin.HienThiPasswordWiFi(WifiPassword);
-        Serial.print("Thong tin Wifi");
-        Serial.println(WifiSSID);
+        Serial.print("Thong tin Wifi: ");
+        Serial.print(WifiSSID + " ");
         Serial.println(WifiPassword);
         if (WiFiConfig.state) {
             xSemaphoreGive(SemaKetNoiWiFi);
@@ -372,9 +362,14 @@ void khoiTaoHeater() {
     // bật quạt
     _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
     _Heater.TurnOnTriac();
+    _Heater.addCallBackWritePinTriacBuong(triggeONICONNhiet, NULL); //trigger on ICON nhiệt
+    _Heater.addCallBackTimeOutTriacBuong(triggeOFFICONNhiet, NULL); //trigger off ICON nhiệt
 }
 void khoiTaoCO2() {
     _CO2.KhoiTaoCO2();
+    _CO2.addCallBackWritePin(triggeONICONCO2, NULL); //trigger on ICON nhiệt
+    _CO2.addCallBackTimeout(triggeOFFICONCO2, NULL); //trigger off ICON nhiệt
+
 }
 void khoiTaoCua() {
     _Door.KhoiTao();
@@ -384,11 +379,22 @@ void khoiTaoCua() {
 void callBackOpenDoor(void* ptr) {
     //!check ptr trước khi dùng nhá 
     Serial.printf("Open door\n");
+    static FrameDataQueue_t data;
+    data.event = eEVENT_ICON_CUA;
+    if (recvHMIQueue == NULL) {
+        return;
+    }
+    xQueueSend(recvHMIQueue, &data, 0);
 }
 void callBackCloseDoor(void* ptr) {
     //!check ptr trước khi dùng nhá 
-    Serial.printf("Clo door\n");
-
+    Serial.printf("Close door\n");
+    static FrameDataQueue_t data;
+    data.event = eEVENT_ICON_CUA;
+    if (recvHMIQueue == NULL) {
+        return;
+    }
+    xQueueSend(recvHMIQueue, &data, 0);
 }
 
 float GetCalib(float value) {
@@ -1232,6 +1238,43 @@ void TaoCacThuMucHeThongTrenSD(void) {
     SDMMCFile.createDir("/Update/HMI");
     SDMMCFile.createDir("/UpdateStatus");
 }
+static inline void triggeONICONNhiet(void*) {
+    static FrameDataQueue_t data;
+    data.event = eEVENT_ICON_NHIET;
+    if (recvHMIQueue == NULL) {
+        return;
+    }
+    xQueueSend(recvHMIQueue, &data, 0);
+}
+static inline void triggeOFFICONNhiet(void*) {
+    static FrameDataQueue_t data;
+    data.event = eEVENT_ICON_NHIET;
+    if (recvHMIQueue == NULL) {
+        return;
+    }
+    xQueueSend(recvHMIQueue, &data, 0);
+}
+static inline void triggeONICONCO2(void*) {
+    static FrameDataQueue_t data;
+    data.event = eEVENT_ICON_CO2;
+    if (recvHMIQueue == NULL) {
+        return;
+    }
+    xQueueSend(recvHMIQueue, &data, 0);
+}
+static inline void triggeOFFICONCO2(void*) {
+    static FrameDataQueue_t data;
+    data.event = eEVENT_ICON_CO2;
+    if (recvHMIQueue == NULL) {
+        return;
+    }
+    xQueueSend(recvHMIQueue, &data, 0);
+}
+
+
+
+
+
 
 void TaskExportData(void*) {
     vTaskSuspend(NULL);
@@ -1254,26 +1297,27 @@ void TaskUpdateFirmware(void*) {
     MethodUpdates_t method;
     for (;;) {
         xQueueReceive(QueueUpdateFirmware, &method, portMAX_DELAY);
-        Serial.printf("%s nhận phương thứ update: %s", __func__, method == MAIN_UPDATE_USB ? "USB" : "FOTA");
+        Serial.printf("%s nhận phương thức update: %s", __func__, method == MAIN_UPDATE_USB ? "USB" : "FOTA");
 
-        
-        if (TaskMainHdl != NULL) {
-            Serial.println("Suspend: TaskMainHdl");
-            vTaskSuspend(TaskMainHdl);
-        }
-        if (TaskHMIHdl != NULL) {
-            Serial.println("Suspend: TaskHMI");
-            vTaskSuspend(TaskHMIHdl);
-        }
-        if (TaskExportDataHdl != NULL) {
-            Serial.println("Suspend: TaskExportDataHdl");
-            vTaskSuspend(TaskExportDataHdl);
-        }
+        // if (TaskMainHdl != NULL) {
+        //     Serial.println("Suspend: TaskMainHdl");
+        //     vTaskSuspend(TaskMainHdl);
+        // }
+        // if (TaskHMIHdl != NULL) {
+        //     Serial.println("Suspend: TaskHMI");
+        //     vTaskSuspend(TaskHMIHdl);
+        // }
+        // if (TaskExportDataHdl != NULL) {
+        //     Serial.println("Suspend: TaskExportDataHdl");
+        //     vTaskSuspend(TaskExportDataHdl);
+        // }
 
         if (method == MAIN_UPDATE_USB) {
             if (USB_MSC_HOST.isConnected()) {
                 // Kết thúc SD_MMC trước khi cập nhật để tránh lỗi
                 SD_MMC.end();
+
+                _dwin.HienThiWarning("updating firmware", _WarningPage);
 
                 // Update firmware
                 updateFirmware(USB_MSC_HOST);
@@ -1290,6 +1334,9 @@ void TaskUpdateFirmware(void*) {
                 _dwin.HienThiWarning("Restarting...", _WarningPage);
                 ESP.restart();
             }
+            else {
+                _dwin.HienThiWarning("no USB device", _UpdatePage);
+            }
         }
         else if (method == MAIN_UPDATE_FOTA) {
             Serial.println("Current Version: " + convertDateToVersion(__DATE__));
@@ -1297,14 +1344,14 @@ void TaskUpdateFirmware(void*) {
                 Serial.println("Error downloading updates or no new version available");
                 _dwin.HienThiWarning("No new version available", _UpdatePage);
                 // _dwin.setPage(_HomePage);
-                vTaskDelete(NULL);
+                // vTaskDelete(NULL);
                 // continue;
             }
             else {
 
                 // Kết thúc SD_MMC trước khi cập nhật để tránh lỗi
                 // SD_MMC.end();
-
+                _dwin.HienThiWarning("updating firmware", _WarningPage);
                 // Update firmware
                 updateFirmware(SD_MMC);
 
@@ -1324,24 +1371,18 @@ void TaskUpdateFirmware(void*) {
         }
 
 
-        if (TaskMainHdl != NULL) {
-            vTaskResume(TaskMainHdl);
-        }
-        else {
-            ESP.restart();
-        }
-        if (TaskHMIHdl != NULL) {
-            vTaskResume(TaskHMIHdl);
-        }
-        else {
-            ESP.restart();
-        }
-        if (TaskExportDataHdl != NULL) {
-            vTaskResume(TaskExportDataHdl);
-        }
-        else {
-            ESP.restart();
-        }
+        // if (TaskMainHdl != NULL) {
+        //     Serial.println("Resume: TaskMainHdl");
+        //     vTaskResume(TaskMainHdl);
+        // }
+        // if (TaskHMIHdl != NULL) {
+        //     Serial.println("Resume: TaskHMI");
+        //     vTaskResume(TaskHMIHdl);
+        // }
+        // if (TaskExportDataHdl != NULL) {
+        //     Serial.println("Resume: TaskExportDataHdl");
+        //     vTaskResume(TaskExportDataHdl);
+        // }
 
     }
 }
@@ -1355,9 +1396,9 @@ void TaskKetNoiWiFi(void*) {
         _dwin.HienThiTrangThaiKetNoiWiFi("");
         if (WiFi.status() != WL_CONNECTED) {
             // Kết nối Wi-Fi
-            WiFi.begin(WifiSSID.c_str(), WifiPassword.c_str());
             Serial.println("Connecting to " + WifiSSID);
             _dwin.HienThiTrangThaiKetNoiWiFi("Connecting to " + WifiSSID);
+            WiFi.begin(WifiSSID.c_str(), WifiPassword.c_str());
 
             uint8_t u8Try = 15;
             while (WiFi.status() != WL_CONNECTED && u8Try--) {
@@ -1385,6 +1426,7 @@ void TaskKetNoiWiFi(void*) {
             }
         }
         else {
+            Serial.println("Connecting to " + WifiSSID);
             WiFi.disconnect();
             delay(100);
             if (WiFi.status() != WL_CONNECTED) {

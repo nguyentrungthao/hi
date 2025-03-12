@@ -14,6 +14,8 @@
 //define queue để lưu các event đã ra lệnh trên chân
 // #define QUEUE
 
+typedef void (*CallBack_t)(void*);
+
 typedef enum {
   eDELAY_ON,
   eDELAY_OFF,
@@ -58,31 +60,23 @@ public:
   void turnOnPin() {
     writePin(1);
   }
-  void turnOnPin(void*(func)(void*), void* arg) {
-    func(arg);
-  }
   // chỉ tắt chân
   void turnOffPin() {
     writePin(0);
   }
-  void turnOffPin(void*(func)(void*), void* arg) {
-    func(arg);
-  }
   void writePin(int8_t pinStatus) {
     digitalWrite(m_i8Pin, pinStatus);
+    if (m_pCallBackWritePin != NULL) {
+      m_pCallBackWritePin(m_pvArgCallBackWritePin);
+    }
   }
-  void writePin(void*(func)(void*), void* arg) {
-    func(arg);
-  }
-
   // trả về trạng thái chân
   bool getStatusPin() {
     return digitalRead(m_i8Pin);
   }
 
-  bool turnOnPin(bool*(func)(void*), void* arg) {
-    return func(arg);
-  }
+  void addCallBackWritePin(CallBack_t func, void* arg = NULL);
+  void addCallBackTimeout(CallBack_t func, void* arg = NULL);
 private:
   typedef struct {
     uint64_t m_u64Time;  // thời gian delay
@@ -93,6 +87,11 @@ private:
   int8_t m_i8Pin;
   void* m_pvArg;
 
+  CallBack_t m_pCallBackTimeout;
+  void* m_pvArgCallBackTimeout;
+
+  CallBack_t m_pCallBackWritePin;
+  void* m_pvArgCallBackWritePin;
   // dùng cho repeat
   TimeType_t dataTimeOn;
   TimeType_t dataTimeOff;
