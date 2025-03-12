@@ -56,6 +56,9 @@ void HEATER::KhoiDongQuat(uint16_t thoiGianKhoiDong) {
 bool HEATER::TrangThaiThanhGiaNhiet(void) {
   return triacBuong.getStatusPin();
 }
+bool HEATER::TrangThaiQuat(void) {
+  return RunStatus;
+}
 bool HEATER::CheckNguonCongSuat() {
   return isACDET;
 }
@@ -65,8 +68,10 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
   HEATER* pHeater = (HEATER*)ptr;
 
   portMUX_TYPE my_spinlock = portMUX_INITIALIZER_UNLOCKED;
+
   TickType_t xLastWakeTime;
   xLastWakeTime = xTaskGetTickCount();
+
   int16_t u16ThoiGianBatBuong = 0;
   int16_t u16ThoiGianBatVanh = THOI_GIAN_BAT_TRIAC_VANH;
   int16_t u16ThoiGianBatCua = THOI_GIAN_BAT_TRIAC_CUA;

@@ -48,7 +48,7 @@
 #define MAX_INPUT_MINUTE_STERILIZATION_DELAYOFF 59
 #define MIN_INPUT_MINUTE_STERILIZATION_DELAYOFF 0
 
-static SemaphoreHandle_t _semaHmi;
+static TaskHandle_t _hmiListenTaskHandle;
 
 HMI::HMI(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, long baud) : DWIN(port, receivePin, transmitPin, baud),
 _hmiSerial(&port),
@@ -151,7 +151,6 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueAdminPassword, _NutVaoChucNangThayDoiAdminPassword_, this); //truc them
     DWIN::addButtonEvent(_VPAddressCacNutTrangAdminPassword, _AllKeyValue, _CacNutTrangThayDoiAdminPassword_, this);
 
-    _semaHmi = xSemaphoreCreateCounting(MAX_SEMAPHORE, INIT_SEMAPHORE);
     _lock = xSemaphoreCreateMutex();
     _createHmiListenTask(this);
 
@@ -162,21 +161,22 @@ void HMI::KhoiTao(void)
 
 void HMI::_hmiUartEvent(void)
 {
-    xSemaphoreGive(_semaHmi);
-    return;
+    xTaskNotify(_hmiListenTaskHandle, 0x01, eSetBits);
+    portYIELD();
 }
 
 void HMI::_hmiListenTask(void* args)
 {
     HMI* hmiPtr = static_cast<HMI*>(args);
+    uint32_t notifyNum;
     for (;;)
     {
-        if (xSemaphoreTake(_semaHmi, portMAX_DELAY) == pdTRUE)
-        {
-            // xSemaphoreTake(hmiPtr->_lock, portMAX_DELAY);
-            hmiPtr->DWIN::listen();
-            // xSemaphoreGive(hmiPtr->_lock);
-        }
+        xTaskNotifyWait(pdFALSE, pdTRUE, &notifyNum, portMAX_DELAY);
+
+        // xSemaphoreTake(hmiPtr->_lock, portMAX_DELAY);
+        hmiPtr->DWIN::listen();
+        // xSemaphoreGive(hmiPtr->_lock);
+
     }
 }
 
@@ -1024,7 +1024,7 @@ void HMI::_NutVaoChucNangChonCalib_(int32_t lastBytes, void* args) {
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_PASSWORD;
     hmiPtr->_set_event.pageAfterEnter = _CalibChoosePage;
-    hmiPtr->_set_event.pageAfterReturn = _CalibChoosePage;
+    hmiPtr->_set_event.pageAfterReturn = _SettingsPage;
     hmiPtr->_set_event.textLen = 10;
     hmiPtr->_ChuoiBanPhimDangNhap = "";
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -1507,11 +1507,11 @@ void HMI::VeDoThi(float value, time_t time, int offset)
     sendGraphValue(0, (int)value);
 }
 
-void HMI::VeDoThiBase(BaseProgram_t data) {
-    for (uint8_t i = 0; i < 6; i++) {
-        setText(_VPAddressGraphYValueText1 + i * 5, String(_DuLieuDoThiNhietDo.valueArr[i] / 10.0f, 1));
-        setText(_VPAddressGraphY_R_ValueText1 + i * 5, String(_DuLieuDoThiCO2.valueArr[i] / 10.0f, 1));
-    }
+void HMI::VeDoThi(BaseProgram_t data) {
+    // for (uint8_t i = 0; i < 6; i++) {
+    //     setText(_VPAddressGraphYValueText1 + i * 5, String(_DuLieuDoThiNhietDo.valueArr[i] / 10.0f, 1));
+    //     setText(_VPAddressGraphY_R_ValueText1 + i * 5, String(_DuLieuDoThiCO2.valueArr[i] / 10.0f, 1));
+    // }
     // sendGraphValue(1, (int)(data.temperature * 10) - _DuLieuDoThiNhietDo.valueArr[0]); // đồ thị nhiệt
     // sendGraphValue(2, (int)(data.CO2 * 10) - _DuLieuDoThiCO2.valueArr[0] ); // đồ thị CO2
 

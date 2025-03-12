@@ -86,6 +86,7 @@ public:
   void KhoiDongQuat(uint16_t);
 
   bool TrangThaiThanhGiaNhiet(void);
+  bool TrangThaiQuat(void);
   bool CheckNguonCongSuat();
 private:
   uint8_t step = 0;

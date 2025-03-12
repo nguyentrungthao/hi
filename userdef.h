@@ -1,6 +1,8 @@
 #ifndef _UserDef_H_
 #define _UserDef_H_
 
+#include <Arduino.h>
+
 #define PATH_CALIB_DATA "/CalibData.data"
 #define PATH_BASEPROGRAM_DATA "/BaseProgram.data"
 #define PATH_RECORD "/record.dat"
@@ -91,5 +93,32 @@ struct PIDData {
     int TGondinh;
     int TGgianhiet;
 };
+
+enum EventTaskHMI_t {
+    eEVENT_ICON_NHIET = 0,
+    eEVENT_ICON_CO2,
+    eEVENT_ICON_FAN,
+    eEVENT_ICON_CUA,
+    eEVENT_ICON_USB,
+    eEVENT_ICON_WIFI,
+    eEVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
+    eEVENT_HIEN_THI_THOI_GIAN,
+    eEVENT_VE_DO_THI,
+    eEVENT_WARNING,
+    eEVENT_REFRESH,
+};
+
+struct FrameDataQueue_t {
+    int32_t event;
+    void* pvData;   
+};
+
+#define _CHECK_AND_WARNING_PAGE(condition, message, returnPage) do { \
+    if (condition) { \
+        _dwin.HienThiWarning(message, returnPage); \
+        _dwin.Buzzer(160); \
+    } \
+} while (0)
+
 
 #endif

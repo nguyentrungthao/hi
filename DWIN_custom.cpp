@@ -324,6 +324,12 @@ void DWIN::setText(long address, String textData)
         sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
         sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
     }
+    // for (int i = 0; i < sizeof(sendBuffer); i++) {
+    //     Serial.print(sendBuffer[i], HEX);
+    //     Serial.print(" ");  // In ra khoảng trắng giữa các byte
+    // }
+    // Serial.println();  // Xuống dòng sau khi in hết sendBuffer
+
     _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
     readDWIN();
 }
@@ -688,6 +694,7 @@ String DWIN::handle()
     // unsigned long startTime = millis();
     while (_dwinSerial->available() > 0)
     {
+        delay(10);
         int inhex;
         if (_dwinSerial->read() == 0x5A && _dwinSerial->read() == 0xA5)
         {

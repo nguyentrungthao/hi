@@ -150,7 +150,7 @@ public:
     void VeDoThi(float value, time_t time, int offset);
     void VeDoThiNhiet(float value, time_t time, int offset);
     void VeDoThiCO2(float value, time_t time, int offset);
-    void VeDoThiBase(BaseProgram_t data);
+    void VeDoThi(BaseProgram_t data);
     void SetupDoThiNho(BaseProgram_t data);
     void XoaDoThi(void);
 
@@ -199,8 +199,6 @@ public:
     void HienThiCheckAdminPasswordState(String text);
 protected:
     HardwareSerial* _hmiSerial;
-    TaskHandle_t _hmiListenTaskHandle;
-    TaskHandle_t _hmiDataEventHandle;
     hmiSetData_t _hmiSetDataCallback;
     hmiGetData_t _hmiGetDataCallback;
     SemaphoreHandle_t _lock;

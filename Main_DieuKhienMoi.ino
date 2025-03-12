@@ -28,6 +28,8 @@
 
 #include "HeaterControl.h"
 #include "09_concentration.h"
+#include "07_Heater.h"
+#include "Door.h"
 
 #include "RTC_Timer.h"
 RTC_Timer _time;
@@ -57,6 +59,10 @@ const uint8_t TxPin = 13;  // Chân Tx1 trên ESP32
 #define ADMIN_PASSWORD "/AdminPassword.txt"
 
 HMI _dwin(Serial2, RxPin, TxPin, DGUS_BAUD);
+Concentration _CO2;
+HEATER _Heater;
+DOOR _Door;
+
 FileHandle UsbFile(USB_MSC_HOST);
 FileHandle SDMMCFile(SD_MMC);
 
@@ -66,7 +72,6 @@ std::vector<Program_t> CurrentProgram(30);
 std::vector<CalibData_t> DanhSachHeSoCalib;
 DateTime RTCnow;
 
-Concentration _CO2;
 
 RunMode_t RunMode = QUICK_MODE;
 static int listPageStartPosition = 0;
@@ -82,19 +87,15 @@ static bool FlagCO2XacLap = false;
 static bool SwitchSegment = false;
 static bool FlagVeDoThi = true;
 
-TaskHandle_t TaskEspnowHdl = NULL;
-TaskHandle_t TaskVeDoThiHdl = NULL;
-TaskHandle_t TaskCanhBaoHdl = NULL;
+TaskHandle_t TaskHMIHdl = NULL;
 TaskHandle_t TaskExportDataHdl = NULL;
 TaskHandle_t TaskUpdateFirmwareHdl = NULL;
 TaskHandle_t TaskMainHdl;
 TaskHandle_t TaskKetNoiWiFiHdl;  // truc them
 
 SemaphoreHandle_t SemaCaiDatHeater;
-SemaphoreHandle_t SemaExportData;
 SemaphoreHandle_t SemaKetNoiWiFi;  // truc them
 
-QueueHandle_t QueueUpdateFirmware;
 
 RecordData_t DuLieuDoThi[500];
 
@@ -115,8 +116,319 @@ bool TrangThaiThanhCuon = false;
 // Queue handle -> POST thong so dieu khien ve server
 QueueHandle_t dataQueue;
 
-bool DemThoiGianChay(bool reset, bool DemXuong = false);
-void sendData(PIDData* data);
+QueueHandle_t recvHMIQueue;
+QueueHandle_t QueueUpdateFirmware;
+
+
+// các hàm khởi tạo và hỗ trợ khởi tạo 
+void khoiTaoDWIN();
+void khoiTaoSDCARD();
+void khoiTaoRTC();
+void khoiTaoHeater();
+void khoiTaoCO2();
+void khoiTaoCua();
+void listFilesInProgramDirectory(void);
+void TaoCacThuMucHeThongTrenSD(void);
+
+//các hàm chạy run time hoặc call back
+float GetCalib(float value);
+bool DemThoiGianChay(bool reset, bool DemXuong);
+void setTimeFromRTC(int year, int month, int day, int hour, int minute, int second);
+void hmiSetEvent(const hmi_set_event_t& event);
+bool hmiGetEvent(hmi_get_type_t event, void* args);
+void callBackOpenDoor(void* ptr);
+void callBackCloseDoor(void* ptr);
+
+//các task
+void TaskHMI(void*);
+void TaskExportData(void*);
+void TaskUpdateFirmware(void*);
+void TaskKetNoiWiFi(void*);
+void TaskMain(void*);
+
+
+void setup() {
+    Serial.begin(115200);
+    Wire.begin(10, 11);
+
+    pinMode(RELAY_PIN, OUTPUT);
+    digitalWrite(RELAY_PIN, LOW);
+
+    khoiTaoRTC();
+    delay(10);
+
+    khoiTaoDWIN();
+    delay(10);
+
+    khoiTaoSDCARD();
+    delay(10);
+
+    khoiTaoCua();
+    delay(10);
+
+    khoiTaoHeater();
+    delay(10);
+
+    khoiTaoCO2();
+    delay(10);
+
+    SemaCaiDatHeater = xSemaphoreCreateBinary();
+    SemaKetNoiWiFi = xSemaphoreCreateBinary();  // truc them
+    QueueUpdateFirmware = xQueueCreate(2, sizeof(MethodUpdates_t));
+    recvHMIQueue = xQueueCreate(10, sizeof(FrameDataQueue_t));
+
+    BaseType_t xTaskExportData = xTaskCreateUniversal(TaskExportData, "Task Export data", 5120, NULL, (configMAX_PRIORITIES - 3), &TaskExportDataHdl, -1);
+    delay(5);
+    BaseType_t xTaskUpdateFirmware = xTaskCreateUniversal(TaskUpdateFirmware, "Task update firmware", 8192, NULL, (configMAX_PRIORITIES - 3), &TaskUpdateFirmwareHdl, -1);
+    delay(5);
+    BaseType_t xTaskKetNoiWiFi = xTaskCreateUniversal(TaskKetNoiWiFi, "Task ket noi wifi", 4096, NULL, 1, &TaskKetNoiWiFiHdl, -1);  // truc them
+    delay(5);
+    BaseType_t xTaskMain = xTaskCreateUniversal(TaskMain, "Task main", 4096, NULL, 3 , &TaskMainHdl, -1);
+    delay(5);
+    BaseType_t xTaskVeDoThiReturn = xTaskCreateUniversal(TaskHMI, "Task HMI", 8000, NULL, 2, &TaskHMIHdl, -1);
+    delay(5);
+
+    delay(1000);
+    _dwin.echoEnabled(true);
+    RunMode = QUICK_MODE;
+    BaseProgram.machineState = false;
+    BaseProgram.delayOffState = false;
+    Serial.println(BaseProgram.programData.setPointTemp);
+    _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
+    _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
+    _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
+    // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
+    _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
+    _dwin.HienThiIconGiaNhiet(false);
+    _dwin.HienThiChuongTrinhDangChay("Quick");
+    _dwin.HienThiThoiGianChay("Inf");
+    _dwin.HienThiSegmentDangChay("");
+    _dwin.HienThiVongLapChuongTrinhConLai("");
+    _dwin.HienThiIconSegment(false);
+    _dwin.setBrightness(40);
+    _dwin.XoaDoThi();
+    xSemaphoreGive(SemaCaiDatHeater);
+    _dwin.HienThiThongTinVersion(__TIME__);
+    _dwin.SetupDoThiNho(BaseProgram);
+    delay(1000);
+    _dwin.setPage(_HomePage);
+
+}
+
+void loop() {
+
+    delay(1000);
+
+    // Nếu RAM còn trống 70000 byte thì mới thực hiện GET POST
+    // if (esp_get_free_heap_size() > 20000)
+    // {
+    // loop_PostGet();
+    // loopMQTT();
+    // if(WiFi.status() == WL_CONNECTED) {
+    //     http.begin()
+    // }
+    // delay(1000);
+    //     if (dataQueue != NULL)
+    //     {
+    //         PIDData data;
+    //         if (xQueueReceive(dataQueue, &data, 0) == pdTRUE)
+    //         {
+    //             sendData(&data);
+    //         }
+    //     }
+    // }
+    // else {
+    //     delay(10);
+    // }
+}
+
+void khoiTaoRTC() {
+    _time.begin();
+    _time.getCurrentTime();  // Gọi hàm này trước khi get thời gian
+    setTimeFromRTC(_time.getYear(), _time.getMonth(), _time.getDay(), _time.getHour(), _time.getMinute(), _time.getSecond());
+    struct tm tmstruct;
+    delay(1000);
+    tmstruct.tm_year = 0;
+    getLocalTime(&tmstruct, 5000);
+    Serial.printf(
+        "\nNow is : %d-%02d-%02d %02d:%02d:%02d\n", (tmstruct.tm_year) + 1900, (tmstruct.tm_mon) + 1, tmstruct.tm_mday, tmstruct.tm_hour, tmstruct.tm_min,
+        tmstruct.tm_sec);
+    Serial.println("");
+}
+void khoiTaoDWIN() {
+    _dwin.KhoiTao();
+    _dwin.CRCEnabled();
+    _dwin.DangKyHamSetCallback(hmiSetEvent);
+    _dwin.DangKyHamGetCallback(hmiGetEvent);
+
+}
+void khoiTaoSDCARD() {
+    // SDMMCFile.begin();
+    SD_MMC.setPins(clk, cmd, d0);
+    if (!SD_MMC.begin("/sdcard", onebit, true, 4000000)) {
+        Serial.println("Mount Failed");
+    }
+    else {
+        Serial.println("SD_MMC initialized successfully");
+        checkAndResumeUpdates(SD_MMC);
+        SDMMCFile.setFileSystem(SD_MMC);
+        TaoCacThuMucHeThongTrenSD();
+    }
+    delay(1000);
+    listFilesInProgramDirectory();
+
+    USB_MSC_HOST.begin();
+    UsbFile.setFileSystem(USB_MSC_HOST);
+    delay(1000);
+    if (USB_MSC_HOST.isConnected()) {
+        checkAndResumeUpdates(USB_MSC_HOST);
+    }
+
+    // Khôi phục thông số hệ thống
+    // Khôi phục danh sách hệ số calib.
+    if (SDMMCFile.exists(PATH_CALIB_DATA)) {
+        DanhSachHeSoCalib.resize(SDMMCFile.sizeFile(PATH_CALIB_DATA) / sizeof(CalibData_t));
+        if (SDMMCFile.readFile(PATH_CALIB_DATA, (uint8_t*)DanhSachHeSoCalib.data(), SDMMCFile.sizeFile(PATH_CALIB_DATA))) {
+            for (CalibData_t HeSoCalib : DanhSachHeSoCalib) {
+                Serial.printf("Setpoint: %.1f, value: %.2f\n", HeSoCalib.Setpoint, HeSoCalib.value);
+            }
+        }
+    }
+
+    // Khôi phục thông số chương trình cơ sở.
+    if (SDMMCFile.exists(PATH_BASEPROGRAM_DATA)) {
+        SDMMCFile.readFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
+    }
+    else {
+        BaseProgram.programData.setPointTemp = 37;
+        BaseProgram.programData.setPointCO2 = 5;
+        BaseProgram.programData.fanSpeed = 50;
+        BaseProgram.programData.delayOffDay = 0;
+        BaseProgram.programData.delayOffHour = 1;
+        BaseProgram.programData.delayOffMinute = 0;
+        // BaseProgram.programData.flap = 10;
+        BaseProgram.programData.tempMax = 1;
+        BaseProgram.programData.tempMin = -1;
+        BaseProgram.programData.CO2Max = 1.1;
+        BaseProgram.programData.CO2Min = -1.1;
+        BaseProgram.machineState = false;
+        BaseProgram.delayOffState = false;
+        SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
+    }
+
+    if (SDMMCFile.exists(PATH_RECORD)) {
+        RecordData_t data;
+        int filesize = SDMMCFile.sizeFile(PATH_RECORD);
+        for (int i = 0; i < filesize / sizeof(data); i++) {
+            SDMMCFile.readFile(PATH_RECORD, (uint8_t*)&data, sizeof(data), i * sizeof(data));
+            // Serial.printf("SP: %.1f, Value: %.1f, Fan: %u, Flap: %u\n", data.setpoint, data.value, data.fan, data.flap);
+            Serial.printf("SP: %.1f, Value: %.1f, Fan: %u\n", data.setpointTemp, data.valueTemp, data.fan);
+        }
+    }
+
+    if (!SDMMCFile.exists("/usbmode.txt")) {
+        uint8_t mode = 0;
+        SDMMCFile.writeFile("/usbmode.txt", (uint8_t*)&mode, sizeof(mode));
+    }
+    else {
+        uint8_t mode;
+        SDMMCFile.readFile("/usbmode.txt", (uint8_t*)&mode, sizeof(mode));
+        if (mode == 0) {
+        }
+        else if (mode == 1) {
+            USB_MSC_HOST.end();
+            delay(1000);
+            sd2usbmsc_init();
+        }
+    }
+
+    if (SDMMCFile.exists(ADMIN_PASSWORD)) {
+        Serial.print("Khoi phuc mat khau admin: ");
+        String admin_password = SDMMCFile.readFile(ADMIN_PASSWORD);
+        _dwin.ThayDoiUserAdminPassword(admin_password);
+        Serial.println(admin_password);
+    }
+
+    // Test log
+    initLogFileState(SD_MMC);
+
+    if (SDMMCFile.exists(WIFICONFIG_PATH)) {
+        SDMMCFile.readFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
+        WifiSSID = String(WiFiConfig.ssid);
+        WifiPassword = String(WiFiConfig.password);
+        _dwin.HienThiSSIDWiFi(WifiSSID);
+        _dwin.HienThiPasswordWiFi(WifiPassword);
+        Serial.print("Thong tin Wifi");
+        Serial.println(WifiSSID);
+        Serial.println(WifiPassword);
+        if (WiFiConfig.state) {
+            xSemaphoreGive(SemaKetNoiWiFi);
+        }
+    }
+
+}
+void khoiTaoHeater() {
+    _Heater.KhoiTao();
+    // bật quạt
+    _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
+    _Heater.TurnOnTriac();
+}
+void khoiTaoCO2() {
+    _CO2.KhoiTaoCO2();
+}
+void khoiTaoCua() {
+    _Door.KhoiTao();
+    _Door.addCloseFuncCallBack(callBackCloseDoor, NULL);
+    _Door.addOpenFuncCallBack(callBackOpenDoor, NULL);
+}
+void callBackOpenDoor(void* ptr) {
+    //!check ptr trước khi dùng nhá 
+    Serial.printf("Open door\n");
+}
+void callBackCloseDoor(void* ptr) {
+    //!check ptr trước khi dùng nhá 
+    Serial.printf("Clo door\n");
+
+}
+
+float GetCalib(float value) {
+    for (CalibData_t HeSoCalib : DanhSachHeSoCalib) {
+        if (fabs(HeSoCalib.Setpoint - value) < 0.02) {
+            // Serial.printf("Setpoint: %.1f, value: %.2f\n", HeSoCalib.Setpoint, HeSoCalib.value);
+            return HeSoCalib.value;
+        }
+    }
+    return 0;
+}
+bool DemThoiGianChay(bool reset, bool DemXuong) {
+    static time_t timeRun;
+    // Serial.println("Gửi thời gian đếm");
+    if (reset) {
+        _time.reset();
+        if (DemXuong) {
+            _time.start(BaseProgram.programData.delayOffDay * 86400 + BaseProgram.programData.delayOffHour * 3600 + BaseProgram.programData.delayOffMinute * 60, true);
+            _dwin.HienThiThoiGianChay(BaseProgram.programData.delayOffDay, BaseProgram.programData.delayOffHour, BaseProgram.programData.delayOffMinute, 0);
+            _dwin.HienThiIconOnOffDelayOff(true);
+        }
+        else {
+            _time.start(BaseProgram.programData.delayOffDay * 86400 + BaseProgram.programData.delayOffHour * 3600 + BaseProgram.programData.delayOffMinute * 60);
+            _dwin.HienThiIconOnOffDelayOff(false);
+        }
+    }
+    else {
+        if (DemXuong) {
+            timeRun = _time.getRemainingTime();  // Lấy thời gian còn lại
+        }
+        else {
+            timeRun = _time.getElapsedTime();  // Lấy thời gian đang đếm
+        }
+        _dwin.HienThiThoiGianChay((int)timeRun / 86400, (int)timeRun % 86400 / 3600, (int)timeRun % 86400 % 3600 / 60, (int)timeRun % 86400 % 3600 % 60);
+    }
+    if (_time.isFinished()) {
+        return false;
+    }
+    return true;
+}
 
 void setTimeFromRTC(int year, int month, int day, int hour, int minute, int second) {
     struct tm timeinfo;
@@ -185,9 +497,6 @@ void hmiSetEvent(const hmi_set_event_t& event) {
                 DemThoiGianChay(true, DEM_LEN);
                 // _time.reset();
             }
-
-            digitalWrite(RELAY_PIN, HIGH);
-            _CO2.BatDieuKhienCO2();
             _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
             xSemaphoreGive(SemaCaiDatHeater);
         }
@@ -199,8 +508,6 @@ void hmiSetEvent(const hmi_set_event_t& event) {
             else {
                 _dwin.HienThiThoiGianChay("Inf");
             }
-            digitalWrite(RELAY_PIN, LOW);
-            _CO2.TatDieuKhienCO2();
             _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
             xSemaphoreGive(SemaCaiDatHeater);
         }
@@ -609,8 +916,10 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         }
         break;
     case HMI_EXPORT_DATA:
-        xSemaphoreGive(SemaExportData);
-        Serial.println("Copy");
+        if (TaskExportDataHdl != NULL) {
+            Serial.println("Resume: TaskExportDataHdl");
+            vTaskResume(TaskExportDataHdl);
+        }
         break;
     case HMI_SET_SSID:
         Serial.print("SSID: ");
@@ -665,6 +974,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         ThoiGian2LanChamThanhCuon = millis();
         break;
     case HMI_CONNECT_OR_DISCONNECT_WIFI:
+        Serial.println("HMI_CONNECT_OR_DISCONNECT_WIFI");
         xSemaphoreGive(SemaKetNoiWiFi);
         break;
     case HMI_CHANGE_ADMIN_PASSWORD:
@@ -913,78 +1223,235 @@ HienThiSegmentList:
     return 1;
 }
 
-bool DemThoiGianChay(bool reset, bool DemXuong) {
-    static time_t timeRun;
-    // Serial.println("Gửi thời gian đếm");
-    if (reset) {
-        _time.reset();
-        if (DemXuong) {
-            _time.start(BaseProgram.programData.delayOffDay * 86400 + BaseProgram.programData.delayOffHour * 3600 + BaseProgram.programData.delayOffMinute * 60, true);
-            _dwin.HienThiThoiGianChay(BaseProgram.programData.delayOffDay, BaseProgram.programData.delayOffHour, BaseProgram.programData.delayOffMinute, 0);
-            _dwin.HienThiIconOnOffDelayOff(true);
-        }
-        else {
-            _time.start(BaseProgram.programData.delayOffDay * 86400 + BaseProgram.programData.delayOffHour * 3600 + BaseProgram.programData.delayOffMinute * 60);
-            _dwin.HienThiIconOnOffDelayOff(false);
-        }
-    }
-    else {
-        if (DemXuong) {
-            timeRun = _time.getRemainingTime();  // Lấy thời gian còn lại
-        }
-        else {
-            timeRun = _time.getElapsedTime();  // Lấy thời gian đang đếm
-        }
-        _dwin.HienThiThoiGianChay((int)timeRun / 86400, (int)timeRun % 86400 / 3600, (int)timeRun % 86400 % 3600 / 60, (int)timeRun % 86400 % 3600 % 60);
-    }
-    if (_time.isFinished()) {
-        return false;
-    }
-    return true;
+void TaoCacThuMucHeThongTrenSD(void) {
+    // program, log
+    SDMMCFile.createDir("/program");
+    SDMMCFile.createDir("/log");
+    SDMMCFile.createDir("/Update");
+    SDMMCFile.createDir("/Update/Firmware");
+    SDMMCFile.createDir("/Update/HMI");
+    SDMMCFile.createDir("/UpdateStatus");
 }
 
-// float GetCalib(float value)
-// {
-//     for (CalibData_t HeSoCalib : DanhSachHeSoCalib)
-//     {
-//         if (fabs(HeSoCalib.Setpoint - value) < 0.02)
-//         {
-//             // Serial.printf("Setpoint: %.1f, value: %.2f\n", HeSoCalib.Setpoint, HeSoCalib.value);
-//             return HeSoCalib.value;
-//         }
-//     }
-//     return 0;
-// }
-
-int values[500];
-void TaskHienThiNhietDoVaVeDoThi(void*) {
-    TickType_t xLastWakeTime;
-    // const TickType_t xFrequency = pdMS_TO_TICKS(1000);
-    int countTime = 0;
-    int32_t preTime = millis();
-
-    static int valueIdx = 0;
-    char timeText[10];
-    int length = 0;
-    int LogFileSize;
-    RecordData_t data;
-
-    // Initialise the xLastWakeTime variable with the current time.
-    xLastWakeTime = xTaskGetTickCount();
+void TaskExportData(void*) {
+    vTaskSuspend(NULL);
     for (;;) {
-        // if (millis() - preTime >= 1000) {
-        // preTime = millis();
-        RTCnow = _time.getCurrentTime();
-        _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
-        _dwin.VeDoThiBase(BaseProgram);
-        if (countTime % BUOC_NHAY_DO_THI == 0) {
-            if (FlagVeDoThi) {
-
-            }
-
+        if (!USB_MSC_HOST.isConnected()) {
+            _dwin.HienThiPhanTramThanhLoading("Fail");
+            _dwin.HienThiThanhLoading(0);
+            continue;
         }
-        if (countTime % 60 == 0) {
-            countTime = 0;
+        copyFiles(USB_MSC_HOST, SD_MMC);  // Test
+        delay(1000);
+        Serial.println("Copy done");
+        vTaskSuspend(NULL);
+        // UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+        // Serial.printf("%s: Task's stack high water mark: %lu words\n", __func__, stackHighWaterMark);
+    }
+}
+
+void TaskUpdateFirmware(void*) {
+    MethodUpdates_t method;
+    for (;;) {
+        xQueueReceive(QueueUpdateFirmware, &method, portMAX_DELAY);
+        Serial.printf("%s nhận phương thứ update: %s", __func__, method == MAIN_UPDATE_USB ? "USB" : "FOTA");
+
+        
+        if (TaskMainHdl != NULL) {
+            Serial.println("Suspend: TaskMainHdl");
+            vTaskSuspend(TaskMainHdl);
+        }
+        if (TaskHMIHdl != NULL) {
+            Serial.println("Suspend: TaskHMI");
+            vTaskSuspend(TaskHMIHdl);
+        }
+        if (TaskExportDataHdl != NULL) {
+            Serial.println("Suspend: TaskExportDataHdl");
+            vTaskSuspend(TaskExportDataHdl);
+        }
+
+        if (method == MAIN_UPDATE_USB) {
+            if (USB_MSC_HOST.isConnected()) {
+                // Kết thúc SD_MMC trước khi cập nhật để tránh lỗi
+                SD_MMC.end();
+
+                // Update firmware
+                updateFirmware(USB_MSC_HOST);
+
+                // Update HMI
+                updateHMI(USB_MSC_HOST);
+
+                _dwin.HienThiWarning("Done", _WarningPage);
+                delay(1000);
+                _dwin.HienThiWarning("Restart after 2s", _WarningPage);
+                delay(1000);
+                _dwin.HienThiWarning("Restart after 1s", _WarningPage);
+                delay(1000);
+                _dwin.HienThiWarning("Restarting...", _WarningPage);
+                ESP.restart();
+            }
+        }
+        else if (method == MAIN_UPDATE_FOTA) {
+            Serial.println("Current Version: " + convertDateToVersion(__DATE__));
+            if (!downloadUpdatesFromJson(SD_MMC)) {
+                Serial.println("Error downloading updates or no new version available");
+                _dwin.HienThiWarning("No new version available", _UpdatePage);
+                // _dwin.setPage(_HomePage);
+                vTaskDelete(NULL);
+                // continue;
+            }
+            else {
+
+                // Kết thúc SD_MMC trước khi cập nhật để tránh lỗi
+                // SD_MMC.end();
+
+                // Update firmware
+                updateFirmware(SD_MMC);
+
+                // Update HMI
+                updateHMI(SD_MMC);
+                SD_MMC.end();
+
+                _dwin.HienThiWarning("Done", _WarningPage);
+                delay(1000);
+                _dwin.HienThiWarning("Restart after 2s", _WarningPage);
+                delay(1000);
+                _dwin.HienThiWarning("Restart after 1s", _WarningPage);
+                delay(1000);
+                _dwin.HienThiWarning("Restarting...", _WarningPage);
+                ESP.restart();
+            }
+        }
+
+
+        if (TaskMainHdl != NULL) {
+            vTaskResume(TaskMainHdl);
+        }
+        else {
+            ESP.restart();
+        }
+        if (TaskHMIHdl != NULL) {
+            vTaskResume(TaskHMIHdl);
+        }
+        else {
+            ESP.restart();
+        }
+        if (TaskExportDataHdl != NULL) {
+            vTaskResume(TaskExportDataHdl);
+        }
+        else {
+            ESP.restart();
+        }
+
+    }
+}
+
+// truc them
+// Sửa lại các hàm icon, hiển thị gọi bên HMI.h
+void TaskKetNoiWiFi(void*) {
+    for (;;) {
+        xSemaphoreTake(SemaKetNoiWiFi, portMAX_DELAY);
+        Serial.println("TaskKetNoiWiFi RUN");
+        _dwin.HienThiTrangThaiKetNoiWiFi("");
+        if (WiFi.status() != WL_CONNECTED) {
+            // Kết nối Wi-Fi
+            WiFi.begin(WifiSSID.c_str(), WifiPassword.c_str());
+            Serial.println("Connecting to " + WifiSSID);
+            _dwin.HienThiTrangThaiKetNoiWiFi("Connecting to " + WifiSSID);
+
+            uint8_t u8Try = 15;
+            while (WiFi.status() != WL_CONNECTED && u8Try--) {
+                _dwin.setVP(_VPAddressIonConnect, 2);
+                _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
+
+                strcpy(WiFiConfig.ssid, WifiSSID.c_str());
+                strcpy(WiFiConfig.password, WifiPassword.c_str());
+                WiFiConfig.state = true;
+                SDMMCFile.writeFile("/WiFiConfig.txt", (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
+                _dwin.HienThiTrangThaiKetNoiWiFi("Connected, MAC: " + String(WiFi.macAddress()));
+                // setup_PostGet();
+                // setupMQTT();
+                // Create queue
+                dataQueue = xQueueCreate(10, sizeof(PIDData));
+                if (dataQueue == NULL) {
+                    Serial.println("Failed to create queue");
+                }
+                delay(1000);
+            }
+            if (WiFi.status() != WL_CONNECTED) {
+                _dwin.setVP(_VPAddressIonConnect, 0);
+                _dwin.HienThiTrangThaiKetNoiWiFi("Failed to connect");
+                continue;
+            }
+        }
+        else {
+            WiFi.disconnect();
+            delay(100);
+            if (WiFi.status() != WL_CONNECTED) {
+                _dwin.setVP(_VPAddressIonConnect, 0);
+                _dwin.setVP(_VPAddressIconWiFi, 0);
+                WiFiConfig.state = false;
+                SDMMCFile.writeFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
+            }
+        }
+        UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+        Serial.printf("%s: Task's stack high water mark: %lu words\n", __func__, stackHighWaterMark);
+    }
+}
+
+// Task này dùng để xử lý trong quá trình tủ chạy như là chuyển segment của program,
+// Tắt tủ khi hết thời
+// Hiển thị Icon xự kiện USB
+// Chạy các chế độ tiệt trùng, program, quick mode
+// quyết định nội dụng hiển thị task HMI
+void TaskMain(void*) {
+    bool FlagUSB = false;
+    TickType_t xLastWakeTime;
+    xLastWakeTime = xTaskGetTickCount();
+
+    FrameDataQueue_t sendData = {
+        .pvData = NULL,
+    };
+
+    uint16_t chuKyVeDoThi = 0; // 10s 
+    uint16_t chuKyWarning = 0; // 60s
+    uint16_t chuKyRefresh = 0; // 120s 
+    uint16_t chuKyRecord = 0; // 60s
+
+    while (1) {
+
+        // *LỆNH CHO HMI
+        // lệnh kiểm tra USB chu kỳ 1s 1 lần 
+        sendData.event = eEVENT_ICON_USB;
+        xQueueSend(recvHMIQueue, &sendData, 10);
+        // lệnh đọc cảm biến chu kỳ 1s 1 lần
+        sendData.event = eEVENT_HIEN_THI_GIA_TRI_CAM_BIEN;
+        xQueueSend(recvHMIQueue, &sendData, 10);
+        // lệnh cho thời gian chu kỳ 1s 1 lần
+        sendData.event = eEVENT_HIEN_THI_THOI_GIAN;
+        xQueueSend(recvHMIQueue, &sendData, 10);
+
+        // lệnh cho đồ thị chu kỳ riêng
+        if (chuKyVeDoThi >= 30) {
+            chuKyVeDoThi = 0;
+            sendData.event = eEVENT_VE_DO_THI;
+            xQueueSend(recvHMIQueue, &sendData, 10);
+        }
+        // lệnh cho warning
+        if (chuKyWarning >= 120) {
+            chuKyWarning = 0;
+            sendData.event = eEVENT_WARNING;
+            xQueueSend(recvHMIQueue, &sendData, 10);
+        }
+        // lệnh cho refesh
+        if (chuKyRefresh >= 600) {
+            chuKyRefresh = 0;
+            sendData.event = eEVENT_REFRESH;
+            xQueueSend(recvHMIQueue, &sendData, 10);
+        }
+        // chu kỳ record
+        if (chuKyRecord >= 60) {
+            chuKyRecord = 0;
             RecordData_t record;
             record.setpointTemp = BaseProgram.programData.setPointTemp;
             record.setpointCO2 = BaseProgram.programData.setPointCO2;
@@ -1000,262 +1467,10 @@ void TaskHienThiNhietDoVaVeDoThi(void*) {
             writeRecord(SD_MMC, record);  // Test
             // SDMMCFile.appendFile("/TestDothi1.dat", (uint8_t *)&record, sizeof(record));
         }
-        countTime++;
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10 * 1000));
-    }
-}
-
-void TaskXuLyCanhBao(void*) {
-    bool TT_CanhBaoNhietDoCao = false;
-    bool TT_CanhBaoNhietDoThap = false;
-    bool TT_CanhBaoLoiCamBien = false;
-
-    for (;;) {
-        if (FlagNhietDoXacLap && BaseProgram.machineState) {
-            if (BaseProgram.temperature > 350 && TT_CanhBaoLoiCamBien == false) {
-                _dwin.HienThiWarning("Err: Temperature sensor", _HomePage);
-                _dwin.Buzzer(160);
-                TT_CanhBaoLoiCamBien = true;
-            }
-            else if (BaseProgram.temperature < 350) {
-                TT_CanhBaoLoiCamBien = false;  // Reset lại khi cảm biến bình thường
-            }
-
-            if (BaseProgram.temperature >= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMax && TT_CanhBaoNhietDoCao == false && TT_CanhBaoLoiCamBien == false && FlagNhietDoXacLap == true) {
-                TT_CanhBaoNhietDoCao = true;
-                _dwin.HienThiWarning("Alarm: Overheat", _HomePage);
-                _dwin.Buzzer(160);
-            }
-            else if (BaseProgram.temperature <= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMin && TT_CanhBaoNhietDoThap == false && TT_CanhBaoLoiCamBien == false && FlagNhietDoXacLap == true) {
-                TT_CanhBaoNhietDoThap = true;
-                _dwin.HienThiWarning("Alarm: Underheat", _HomePage);
-                _dwin.Buzzer(160);
-            }
-            else if (BaseProgram.temperature < BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMax && BaseProgram.temperature > BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMin && TT_CanhBaoLoiCamBien == false) {
-                TT_CanhBaoNhietDoCao = false;   // Reset cảnh báo nhiệt độ cao
-                TT_CanhBaoNhietDoThap = false;  // Reset cảnh báo nhiệt độ thấp
-            }
-        }
-        CapNhatTrangThaiHeater();
-
-        //hiện CO2
-        BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
-        if (BaseProgram.CO2 >= -0.5f && BaseProgram.CO2 <= 30.0f) {
-            _dwin.HienThiCO2(BaseProgram.CO2);
-        }
-        else {
-            _dwin.HienThiCO2("err");
-        }
-        // cập nhật ICON VAN 
-        if (_CO2.LayTrangThaiVan() == 1) {
-            _dwin.HienThiIconVanCO2(1);
-        }
-        else {
-            _dwin.HienThiIconVanCO2(0);
-        }
-        delay(500);
-    }
-}
-
-void TaskExportData(void*) {
-    for (;;) {
-        if (xSemaphoreTake(SemaExportData, portMAX_DELAY) == pdTRUE) {
-            if (!USB_MSC_HOST.isConnected()) {
-                _dwin.HienThiPhanTramThanhLoading("Fail");
-                _dwin.HienThiThanhLoading(0);
-                continue;
-            }
-            copyFiles(USB_MSC_HOST, SD_MMC);  // Test
-        }
-        // UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
-        // Serial.printf("%s: Task's stack high water mark: %lu words\n", __func__, stackHighWaterMark);
-    }
-}
-
-void TaskUpdateFirmware(void*) {
-    for (;;) {
-        MethodUpdates_t method;
-        if (QueueUpdateFirmware != NULL) {
-            if (xQueueReceive(QueueUpdateFirmware, &method, portMAX_DELAY) == pdPASS) {
-                if (TaskCanhBaoHdl != NULL) {
-                    Serial.println("Suspend: TaskCanhBaoHdl");
-                    vTaskSuspend(TaskCanhBaoHdl);
-                }
-                if (TaskEspnowHdl != NULL) {
-                    Serial.println("Suspend: TaskEspnowHdl");
-                    vTaskSuspend(TaskEspnowHdl);
-                }
-                if (TaskVeDoThiHdl != NULL) {
-                    Serial.println("Suspend: TaskVeDoThiHdl");
-                    vTaskSuspend(TaskVeDoThiHdl);
-                }
-                if (TaskExportDataHdl != NULL) {
-                    Serial.println("Suspend: TaskExportDataHdl");
-                    vTaskSuspend(TaskExportDataHdl);
-                }
-
-                if (method == MAIN_UPDATE_USB) {
-                    if (USB_MSC_HOST.isConnected()) {
-                        // Kết thúc SD_MMC trước khi cập nhật để tránh lỗi
-                        SD_MMC.end();
-
-                        // Update firmware
-                        updateFirmware(USB_MSC_HOST);
-
-                        // Update HMI
-                        updateHMI(USB_MSC_HOST);
-
-                        _dwin.HienThiWarning("Done", _WarningPage);
-                        delay(1000);
-                        _dwin.HienThiWarning("Restart after 2s", _WarningPage);
-                        delay(1000);
-                        _dwin.HienThiWarning("Restart after 1s", _WarningPage);
-                        delay(1000);
-                        _dwin.HienThiWarning("Restarting...", _WarningPage);
-                        ESP.restart();
-                    }
-                }
-                else if (method == MAIN_UPDATE_FOTA) {
-                    Serial.println("Current Version: " + convertDateToVersion(__DATE__));
-                    if (!downloadUpdatesFromJson(SD_MMC)) {
-                        Serial.println("Error downloading updates or no new version available");
-                        _dwin.HienThiWarning("No new version available", _UpdatePage);
-                        // _dwin.setPage(_HomePage);
-                        vTaskDelete(NULL);
-                        // continue;
-                    }
-                    else {
-
-                        // // Kết thúc SD_MMC trước khi cập nhật để tránh lỗi
-                        // SD_MMC.end();
-
-                        // Update firmware
-                        updateFirmware(SD_MMC);
-
-                        // Update HMI
-                        updateHMI(SD_MMC);
-                        SD_MMC.end();
-
-                        _dwin.HienThiWarning("Done", _WarningPage);
-                        delay(1000);
-                        _dwin.HienThiWarning("Restart after 2s", _WarningPage);
-                        delay(1000);
-                        _dwin.HienThiWarning("Restart after 1s", _WarningPage);
-                        delay(1000);
-                        _dwin.HienThiWarning("Restarting...", _WarningPage);
-                        ESP.restart();
-                    }
-                }
-
-                if (TaskEspnowHdl != NULL) {
-                    vTaskResume(TaskEspnowHdl);
-                }
-                else {
-                    ESP.restart();
-                }
-                if (TaskVeDoThiHdl != NULL) {
-                    vTaskResume(TaskVeDoThiHdl);
-                }
-                else {
-                    ESP.restart();
-                }
-                if (TaskCanhBaoHdl != NULL) {
-                    vTaskResume(TaskCanhBaoHdl);
-                }
-                else {
-                    ESP.restart();
-                }
-                if (TaskExportDataHdl != NULL) {
-                    vTaskResume(TaskExportDataHdl);
-                }
-                else {
-                    ESP.restart();
-                }
-            }
-        }
-        delay(100);
-    }
-}
-
-// truc them
-// Sửa lại các hàm icon, hiển thị gọi bên HMI.h
-void TaskKetNoiWiFi(void*) {
-    for (;;) {
-        if (xSemaphoreTake(SemaKetNoiWiFi, 5000 / portTICK_PERIOD_MS) == pdTRUE) {
-            _dwin.HienThiTrangThaiKetNoiWiFi("");
-            if (WiFi.status() != WL_CONNECTED) {
-                // Kết nối Wi-Fi
-                WiFi.begin(WifiSSID.c_str(), WifiPassword.c_str());
-                Serial.println("Connecting to " + WifiSSID);
-                _dwin.HienThiTrangThaiKetNoiWiFi("Connecting to " + WifiSSID);
-                for (uint8_t i = 0; i < 15; i++) {
-                    if (WiFi.status() == WL_CONNECTED) {
-                        _dwin.setVP(_VPAddressIonConnect, 2);
-                        _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
-
-                        strcpy(WiFiConfig.ssid, WifiSSID.c_str());
-                        strcpy(WiFiConfig.password, WifiPassword.c_str());
-                        WiFiConfig.state = true;
-                        SDMMCFile.writeFile("/WiFiConfig.txt", (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
-                        _dwin.HienThiTrangThaiKetNoiWiFi("Connected, MAC: " + String(WiFi.macAddress()));
-                        // setup_PostGet();
-                        // setupMQTT();
-                        // Create queue
-                        dataQueue = xQueueCreate(10, sizeof(PIDData));
-                        if (dataQueue == NULL) {
-                            Serial.println("Failed to create queue");
-                        }
-                        break;
-                    }
-                    delay(1000);
-                }
-                if (WiFi.status() != WL_CONNECTED) {
-                    _dwin.setVP(_VPAddressIonConnect, 0);
-                    _dwin.HienThiTrangThaiKetNoiWiFi("Failed to connect");
-                    continue;
-                }
-            }
-            else {
-                WiFi.disconnect();
-                delay(100);
-                if (WiFi.status() != WL_CONNECTED) {
-                    _dwin.setVP(_VPAddressIonConnect, 0);
-                    _dwin.setVP(_VPAddressIconWiFi, 0);
-                    WiFiConfig.state = false;
-                    SDMMCFile.writeFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
-                }
-            }
-            UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
-            Serial.printf("%s: Task's stack high water mark: %lu words\n", __func__, stackHighWaterMark);
-        }
-        else {
-            if (WiFi.status() == WL_CONNECTED) {
-                _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
-            }
-            else {
-                _dwin.setVP(_VPAddressIconWiFi, 0);
-            }
-        }
-    }
-}
-
-// Task này dùng để xử lý trong quá trình tủ chạy như là chuyển segment của program,
-// Tắt tủ khi hết thời
-// Hiển thị Icon xự kiện USB
-// Chạy các chế độ tiệt trùng, program, quick mode
-void TaskMain(void*) {
-    bool FlagUSB = false;
-    for (;;) {
-
-        // Phần xử lý hiển thị icon usb
-        if (FlagUSB == false && USB_MSC_HOST.isConnected()) {
-            FlagUSB = true;
-            _dwin.HienThiIconUSB(FlagUSB);
-        }
-        else if (FlagUSB == true && !USB_MSC_HOST.isConnected()) {
-            FlagUSB = false;
-            _dwin.HienThiIconUSB(FlagUSB);
-        }
+        chuKyRecord++;
+        chuKyRefresh++;
+        chuKyVeDoThi++;
+        chuKyWarning++;
 
         // Phần xác định nhiệt độ đã xác lập hay chưa
         if (fabs(BaseProgram.temperature - BaseProgram.programData.setPointTemp) <= 0.15 &&
@@ -1297,6 +1512,7 @@ void TaskMain(void*) {
         // if(RunMode == PROGRAM_MODE && SwitchSegment == true && BaseProgram.machineState == true)
         // if (RunMode == PROGRAM_MODE && SwitchSegment == true)
         if (SwitchSegment == true) {
+            Serial.println("SwitchSegment");
             SwitchSegment = false;
             if (RunMode == PROGRAM_MODE) {
                 if (CurrentProgram.size() > RunningSegmentIndex) {
@@ -1359,264 +1575,145 @@ void TaskMain(void*) {
                 }
             }
         }
-
-        delay(999);
+        if (BaseProgram.machineState == true) {
+            _Heater.BatDieuKhienNhietDo();
+            digitalWrite(RELAY_PIN, HIGH);
+            _CO2.BatDieuKhienCO2();
+        }
+        else if (BaseProgram.machineState == false) {
+            _Heater.TatDieuKhienNhietDo();
+            digitalWrite(RELAY_PIN, LOW);
+            _CO2.TatDieuKhienCO2();
+        }
+        _Heater.CaiDatNhietDo(BaseProgram.programData.setPointTemp);
+        _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
+        _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
+        _CO2.CaiNongDoCO2(BaseProgram.programData.setPointCO2);
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
         // UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
         // Serial.printf("%s: Task's stack high water mark: %lu words\n", __func__, stackHighWaterMark);
     }
 }
 
-void TaoCacThuMucHeThongTrenSD(void) {
-    // program, log
-    SDMMCFile.createDir("/program");
-    SDMMCFile.createDir("/log");
-    SDMMCFile.createDir("/Update");
-    SDMMCFile.createDir("/Update/Firmware");
-    SDMMCFile.createDir("/Update/HMI");
-    SDMMCFile.createDir("/UpdateStatus");
-}
+void TaskHMI(void*) {
+    FrameDataQueue_t data;
+    while (1) {
+        xQueueReceive(recvHMIQueue, &data, portMAX_DELAY);
+        Serial.printf("%s nhận event: %d, data nhận được %s\n", __func__, data.event, data.pvData == NULL ? "NULL" : "NOT NULL");
 
-void setup() {
-    Serial.begin(115200);
-
-    pinMode(RELAY_PIN, OUTPUT);
-    digitalWrite(RELAY_PIN, LOW);
-    delay(1000);
-
-    /*------------------------------------RTC-----------------------------------*/
-    // Kiểm tra kết nối DS3231
-    Wire.begin(10, 11);
-
-    // Wire.begin(8, 9);
-
-    _time.begin();
-    _time.getCurrentTime();  // Gọi hàm này trước khi get thời gian
-    setTimeFromRTC(_time.getYear(), _time.getMonth(), _time.getDay(), _time.getHour(), _time.getMinute(), _time.getSecond());
-    struct tm tmstruct;
-    delay(1000);
-    tmstruct.tm_year = 0;
-    getLocalTime(&tmstruct, 5000);
-    Serial.printf(
-        "\nNow is : %d-%02d-%02d %02d:%02d:%02d\n", (tmstruct.tm_year) + 1900, (tmstruct.tm_mon) + 1, tmstruct.tm_mday, tmstruct.tm_hour, tmstruct.tm_min,
-        tmstruct.tm_sec);
-    Serial.println("");
-
-    _dwin.KhoiTao();
-    _dwin.CRCEnabled();
-    _dwin.DangKyHamSetCallback(hmiSetEvent);
-    _dwin.DangKyHamGetCallback(hmiGetEvent);
-
-    // SDMMCFile.begin();
-    SD_MMC.setPins(clk, cmd, d0);
-    if (!SD_MMC.begin("/sdcard", onebit, true, 4000000)) {
-        Serial.println("Mount Failed");
-    }
-    else {
-        Serial.println("SD_MMC initialized successfully");
-        checkAndResumeUpdates(SD_MMC);
-        SDMMCFile.setFileSystem(SD_MMC);
-        TaoCacThuMucHeThongTrenSD();
-    }
-    delay(1000);
-    listFilesInProgramDirectory();
-
-    USB_MSC_HOST.begin();
-    UsbFile.setFileSystem(USB_MSC_HOST);
-    delay(1000);
-    if (USB_MSC_HOST.isConnected()) {
-        checkAndResumeUpdates(USB_MSC_HOST);
-    }
-
-    // Khởi tạo SD_MMC
-    // Serial.println("Mounting SDcard");
-    // SPI.begin(sck, miso, mosi, cs);
-    // if (!SD.begin(cs, SPI, 8000000)) {
-    //     Serial.println("Card Mount Failed");
-    //     // return;
-    // }
-    // else {
-    //     checkAndResumeUpdates(SD);
-    // }
-
-    KhoiTaoHeater();
-    delay(10);
-    _CO2.KhoiTaoCO2();
-    delay(10);
-
-    // Khôi phục thông số hệ thống
-    // Khôi phục danh sách hệ số calib.
-    if (SDMMCFile.exists(PATH_CALIB_DATA)) {
-        DanhSachHeSoCalib.resize(SDMMCFile.sizeFile(PATH_CALIB_DATA) / sizeof(CalibData_t));
-        if (SDMMCFile.readFile(PATH_CALIB_DATA, (uint8_t*)DanhSachHeSoCalib.data(), SDMMCFile.sizeFile(PATH_CALIB_DATA))) {
-            for (CalibData_t HeSoCalib : DanhSachHeSoCalib) {
-                Serial.printf("Setpoint: %.1f, value: %.2f\n", HeSoCalib.Setpoint, HeSoCalib.value);
+        switch ((EventTaskHMI_t)data.event) {
+        case eEVENT_ICON_NHIET:
+            if (_Heater.TrangThaiThanhGiaNhiet() == 1) { // gia nhiet
+                _dwin.HienThiIconGiaNhiet(1);
             }
+            else if (_Heater.TrangThaiThanhGiaNhiet() == 0) {
+                _dwin.HienThiIconGiaNhiet(0);
+            }
+            break;
+        case eEVENT_ICON_CO2:
+            if (_CO2.LayTrangThaiVan() == 1) { // bat van khi
+                _dwin.HienThiIconVanCO2(1);
+            }
+            else if (_CO2.LayTrangThaiVan() == 0) {
+                _dwin.HienThiIconVanCO2(0);
+            }
+            break;
+        case eEVENT_ICON_CUA:
+            if (_Door.TrangThai() == DOOR_CLOSE) {
+                _dwin.HienThiIconCua(0);
+            }
+            else if (_Door.TrangThai() == DOOR_OPEN) {
+                _dwin.HienThiIconCua(1);
+            }
+            break;
+        case eEVENT_ICON_FAN:
+            if (_Heater.TrangThaiQuat() == 1) {
+                _dwin.HienThiIconQuat(1);
+            }
+            else if (_Heater.TrangThaiQuat() == 0) {
+                _dwin.HienThiIconQuat(0);
+            }
+            break;
+        case eEVENT_ICON_USB:
+            if (USB_MSC_HOST.isConnected()) {
+                _dwin.HienThiIconUSB(1);
+            }
+            else {
+                _dwin.HienThiIconUSB(0);
+            }
+            break;
+        case eEVENT_ICON_WIFI:
+            if (WiFi.status() == WL_CONNECTED) {
+                _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
+            }
+            else {
+                _dwin.setVP(_VPAddressIconWiFi, 0);
+            }
+            break;
+        case eEVENT_HIEN_THI_GIA_TRI_CAM_BIEN: // cập nhật 1s
+            BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
+            if (BaseProgram.CO2 >= -0.5f && BaseProgram.CO2 <= 30.0f) {
+                _dwin.HienThiCO2(BaseProgram.CO2);
+            }
+            else {
+                _dwin.HienThiCO2("err");
+            }
+            BaseProgram.temperature = _Heater.LayNhietDoLoc();
+            if (BaseProgram.temperature > -10 && BaseProgram.temperature < 350) {
+                _dwin.HienThiNhietDo(BaseProgram.temperature);
+            }
+            else {
+                _dwin.HienThiNhietDo("err");
+            }
+            break;
+        case eEVENT_HIEN_THI_THOI_GIAN: // cập nhật 1s 
+            RTCnow = _time.getCurrentTime();
+            _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
+            break;
+        case eEVENT_VE_DO_THI: // cập nhật theo chu kỳ riêng (hiện tại 1s)
+            _dwin.VeDoThi(BaseProgram);
+            break;
+        case eEVENT_WARNING: // cập nhật chu kỳ hoặc có lỗi xuất hiện
+            if (BaseProgram.temperature > 350) {
+                _dwin.HienThiWarning("Err: Temperature sensor", _HomePage);
+                _dwin.Buzzer(160);
+            }
+            if (BaseProgram.CO2 > 30) {
+                _dwin.HienThiWarning("Err: CO2 sensor", _HomePage);
+                _dwin.Buzzer(160);
+            }
+
+            if (FlagNhietDoXacLap == true) {
+                if (BaseProgram.temperature >= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMax) {
+                    _dwin.HienThiWarning("Alarm: Overheat", _HomePage);
+                    _dwin.Buzzer(160);
+                }
+                else if (BaseProgram.temperature <= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMin) {
+                    _dwin.HienThiWarning("Alarm: Underheat", _HomePage);
+                    _dwin.Buzzer(160);
+                }
+
+                if (BaseProgram.CO2 >= BaseProgram.programData.setPointCO2 + BaseProgram.programData.CO2Max) {
+                    _dwin.HienThiWarning("Alarm: OverCO2", _HomePage);
+                    _dwin.Buzzer(160);
+                }
+                else if (BaseProgram.CO2 <= BaseProgram.programData.setPointCO2 + BaseProgram.programData.CO2Min) {
+                    _dwin.HienThiWarning("Alarm: UnderCO2", _HomePage);
+                    _dwin.Buzzer(160);
+                }
+            }
+            break;
+        case eEVENT_REFRESH: // ghi lại màn hình sau 10p 
+            Serial.println(BaseProgram.programData.setPointTemp);
+            _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
+            _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
+            _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
+            // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
+            _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
+            break;
+        default:
+            Serial.printf("%s nhận UNDEFINE event \n", __func__);
+            break;
         }
     }
-
-    // Khôi phục thông số chương trình cơ sở.
-    if (SDMMCFile.exists(PATH_BASEPROGRAM_DATA)) {
-        SDMMCFile.readFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
-    }
-    else {
-        BaseProgram.programData.setPointTemp = 37;
-        BaseProgram.programData.setPointCO2 = 5;
-        BaseProgram.programData.fanSpeed = 50;
-        BaseProgram.programData.delayOffDay = 0;
-        BaseProgram.programData.delayOffHour = 1;
-        BaseProgram.programData.delayOffMinute = 0;
-        // BaseProgram.programData.flap = 10;
-        BaseProgram.programData.tempMax = 1;
-        BaseProgram.programData.tempMin = -1;
-        BaseProgram.programData.CO2Max = 1.1;
-        BaseProgram.programData.CO2Min = -1.1;
-        BaseProgram.machineState = false;
-        BaseProgram.delayOffState = false;
-        SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
-    }
-
-    if (SDMMCFile.exists(PATH_RECORD)) {
-        RecordData_t data;
-        int filesize = SDMMCFile.sizeFile(PATH_RECORD);
-        for (int i = 0; i < filesize / sizeof(data); i++) {
-            SDMMCFile.readFile(PATH_RECORD, (uint8_t*)&data, sizeof(data), i * sizeof(data));
-            // Serial.printf("SP: %.1f, Value: %.1f, Fan: %u, Flap: %u\n", data.setpoint, data.value, data.fan, data.flap);
-            Serial.printf("SP: %.1f, Value: %.1f, Fan: %u\n", data.setpointTemp, data.valueTemp, data.fan);
-        }
-    }
-
-    if (!SDMMCFile.exists("/usbmode.txt")) {
-        uint8_t mode = 0;
-        SDMMCFile.writeFile("/usbmode.txt", (uint8_t*)&mode, sizeof(mode));
-    }
-    else {
-        uint8_t mode;
-        SDMMCFile.readFile("/usbmode.txt", (uint8_t*)&mode, sizeof(mode));
-        if (mode == 0) {
-        }
-        else if (mode == 1) {
-            USB_MSC_HOST.end();
-            delay(1000);
-            sd2usbmsc_init();
-        }
-    }
-
-    if (SDMMCFile.exists(ADMIN_PASSWORD)) {
-        Serial.print("Khoi phuc mat khau admin: ");
-        String admin_password = SDMMCFile.readFile(ADMIN_PASSWORD);
-        _dwin.ThayDoiUserAdminPassword(admin_password);
-        Serial.println(admin_password);
-    }
-
-    SemaCaiDatHeater = xSemaphoreCreateBinary();
-    SemaExportData = xSemaphoreCreateBinary();
-    SemaKetNoiWiFi = xSemaphoreCreateBinary();  // truc them
-
-    QueueUpdateFirmware = xQueueCreate(2, sizeof(MethodUpdates_t));
-
-    RunMode = QUICK_MODE;
-    BaseProgram.machineState = false;
-    BaseProgram.delayOffState = false;
-    Serial.println(BaseProgram.programData.setPointTemp);
-    _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
-    _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
-    _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
-    // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
-    _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
-    _dwin.HienThiIconGiaNhiet(false);
-    _dwin.HienThiChuongTrinhDangChay("Quick");
-    _dwin.HienThiThoiGianChay("Inf");
-    _dwin.HienThiSegmentDangChay("");
-    _dwin.HienThiVongLapChuongTrinhConLai("");
-    _dwin.HienThiIconSegment(false);
-    _dwin.setBrightness(40);
-    _dwin.XoaDoThi();
-    xSemaphoreGive(SemaCaiDatHeater);
-
-    // Test log
-    initLogFileState(SD_MMC);
-    _dwin.HienThiThongTinVersion(__TIME__);
-
-    // BaseType_t xTaskExportData = xTaskCreateUniversal(TaskExportData, "Task Export data", 5120, NULL, 1, &TaskCanhBaoHdl, -1);
-    delay(5);
-    // BaseType_t xTaskUpdateFirmware = xTaskCreateUniversal(TaskUpdateFirmware, "Task update firmware", 8192, NULL, 4, &TaskUpdateFirmwareHdl, -1);
-    // delay(5);
-    // BaseType_t xTaskKetNoiWiFi = xTaskCreateUniversal(TaskKetNoiWiFi, "Task ket noi wifi", 4096, NULL, 1, &TaskKetNoiWiFiHdl, -1);  // truc them
-    delay(5);
-    BaseType_t xTaskMain = xTaskCreateUniversal(TaskMain, "Task main", 3072, NULL, (configMAX_PRIORITIES - 2), &TaskMainHdl, -1);
-    delay(5);
-    BaseType_t xTaskVeDoThiReturn = xTaskCreateUniversal(TaskHienThiNhietDoVaVeDoThi, "Task hien thi nhiet va ve do thi", 5120, NULL, 2, &TaskVeDoThiHdl, -1);
-    delay(5);
-    BaseType_t xTaskXuLyCanhBaoReturn = xTaskCreateUniversal(TaskXuLyCanhBao, "Task xu ly canh bao", 3072, NULL, 1, &TaskCanhBaoHdl, -1);
-    delay(5);
-
-    if (SDMMCFile.exists(WIFICONFIG_PATH)) {
-        SDMMCFile.readFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
-        WifiSSID = String(WiFiConfig.ssid);
-        WifiPassword = String(WiFiConfig.password);
-        _dwin.HienThiSSIDWiFi(WifiSSID);
-        _dwin.HienThiPasswordWiFi(WifiPassword);
-        Serial.print("Thong tin Wifi");
-        Serial.println(WifiSSID);
-        Serial.println(WifiPassword);
-        if (WiFiConfig.state) {
-            xSemaphoreGive(SemaKetNoiWiFi);
-        }
-    }
-    // _dwin.echoEnabled(true);
-    delay(1000);
-    _dwin.SetupDoThiNho(BaseProgram);
-    _dwin.setPage(_HomePage);
-
 }
-
-void loop() {
-
-    // _dwin.setText(_VPAddressProgramNameText1 + 0 * 20, "a");
-    // _dwin.setText(_VPAddressNumProgramText1 + 0 * 20, "b");
-    // _dwin.setText(_VPAddressTotalNumOfSegmentsText1 + 0 * 20, "c");
-    CaiDatHeater();
-    _CO2.CaiNongDoCO2(BaseProgram.programData.setPointCO2);
-    delay(1000);
-}
-
-// void sendData(PIDData *data)
-// {
-//     HTTPClient http;
-//     http.begin("https://app.iottest.io.vn/pidparam/data");
-//     http.addHeader("Content-Type", "application/json");
-
-//     // Create JSON object
-//     StaticJsonDocument<512> jsonDoc;
-//     jsonDoc["Setpoint"] = data->Setpoint;
-//     jsonDoc["Temperature"] = data->Temperature;
-//     jsonDoc["Kp"] = data->Kp;
-//     jsonDoc["Ki"] = data->Ki;
-//     jsonDoc["Kd"] = data->Kd;
-//     jsonDoc["PTerm"] = data->PTerm;
-//     jsonDoc["ITerm"] = data->ITerm;
-//     jsonDoc["DTerm"] = data->DTerm;
-//     jsonDoc["Output"] = data->Output;
-//     jsonDoc["Triac"] = data->Triac;
-//     jsonDoc["IMax"] = data->IMax;
-//     jsonDoc["UMax"] = data->UMax;
-//     jsonDoc["TGondinh"] = data->TGondinh;
-//     jsonDoc["TGgianhiet"] = data->TGgianhiet;
-//     jsonDoc["MAC"] = String(WiFi.macAddress());
-
-//     String jsonString;
-//     serializeJson(jsonDoc, jsonString);
-//     Serial.print(jsonString);
-
-//     // Send HTTP POST request
-//     int httpResponseCode = http.POST("[" + jsonString + "]");
-//     if (httpResponseCode > 0)
-//     {
-//         Serial.printf("HTTP Response code: %d\n", httpResponseCode);
-//     }
-//     else
-//     {
-//         Serial.printf("Error in HTTP request: %s\n", http.errorToString(httpResponseCode).c_str());
-//     }
-//     http.end();
-// }
