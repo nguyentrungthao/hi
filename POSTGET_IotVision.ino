@@ -276,8 +276,8 @@ void loop_PostGet()
 
             // }
 
-            Serial.printf("Minimum heap free size: %u bytes\n", esp_get_minimum_free_heap_size());
-            Serial.printf("Free heap size: %u bytes\n", esp_get_free_heap_size());
+            // Serial.printf("Minimum heap free size: %u bytes\n", esp_get_minimum_free_heap_size());
+            // Serial.printf("Free heap size: %u bytes\n", esp_get_free_heap_size());
             preTime = millis();
         }
     }

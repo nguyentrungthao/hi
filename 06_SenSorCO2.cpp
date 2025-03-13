@@ -34,21 +34,16 @@ IRCO2_StatusTydef IRCO2::init(uint32_t serialBaudRate, uint8_t serialTXPin, uint
     dbSerialBegin(DBserialBaudRate);
   }
   // delay before communication
-  delay(3);
+  delay(10);
   // be sure get ID sensor
   while (_try--) {
-    //get ID sensor
-    this->SendCommand((const char*)READ_DATA);
-    delay(1000);
-    result = GetSensorFeedback();
-    if (result == IRCO2_OK) {
-      break;
+    if (ReadData() == IRCO2_OK) {
+      //delay before get data
+      delay(10);
+      return IRCO2_OK;
     }
-    delay(100);
+    delay(1000);
   }
-  //delay before get data
-  delay(10);
-  Serial.println("Khởi tạo cảm biến CO2 thành công\n");
   return result;
 }
 
@@ -69,19 +64,20 @@ IRCO2_StatusTydef IRCO2::GetSensorFeedback() {
   uint16_t i = 0;
   uint8_t c;
   String str;
-  delay(10);
+  delay(100);
   // Serial.print("data: ");
   while (_serial->available() > 0) {
-    str = _serial->readString();
+    _buffer[i++] = _serial->read();
+    delay(10);
   }
-  uint8_t length = str.length();
-  memcpy(_buffer, str.c_str(), length);
+  // uint8_t length = str.length();
+  // memcpy(_buffer, str.c_str(), length);
   // Serial.println(str);
-  if (_buffer[0] == STX && _buffer[length - 1] == ETX) {
+  if (_buffer[0] == STX && _buffer[i - 1] == ETX) {
     result = this->ProcessString(_buffer);
   }
   else {
-    Serial.printf("CO2 sai frame %x %x\n", _buffer[0], _buffer[length - 1]);
+    Serial.printf("CO2 sai frame %x %x\n", _buffer[0], _buffer[i - 1]);
   }
   memset(_buffer, 0, 40);
   return result;

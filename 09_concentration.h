@@ -89,7 +89,9 @@ public:
 
     void BatDieuKhienCO2();//
     void TatDieuKhienCO2();//
-
+    void SetEventDOOR();
+    void ResetEventDOOR();
+    
     // void logDEBUG();
     
     void KhoiDongLaiCamBien();
@@ -106,6 +108,8 @@ private:
     float thoiGianMoVan;
     float ketQuaDocCamBien;
     uint16_t thoiGianCho = 0; // đếm thời gian lấy mẫu, đơn vị 1s 
+    uint8_t step = 0;
+    uint32_t preCloseDoor = 0;
 
     // float saiSo, saiSoTruocDo;
     bool coChayBoDieuKhienCO2;

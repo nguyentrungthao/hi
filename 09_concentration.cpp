@@ -28,7 +28,7 @@ void Concentration::KhoiTaoCO2() {
 
   this->TatDieuKhienCO2();
   //khởi tạo task tính toán thời gian điều khiển van khí
-  xTaskCreate(taskTinhToanCO2, "tính CO2", 3072, (void*)this, 2, &taskTinhToan);
+  xTaskCreate(taskTinhToanCO2, "tính CO2", 8196, (void*)this, (configMAX_PRIORITIES - 3), &taskTinhToan);
   delay(1000);
 }
 
@@ -50,10 +50,23 @@ bool Concentration::LayTrangThaiVan() {
 }
 void Concentration::BatDieuKhienCO2() {
   this->coChayBoDieuKhienCO2 = BAT_CO2;
+  step = 1;
 }
 void Concentration::TatDieuKhienCO2() {
   this->coChayBoDieuKhienCO2 = TAT_CO2;
+  step = 0;
   this->turnOffPin();
+}
+void Concentration::SetEventDOOR() {
+  if (coChayBoDieuKhienCO2 == BAT_CO2) {
+    step = 2;
+  }
+}
+void Concentration::ResetEventDOOR() {
+  if (coChayBoDieuKhienCO2 == BAT_CO2) {
+    step = 3;
+    preCloseDoor = millis();
+  }
 }
 
 void Concentration::taskTinhToanCO2(void* ptr) {
@@ -67,21 +80,34 @@ void Concentration::taskTinhToanCO2(void* ptr) {
   while (1) {
     pClass->nongDoThucCO2 = pClass->LayGiaTriTuCamBien();
     //! kiểm tra giá trị đọc về từ cảm biến
-    if (pClass->coChayBoDieuKhienCO2  == BAT_CO2 && (pClass->nongDoThucCO2 >= -0.5f && pClass->nongDoThucCO2 <= 30.0f)) {
-      SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
-
-      if (i >= (CO2_SAMPLE_TIME / 1000)) {
+    switch (pClass->step) {
+    case 0:
+      i = 0;
+      break;
+    case 1:
+      if (i >= (CO2_SAMPLE_TIME / 1000) && (pClass->nongDoThucCO2 >= -0.5f && pClass->nongDoThucCO2 <= 30.0f)) {
+        SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
         thoiGianMoVan = (uint64_t)pClass->getPIDcompute(SaiSo);
         pClass->turnOnPinAndDelayOff(thoiGianMoVan);
         i = 0;
       }
-      i++;
+      break;
+    case 2:
+      break;
+    case 3:
+      if (millis() - pClass->preCloseDoor >= 10 * 1000) {  // theo dõi CO2 20 trước khi quay lại tính toán
+        pClass->step = 1;
+      }
+      break;
+    default:
+      Serial.printf("case error. Line %d, value %d", __LINE__, pClass->step);
+      break;
     }
-    else {
-      i = 0;
-    }
-    // Serial.printf("CO2: %.2f, SaiSo: %.2f, output: %llu\n", pClass->nongDoThucCO2, SaiSo, thoiGianMoVan);
+    i++;
+    Serial.printf("CO2: %.2f, SaiSo: %.2f, output: %llu\n", pClass->nongDoThucCO2, SaiSo, thoiGianMoVan);
     thoiGianMoVan = 0;
+
+    portYIELD();
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
 }

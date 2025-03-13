@@ -26,7 +26,6 @@
 #include "freertos/FreeRTOSConfig.h"
 #include "driver/temperature_sensor.h"
 
-#include "HeaterControl.h"
 #include "09_concentration.h"
 #include "07_Heater.h"
 #include "Door.h"
@@ -93,7 +92,6 @@ TaskHandle_t TaskUpdateFirmwareHdl = NULL;
 TaskHandle_t TaskMainHdl;
 TaskHandle_t TaskKetNoiWiFiHdl;  // truc them
 
-SemaphoreHandle_t SemaCaiDatHeater;
 SemaphoreHandle_t SemaKetNoiWiFi;  // truc them
 
 
@@ -131,15 +129,18 @@ void listFilesInProgramDirectory(void);
 void TaoCacThuMucHeThongTrenSD(void);
 
 //các hàm chạy run time hoặc call back
+void BatMay(const char* funcCall);
+void TatMay(const char* funcCall);
 float GetCalib(float value);
 bool DemThoiGianChay(bool reset, bool DemXuong);
 void setTimeFromRTC(int year, int month, int day, int hour, int minute, int second);
 void hmiSetEvent(const hmi_set_event_t& event);
 bool hmiGetEvent(hmi_get_type_t event, void* args);
-inline void callBackOpenDoor(void* ptr);
-inline void callBackCloseDoor(void* ptr);
-static inline void triggeONICONNhiet(void*);
-static inline void triggeOFFICONNhiet(void*);
+void callBackOpenDoor(void* ptr);
+void callBackCloseDoor(void* ptr);
+static void triggeONICONNhiet(void*);
+static void triggeOFFICONNhiet(void*);
+
 //các task
 void TaskHMI(void*);
 void TaskExportData(void*);
@@ -155,7 +156,6 @@ void setup() {
     pinMode(RELAY_PIN, OUTPUT);
     digitalWrite(RELAY_PIN, LOW);
 
-    SemaCaiDatHeater = xSemaphoreCreateBinary();
     SemaKetNoiWiFi = xSemaphoreCreateBinary();  // truc them
     QueueUpdateFirmware = xQueueCreate(2, sizeof(MethodUpdates_t));
     recvHMIQueue = xQueueCreate(10, sizeof(FrameDataQueue_t));
@@ -199,7 +199,7 @@ void setup() {
     _dwin.HienThiIconSegment(false);
     _dwin.setBrightness(40);
     _dwin.XoaDoThi();
-    xSemaphoreGive(SemaCaiDatHeater);
+
     _dwin.HienThiThongTinVersion(__TIME__);
     _dwin.SetupDoThiNho(BaseProgram);
     delay(1000);
@@ -223,7 +223,7 @@ void loop() {
     // Nếu RAM còn trống 70000 byte thì mới thực hiện GET POST
     if (esp_get_free_heap_size() > 20000)
     {
-        // loop_PostGet();
+        loop_PostGet();
         // loopMQTT();
         // if (WiFi.status() == WL_CONNECTED) {
         //     http.begin();
@@ -364,6 +364,12 @@ void khoiTaoHeater() {
     _Heater.TurnOnTriac();
     _Heater.addCallBackWritePinTriacBuong(triggeONICONNhiet, NULL); //trigger on ICON nhiệt
     _Heater.addCallBackTimeOutTriacBuong(triggeOFFICONNhiet, NULL); //trigger off ICON nhiệt
+    static FrameDataQueue_t data;
+    data.event = eEVENT_ICON_FAN;
+    if (recvHMIQueue == NULL) {
+        return;
+    }
+    xQueueSend(recvHMIQueue, &data, 0);
 }
 void khoiTaoCO2() {
     _CO2.KhoiTaoCO2();
@@ -375,6 +381,12 @@ void khoiTaoCua() {
     _Door.KhoiTao();
     _Door.addCloseFuncCallBack(callBackCloseDoor, NULL);
     _Door.addOpenFuncCallBack(callBackOpenDoor, NULL);
+    static FrameDataQueue_t data;
+    data.event = eEVENT_ICON_CUA;
+    if (recvHMIQueue == NULL) {
+        return;
+    }
+    xQueueSend(recvHMIQueue, &data, 0);
 }
 void callBackOpenDoor(void* ptr) {
     //!check ptr trước khi dùng nhá 
@@ -385,16 +397,34 @@ void callBackOpenDoor(void* ptr) {
         return;
     }
     xQueueSend(recvHMIQueue, &data, 0);
+    _Heater.SetEventDOOR();
+    _CO2.SetEventDOOR();
 }
 void callBackCloseDoor(void* ptr) {
     //!check ptr trước khi dùng nhá 
     Serial.printf("Close door\n");
+    FlagNhietDoXacLap = false;
     static FrameDataQueue_t data;
     data.event = eEVENT_ICON_CUA;
     if (recvHMIQueue == NULL) {
         return;
     }
     xQueueSend(recvHMIQueue, &data, 0);
+    _Heater.ResetEventDOOR();
+    _CO2.ResetEventDOOR();
+}
+
+void BatMay(const char* funcCall) {
+    Serial.printf("\t\t\tBat may: call from %s\n", funcCall ? funcCall : "NULL");
+    _Heater.BatDieuKhienNhietDo();
+    digitalWrite(RELAY_PIN, HIGH);
+    _CO2.BatDieuKhienCO2();
+}
+void TatMay(const char* funcCall) {
+    Serial.printf("\t\t\tTat may: call from %s\n", funcCall ? funcCall : "NULL");
+    _Heater.TatDieuKhienNhietDo();
+    digitalWrite(RELAY_PIN, LOW);
+    _CO2.TatDieuKhienCO2();
 }
 
 float GetCalib(float value) {
@@ -504,7 +534,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
                 // _time.reset();
             }
             _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
-            xSemaphoreGive(SemaCaiDatHeater);
+
         }
         else {
             BaseProgram.machineState = false;
@@ -515,7 +545,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
                 _dwin.HienThiThoiGianChay("Inf");
             }
             _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
-            xSemaphoreGive(SemaCaiDatHeater);
+
         }
         Serial.printf("HMI_SET_RUN_ONOFF\n");
         break;
@@ -526,7 +556,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
             SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
         }
         FlagNhietDoXacLap = false;
-        xSemaphoreGive(SemaCaiDatHeater);
+
         break;
     case HMI_SET_SETPOINT_CO2:
         Serial.printf("Set setpoint CO2: %.1f\n", event.f_value);
@@ -535,7 +565,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
             SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
         }
         FlagCO2XacLap = false;
-        xSemaphoreGive(SemaCaiDatHeater);
+
         break;
     case HMI_SET_FAN:
         Serial.printf("Set fanspeed: %.1f\n", event.f_value);
@@ -543,7 +573,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         if (RunMode == QUICK_MODE) {
             SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
         }
-        xSemaphoreGive(SemaCaiDatHeater);
+
         break;
     case HMI_SET_CALIB_NHIET:
     {
@@ -555,7 +585,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
                 DanhSachHeSoCalib[i].value = event.f_value - (BaseProgram.temperature - DanhSachHeSoCalib[i].value);
                 SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t*)DanhSachHeSoCalib.data(), DanhSachHeSoCalib.size() * sizeof(CalibData_t));
                 Serial.println("Thay Doi he so calib da co");
-                xSemaphoreGive(SemaCaiDatHeater);
+
                 return;
             }
         }
@@ -563,7 +593,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         HeSoCalib.value = event.f_value - BaseProgram.temperature;
         DanhSachHeSoCalib.push_back(HeSoCalib);
         SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t*)DanhSachHeSoCalib.data(), DanhSachHeSoCalib.size() * sizeof(CalibData_t));
-        xSemaphoreGive(SemaCaiDatHeater);
+
         break;
     }
     case HMI_RESET_CALIB:
@@ -574,7 +604,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
             if (fabs(DanhSachHeSoCalib.at(i).Setpoint - BaseProgram.programData.setPointTemp) < 0.01) {
                 DanhSachHeSoCalib[i].value = 0;
                 SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t*)DanhSachHeSoCalib.data(), DanhSachHeSoCalib.size() * sizeof(CalibData_t));
-                xSemaphoreGive(SemaCaiDatHeater);
+
                 return;
             }
         }
@@ -593,7 +623,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
     //     {
     //         SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
     //     }
-    //     xSemaphoreGive(SemaCaiDatHeater);
+    //     
     //     break;
     case HMI_SET_DELAYOFF:
         if (RunMode == STERILIZATION_MODE) {
@@ -879,7 +909,7 @@ void hmiSetEvent(const hmi_set_event_t& event) {
         _dwin.HienThiIconOnOffDelayOff(false);
         _dwin.HienThiThoiGianChay("Inf");
         _dwin.HienThiVongLapChuongTrinhConLai("Inf");
-        xSemaphoreGive(SemaCaiDatHeater);
+
         break;
     case HMI_RESET_STER:
         XacNhanTietTrung = 0;
@@ -1238,7 +1268,7 @@ void TaoCacThuMucHeThongTrenSD(void) {
     SDMMCFile.createDir("/Update/HMI");
     SDMMCFile.createDir("/UpdateStatus");
 }
-static inline void triggeONICONNhiet(void*) {
+static void triggeONICONNhiet(void*) {
     static FrameDataQueue_t data;
     data.event = eEVENT_ICON_NHIET;
     if (recvHMIQueue == NULL) {
@@ -1246,7 +1276,7 @@ static inline void triggeONICONNhiet(void*) {
     }
     xQueueSend(recvHMIQueue, &data, 0);
 }
-static inline void triggeOFFICONNhiet(void*) {
+static void triggeOFFICONNhiet(void*) {
     static FrameDataQueue_t data;
     data.event = eEVENT_ICON_NHIET;
     if (recvHMIQueue == NULL) {
@@ -1254,7 +1284,7 @@ static inline void triggeOFFICONNhiet(void*) {
     }
     xQueueSend(recvHMIQueue, &data, 0);
 }
-static inline void triggeONICONCO2(void*) {
+static void triggeONICONCO2(void*) {
     static FrameDataQueue_t data;
     data.event = eEVENT_ICON_CO2;
     if (recvHMIQueue == NULL) {
@@ -1262,7 +1292,7 @@ static inline void triggeONICONCO2(void*) {
     }
     xQueueSend(recvHMIQueue, &data, 0);
 }
-static inline void triggeOFFICONCO2(void*) {
+static void triggeOFFICONCO2(void*) {
     static FrameDataQueue_t data;
     data.event = eEVENT_ICON_CO2;
     if (recvHMIQueue == NULL) {
@@ -1394,48 +1424,47 @@ void TaskKetNoiWiFi(void*) {
         xSemaphoreTake(SemaKetNoiWiFi, portMAX_DELAY);
         Serial.println("TaskKetNoiWiFi RUN");
         _dwin.HienThiTrangThaiKetNoiWiFi("");
+
         if (WiFi.status() != WL_CONNECTED) {
             // Kết nối Wi-Fi
             Serial.println("Connecting to " + WifiSSID);
             _dwin.HienThiTrangThaiKetNoiWiFi("Connecting to " + WifiSSID);
             WiFi.begin(WifiSSID.c_str(), WifiPassword.c_str());
 
-            uint8_t u8Try = 15;
-            while (WiFi.status() != WL_CONNECTED && u8Try--) {
-                _dwin.setVP(_VPAddressIonConnect, 2);
-                _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
-
-                strcpy(WiFiConfig.ssid, WifiSSID.c_str());
-                strcpy(WiFiConfig.password, WifiPassword.c_str());
-                WiFiConfig.state = true;
-                SDMMCFile.writeFile("/WiFiConfig.txt", (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
-                _dwin.HienThiTrangThaiKetNoiWiFi("Connected, MAC: " + String(WiFi.macAddress()));
-                // setup_PostGet();
-                // setupMQTT();
-                // Create queue
-                dataQueue = xQueueCreate(10, sizeof(PIDData));
-                if (dataQueue == NULL) {
-                    Serial.println("Failed to create queue");
+            uint8_t u8Try = 30;
+            while (u8Try--) {
+                if (WiFi.status() == WL_CONNECTED) {
+                    _dwin.setVP(_VPAddressIonConnect, 2);
+                    _dwin.HienThiTrangThaiKetNoiWiFi("Connected, MAC: " + String(WiFi.macAddress()));
+                    _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
+                    strcpy(WiFiConfig.ssid, WifiSSID.c_str());
+                    strcpy(WiFiConfig.password, WifiPassword.c_str());
+                    WiFiConfig.state = true;
+                    setup_PostGet();
+                    // setupMQTT();
+                    SDMMCFile.writeFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
+                    break;
                 }
-                delay(1000);
+                delay(500);
             }
             if (WiFi.status() != WL_CONNECTED) {
                 _dwin.setVP(_VPAddressIonConnect, 0);
                 _dwin.HienThiTrangThaiKetNoiWiFi("Failed to connect");
-                continue;
             }
         }
         else {
+            _dwin.HienThiTrangThaiKetNoiWiFi("disconnect " + WifiSSID);
             Serial.println("Connecting to " + WifiSSID);
-            WiFi.disconnect();
-            delay(100);
-            if (WiFi.status() != WL_CONNECTED) {
-                _dwin.setVP(_VPAddressIonConnect, 0);
-                _dwin.setVP(_VPAddressIconWiFi, 0);
-                WiFiConfig.state = false;
-                SDMMCFile.writeFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
+            _dwin.setVP(_VPAddressIonConnect, 0);
+            _dwin.setVP(_VPAddressIconWiFi, 0);
+            WiFiConfig.state = false;
+            uint8_t u8Try = 15;
+            while (WiFi.status() == WL_CONNECTED && u8Try--) {
+                WiFi.disconnect();
+                delay(100);
             }
         }
+        
         UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
         Serial.printf("%s: Task's stack high water mark: %lu words\n", __func__, stackHighWaterMark);
     }
@@ -1447,6 +1476,7 @@ void TaskKetNoiWiFi(void*) {
 // Chạy các chế độ tiệt trùng, program, quick mode
 // quyết định nội dụng hiển thị task HMI
 void TaskMain(void*) {
+    bool machineState = BaseProgram.machineState;
     bool FlagUSB = false;
     TickType_t xLastWakeTime;
     xLastWakeTime = xTaskGetTickCount();
@@ -1459,6 +1489,7 @@ void TaskMain(void*) {
     uint16_t chuKyWarning = 0; // 60s
     uint16_t chuKyRefresh = 0; // 120s 
     uint16_t chuKyRecord = 0; // 60s
+    uint16_t chuKyCheckWifi = 0; // 60s
 
     while (1) {
 
@@ -1472,11 +1503,19 @@ void TaskMain(void*) {
         // lệnh cho thời gian chu kỳ 1s 1 lần
         sendData.event = eEVENT_HIEN_THI_THOI_GIAN;
         xQueueSend(recvHMIQueue, &sendData, 10);
-
+        // icon quạt
+        sendData.event = eEVENT_ICON_FAN;
+        xQueueSend(recvHMIQueue, &sendData, 10);
         // lệnh cho đồ thị chu kỳ riêng
-        if (chuKyVeDoThi >= 30) {
+        if (chuKyVeDoThi >= 10) {
             chuKyVeDoThi = 0;
             sendData.event = eEVENT_VE_DO_THI;
+            xQueueSend(recvHMIQueue, &sendData, 10);
+        }
+        // lệnh cho đồ thị chu kỳ riêng
+        if (chuKyCheckWifi >= 30) {
+            chuKyCheckWifi = 0;
+            sendData.event = eEVENT_ICON_WIFI;
             xQueueSend(recvHMIQueue, &sendData, 10);
         }
         // lệnh cho warning
@@ -1513,6 +1552,7 @@ void TaskMain(void*) {
         chuKyRefresh++;
         chuKyVeDoThi++;
         chuKyWarning++;
+        chuKyCheckWifi++;
 
         // Phần xác định nhiệt độ đã xác lập hay chưa
         if (fabs(BaseProgram.temperature - BaseProgram.programData.setPointTemp) <= 0.15 &&
@@ -1540,7 +1580,7 @@ void TaskMain(void*) {
                         BaseProgram.machineState = false;
                         _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
                         _dwin.HienThiThoiGianChay("FINISH");
-                        xSemaphoreGive(SemaCaiDatHeater);
+
                         _dwin.Buzzer(800);
                     }
                 }
@@ -1562,7 +1602,7 @@ void TaskMain(void*) {
                     // BaseProgram.machineState = true;
                     BaseProgram.delayOffState = true;
                     FlagNhietDoXacLap = false;
-                    xSemaphoreGive(SemaCaiDatHeater);
+
                     // _dwin.HienThiIconTrangThaiRun(true);
                     _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
                     _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
@@ -1611,22 +1651,14 @@ void TaskMain(void*) {
                         BaseProgram.machineState = false;
                         _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
                         _dwin.HienThiThoiGianChay("FINISH");
-                        xSemaphoreGive(SemaCaiDatHeater);
+
                         _dwin.Buzzer(800);
                     }
                 }
             }
         }
-        if (BaseProgram.machineState == true) {
-            _Heater.BatDieuKhienNhietDo();
-            digitalWrite(RELAY_PIN, HIGH);
-            _CO2.BatDieuKhienCO2();
-        }
-        else if (BaseProgram.machineState == false) {
-            _Heater.TatDieuKhienNhietDo();
-            digitalWrite(RELAY_PIN, LOW);
-            _CO2.TatDieuKhienCO2();
-        }
+
+
         _Heater.CaiDatNhietDo(BaseProgram.programData.setPointTemp);
         _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
         _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
@@ -1634,6 +1666,15 @@ void TaskMain(void*) {
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
         // UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
         // Serial.printf("%s: Task's stack high water mark: %lu words\n", __func__, stackHighWaterMark);
+        if (machineState != BaseProgram.machineState) {
+            if (BaseProgram.machineState == true) {
+                BatMay(__func__);
+            }
+            else if (BaseProgram.machineState == false) {
+                TatMay(__func__);
+            }
+            machineState = BaseProgram.machineState;
+        }
     }
 }
 
@@ -1641,7 +1682,7 @@ void TaskHMI(void*) {
     FrameDataQueue_t data;
     while (1) {
         xQueueReceive(recvHMIQueue, &data, portMAX_DELAY);
-        Serial.printf("%s nhận event: %d, data nhận được %s\n", __func__, data.event, data.pvData == NULL ? "NULL" : "NOT NULL");
+        // Serial.printf("%s nhận event: %d, data nhận được %s\n", __func__, data.event, data.pvData == NULL ? "NULL" : "NOT NULL");
 
         switch ((EventTaskHMI_t)data.event) {
         case eEVENT_ICON_NHIET:
@@ -1726,21 +1767,24 @@ void TaskHMI(void*) {
             }
 
             if (FlagNhietDoXacLap == true) {
+                String warningText = "";
                 if (BaseProgram.temperature >= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMax) {
-                    _dwin.HienThiWarning("Alarm: Overheat", _HomePage);
-                    _dwin.Buzzer(160);
+                    warningText += "Overheat";
                 }
                 else if (BaseProgram.temperature <= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMin) {
-                    _dwin.HienThiWarning("Alarm: Underheat", _HomePage);
+                    warningText += "Underheat";
                     _dwin.Buzzer(160);
                 }
 
                 if (BaseProgram.CO2 >= BaseProgram.programData.setPointCO2 + BaseProgram.programData.CO2Max) {
-                    _dwin.HienThiWarning("Alarm: OverCO2", _HomePage);
-                    _dwin.Buzzer(160);
+                    warningText += "OverCO2";
                 }
                 else if (BaseProgram.CO2 <= BaseProgram.programData.setPointCO2 + BaseProgram.programData.CO2Min) {
-                    _dwin.HienThiWarning("Alarm: UnderCO2", _HomePage);
+                    warningText += "UnderCO2";
+                }
+
+                if (warningText.length() > 2) {
+                    _dwin.HienThiWarning("Alarm: " + warningText, _HomePage);
                     _dwin.Buzzer(160);
                 }
             }
@@ -1750,7 +1794,6 @@ void TaskHMI(void*) {
             _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
             _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
             _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
-            // _dwin.HienThiGocFlap(BaseProgram.programData.flap);
             _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
             break;
         default:

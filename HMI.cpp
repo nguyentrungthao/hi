@@ -93,7 +93,7 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEditCalibCO2, _NutEditCalibCO2_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibTemp, _NutEnterTrangCalibNhiet_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibCO2, _NutEnterTrangCalibCO2_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibTemp, _NutResetHeSoCalib_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibCO2, _NutResetHeSoCalib_, this);
 
     // DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetFlap, _NutSetFlap_, this);
     // DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterFlap, _NutEnterTrangFlap_, this);
@@ -1523,20 +1523,17 @@ void HMI::VeDoThi(BaseProgram_t data) {
 void HMI::SetupDoThiNho(BaseProgram_t data) {
     //xử lý thông số cho nhiệt 
     // thông số cho cột Y 
-    uint16_t YL0 = ((uint16_t)(data.temperature));
+    int16_t YL0 = ((int16_t)(data.temperature));
     if (YL0 < 0) YL0 = 0;
-    uint16_t stepYL0 = (((uint16_t)(data.programData.setPointTemp)) - YL0) * 10 / 4;
+    int16_t stepYL0 = (((int16_t)(data.programData.setPointTemp)) - YL0) * 10 / 4;
     for (uint8_t i = 0; i < 6; i++) {
         _DuLieuDoThiNhietDo.valueArr[i] = (YL0 * 10 + i * stepYL0);
         setText(_VPAddressGraphYValueText1 + i * 5, String(_DuLieuDoThiNhietDo.valueArr[i] / 10.0f, 1));
     }
     // thông số cho đồ thị 
-    uint16_t CaoDoThi0 = 5 * ((((uint16_t)(data.programData.setPointTemp)) - YL0) * 10 / 4);
+    int16_t CaoDoThi0 = 5 * ((((int16_t)(data.programData.setPointTemp)) - YL0) * 10 / 4);
     if (CaoDoThi0 == 0) {
-        while (1) {
-            Serial.println("CaoDoThi0 == 0");
-            delay(100);
-        }
+        CaoDoThi0 = 1;
     }
     uint16_t MulY0 = 116 * 256 / CaoDoThi0;
     uint16_t VDCentral0 = CaoDoThi0 / 2;
@@ -1545,20 +1542,17 @@ void HMI::SetupDoThiNho(BaseProgram_t data) {
 
     //xử lý thông số cho CO2 
     // thông số cho cột Y 
-    uint16_t YL1 = ((uint16_t)(data.CO2));
+    int16_t YL1 = ((int16_t)(data.CO2));
     if (YL1 < 0) YL1 = 0;
-    uint16_t stepYL1 = (((uint16_t)(data.programData.setPointCO2)) - YL1) * 10 / 4;
+    int16_t stepYL1 = (((int16_t)(data.programData.setPointCO2)) - YL1) * 10 / 4;
     for (uint8_t i = 0; i < 6; i++) {
         _DuLieuDoThiCO2.valueArr[i] = (YL1 * 10 + i * stepYL1);
         setText(_VPAddressGraphY_R_ValueText1 + i * 5, String(_DuLieuDoThiCO2.valueArr[i] / 10.0f, 1));
     }
     // thông số cho đồ thị 
-    uint16_t CaoDoThi1 = 5 * ((((uint16_t)(data.programData.setPointCO2)) - YL1) * 10 / 4);
+    int16_t CaoDoThi1 = 5 * ((((uint16_t)(data.programData.setPointCO2)) - YL1) * 10 / 4);
     if (CaoDoThi1 == 0) {
-        while (1) {
-            Serial.println("CaoDoThi1 == 0");
-            delay(100);
-        }
+        CaoDoThi1 = 1;
     }
     uint16_t MulY1 = 116 * 256 / CaoDoThi1;
     uint16_t VDCentral1 = CaoDoThi1 / 2;

@@ -80,7 +80,8 @@ public:
 
   void BatDieuKhienNhietDo(void);     // Bật gia nhiệt
   void TatDieuKhienNhietDo(void);     // Tắt gia nhiệt
-
+  void SetEventDOOR();
+  void ResetEventDOOR();
   void CalibNhietDoPT100(float, float);      // hàm calib tham số đầu tiên là nhiệt độ cài, tham số thứ 2 là nhiệt độ được đo bằng máy chuẩn
   void ResetCamBienNhiet(void);              // khởi động lại PT100 khi đọc nhiệt độ bị lỗi
   void CaiTocDoQuat(uint8_t value = 10);
@@ -100,6 +101,9 @@ private:
   uint8_t step = 0;
   uint32_t preOpenDoor = 0;
   uint32_t preCloseDoor = 0;
+  int16_t u16ThoiGianBatBuong = 0;
+  int16_t u16ThoiGianBatVanh = THOI_GIAN_BAT_TRIAC_VANH;
+  int16_t u16ThoiGianBatCua = THOI_GIAN_BAT_TRIAC_CUA;
 
   HRTOnOffPin triacBuong = HRTOnOffPin(TRIAC1_PIN);
   HRTOnOffPin triacCua = HRTOnOffPin(TRIAC3_PIN);
@@ -116,9 +120,7 @@ private:
   float temperature;
   float NhietDoLocBuong;
   float HeSoCalib = 0;
-  uint8_t CoBaoDocNhiet = 1;
-  uint8_t ThoiGianOnDinhSauKhiMoCua = 30;
-  uint8_t ThoiGianGiaNhietSauKhiMoCua = 60;
+
   volatile uint16_t pArru16ThoiGianKichTriac[eTriacMax];
   HRTOnOffPin* pArrTriac[eTriacMax] = { &triacBuong, &triacCua, &triacVanh };
 
@@ -132,7 +134,8 @@ private:
   TaskHandle_t taskHandleNgatACDET;
 
   static void TaskDieuKhienNhiet(void* ptr);
-  static void IRAM_ATTR interupt(void* ptr);
+  // static void IRAM_ATTR interupt(void* ptr);
+  static void interupt(void* ptr);
   static void TaskNgatACDET(void* ptr);
 
   void KhoiTaoThongSoPID(void);

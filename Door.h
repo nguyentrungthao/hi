@@ -24,6 +24,7 @@ private:
 
   TaskHandle_t taskHandleDoor;
   static void taskDoor(void* ptr);
-  static void IRAM_ATTR interupt(void* ptr);
+  // static void IRAM_ATTR interupt(void* ptr);
+  static void interupt(void* ptr);
 };
 #endif

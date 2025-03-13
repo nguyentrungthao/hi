@@ -24,15 +24,13 @@ void triac::configACDETPIN(gpio_num_t acdet_pin) {
     };
     gpio_config(&acdet_pin_conf);
     gpio_install_isr_service(0);
-    gpio_isr_handler_add(triac::acdet, acdet_intr_handler, NULL);
+    gpio_isr_handler_add(triac::acdet, acdet_intr_handler_in_isr, NULL);
     gpio_intr_enable(triac::acdet);
 }
 
 
 void triac::init(void) {
-    // gpio_set_direction(this->pin, GPIO_MODE_OUTPUT);
     pinMode(this->pin, OUTPUT);
-    // digitalWrite(this->pin, 0);
     digitalWrite(this->pin, 0);
 
     timer_config_t triac1_tim_conf = {
@@ -48,6 +46,7 @@ void triac::init(void) {
     timer_enable_intr(this->grp, this->idx);
 
     triac_set[num_triac++] = this;
+    xTaskCreate(TimerTimoutTask, "TimeOutTask", 2048, this, configMAX_PRIORITIES - 1, &TimerTimoutTaskHandle);
 }
 
 
@@ -61,21 +60,14 @@ void triac::SetTimeOverFlow(uint16_t timeOverFlow) {
 void triac::TurnOnTriac() {
     this->RunStatus = true;
     digitalWrite(this->pin, 0);
-    gpio_intr_enable(triac::acdet);
-    timer_enable_intr(this->grp, this->idx);
 }
 void triac::TurnOffTriac() {
     this->RunStatus = false;
     digitalWrite(this->pin, 0);
-    gpio_intr_disable(triac::acdet);
-    timer_disable_intr(this->grp, this->idx);
-    timer_set_counter_value(this->grp, this->idx, 0);
 }
 
-
-
-void IRAM_ATTR triac::acdet_intr_handler(void* arg) {
-    if (gpio_get_level(triac::acdet)) return;
+void IRAM_ATTR triac::acdet_intr_handler_in_isr(void* arg) {
+    if (digitalRead(triac::acdet)) return;
 
     for (uint8_t i = 0; i < num_triac; i++) {
         triac* ptriac = triac_set[i];
@@ -89,21 +81,43 @@ void IRAM_ATTR triac::acdet_intr_handler(void* arg) {
     }
 }
 
+void triac::acdet_intr_handler_in_task() {
+    if (digitalRead(triac::acdet)) return;
+
+    for (uint8_t i = 0; i < num_triac; i++) {
+        triac* ptriac = triac_set[i];
+
+        ptriac->dis_timer = false;
+        digitalWrite(ptriac->pin, 0);
+        if (ptriac->RunStatus == true && ptriac->timeOverFlow < TRIAC_HIGH_LIMIT) {
+            timer_set_alarm_value(ptriac->grp, ptriac->idx, ptriac->timeOverFlow);
+            timer_start(ptriac->grp, ptriac->idx);
+        }
+    }
+}
 
 bool IRAM_ATTR triac::timer_triac_intr_handler(void* arg) {
+    if (arg == NULL) return false;
     triac* ptriac = (triac*)arg;
 
-    if (ptriac->dis_timer == false) {
-        digitalWrite(ptriac->pin, 1);
-        timer_group_set_alarm_value_in_isr(ptriac->grp, ptriac->idx, TRIAC_HOLD_TIME);
-        ptriac->dis_timer = true;
-
-        return false;
-    }
-    else {
-        digitalWrite(ptriac->pin, 0);
-        timer_pause(ptriac->grp, ptriac->idx);
-    }
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyFromISR(ptriac->TimerTimoutTaskHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 
     return false;
+}
+
+void triac::TimerTimoutTask(void* ptr) {
+    if (ptr == NULL) return;
+    triac* pTriac = (triac*)ptr;
+    uint32_t notifyNum;
+    while (1) {
+        xTaskNotifyWait(pdFALSE, pdTRUE, &notifyNum, portMAX_DELAY);
+        timer_pause(pTriac->grp, pTriac->idx);
+        gpio_set_level(pTriac->pin, 1);
+        delayMicroseconds(100);
+        gpio_set_level(pTriac->pin, 0);
+        portYIELD();
+    }
+
 }

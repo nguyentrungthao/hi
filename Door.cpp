@@ -41,10 +41,12 @@ void DOOR::taskDoor(void* ptr) {
     else if (pDoor->TrangThai() == DOOR_OPEN && pDoor->m_pOpenFuncCallBack != NULL) {
       pDoor->m_pOpenFuncCallBack(pDoor->pOpenPrameter);
     }
+    portYIELD();
   }
 }
 
-void IRAM_ATTR DOOR::interupt(void* ptr) {
+// void IRAM_ATTR DOOR::interupt(void* ptr) {
+void DOOR::interupt(void* ptr) {
   if (ptr == NULL) return;
   DOOR* pDoor = (DOOR*)ptr;
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
