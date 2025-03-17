@@ -122,7 +122,7 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
       pHeater->u16ThoiGianBatBuong = 0;
       pHeater->u16ThoiGianBatVanh = 0;
       pHeater->u16ThoiGianBatCua = 0;
-      Serial.print(" - step 0 - ");
+      // Serial.print(" - step 0 - ");
       break;
 
     case 1:  // chạy máy bình thường
@@ -132,9 +132,9 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
       pHeater->u16ThoiGianBatBuong *= 10;  // chuyển số chu kì sang mS
 
       chuKyTheoDoi++;
-      if (chuKyTheoDoi >= 60) {  // 60 chu kỳ với delay 1s => theo dõi 60s
+      if (chuKyTheoDoi >= 120) {  // 60 chu kỳ với delay 1s => theo dõi 60s
         chuKyTheoDoi = 0;
-        if (saiSo < 0) {
+        if (saiSo < -0.1) {
           pHeater->u16ThoiGianBatVanh -= 10;
           pHeater->u16ThoiGianBatCua -= 10;
         }
@@ -157,7 +157,7 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
           pHeater->u16ThoiGianBatCua = THOI_GIAN_BAT_TRIAC_CUA;
         }
       }
-      Serial.print(" - step 1 - ");
+      // Serial.print(" - step 1 - ");
       break;
 
     case 2:                                       // chạy mở cửa
@@ -170,7 +170,7 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
       // kích bật công suất cao cho cửa và vành
       pHeater->u16ThoiGianBatCua = OUT_MAX_POWER;
       pHeater->u16ThoiGianBatVanh = OUT_MAX_POWER;
-      Serial.printf(" - step 2 %ld %ld - ", millis(), pHeater->preOpenDoor);
+      // Serial.printf(" - step 2 %ld %ld - ", millis(), pHeater->preOpenDoor);
       break;
 
     case 3:                                        // chạy đóng cửa
@@ -185,9 +185,9 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
         // kích bật công xuất cao cho cửa và vành
         pHeater->u16ThoiGianBatCua = OUT_MAX_POWER;
         pHeater->u16ThoiGianBatVanh = OUT_MAX_POWER;
-        Serial.print(" - đợi - ");
+        // Serial.print(" - đợi - ");
       }
-      Serial.printf(" - step 3 %ld %ld - ", millis(), pHeater->preCloseDoor);
+      // Serial.printf(" - step 3 %ld %ld - ", millis(), pHeater->preCloseDoor);
       break;
     default:
       Serial.printf("case error. Line %d, value %d", __LINE__, pHeater->step);
@@ -200,10 +200,9 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
     pHeater->pArru16ThoiGianKichTriac[eTriac4] = pHeater->u16ThoiGianBatVanh;
     taskEXIT_CRITICAL(&my_spinlock);
 
-    Serial.printf("cb1: %0.2f T1:%d T3:%d T4:%d\n",
-      pHeater->NhietDoLocBuong, pHeater->u16ThoiGianBatBuong, pHeater->u16ThoiGianBatCua, pHeater->u16ThoiGianBatVanh);
+    // Serial.printf("cb1: %0.2f T1:%d T3:%d T4:%d\n",
+    //   pHeater->NhietDoLocBuong, pHeater->u16ThoiGianBatBuong, pHeater->u16ThoiGianBatCua, pHeater->u16ThoiGianBatVanh);
     
-    portYIELD();
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
 }
@@ -236,7 +235,6 @@ void HEATER::TaskNgatACDET(void* ptr) {
 
       }
     }
-    portYIELD();
   }
 }
 
@@ -277,7 +275,7 @@ float HEATER::DocGiaTriCamBien(Adafruit_MAX31865& xPt100) {
     fNhietDo = 999;
     xPt100.begin(MAX31865_4WIRE);
     xPt100.enable50Hz(true);
-    delay(10);
+    delay(100);
   }
   return fNhietDo;
 }

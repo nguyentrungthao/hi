@@ -2,7 +2,7 @@
 
 void DOOR::KhoiTao(void) {
   pinMode(DOOR_PIN, INPUT);
-  xTaskCreate(taskDoor, "DoorTask", 4096, this, (configMAX_PRIORITIES - 2), &taskHandleDoor);
+  xTaskCreate(taskDoor, "DoorTask", 4096, this, (configMAX_PRIORITIES - 3), &taskHandleDoor);
   attachInterruptArg(DOOR_PIN, interupt, this, CHANGE);
 }
 
@@ -41,7 +41,6 @@ void DOOR::taskDoor(void* ptr) {
     else if (pDoor->TrangThai() == DOOR_OPEN && pDoor->m_pOpenFuncCallBack != NULL) {
       pDoor->m_pOpenFuncCallBack(pDoor->pOpenPrameter);
     }
-    portYIELD();
   }
 }
 

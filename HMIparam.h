@@ -314,7 +314,12 @@
 
 
 #define _VPAddressKeyboardWarningText 0xA010
-#define _VPAddressWarningText 0xA020            // 50 ky tu
+#define _VPAddressWarningText0 0xA020            // 50 ky tu
+#define _VPAddressWarningText1 0xA020            // 50 ky tu
+#define _VPAddressWarningText2 0xA020            // 50 ky tu
+#define _VPAddressWarningText3 0xA020            // 50 ky tu
+#define _VPAddressWarningText4 0xA020            // 50 ky tu
+
 #define _VPAddressCurrentProgramNameText 0xA052 // 20 ky tu
 #define _VPAddressProgramLoopText 0xA072        // 3 ký tự
 #define _VPAddressCurrentProgramLoopText 0xA075 // 10 ký tự

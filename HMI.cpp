@@ -161,7 +161,6 @@ void HMI::KhoiTao(void)
 void HMI::_hmiUartEvent(void)
 {
     xTaskNotify(_hmiListenTaskHandle, 0x01, eSetBits);
-    portYIELD();
 }
 
 void HMI::_hmiListenTask(void* args)
@@ -1535,7 +1534,7 @@ void HMI::SetupDoThiNho(BaseProgram_t data) {
     if (CaoDoThi0 == 0) {
         CaoDoThi0 = 1;
     }
-    uint16_t MulY0 = 116 * 256 / CaoDoThi0;
+    uint16_t MulY0 = 250 * 256 / CaoDoThi0;
     uint16_t VDCentral0 = CaoDoThi0 / 2;
     setGraphVDCentral(_SPAddressSmallGraph1, VDCentral0);
     setGraphMulY(_SPAddressSmallGraph1, MulY0);
@@ -1554,7 +1553,7 @@ void HMI::SetupDoThiNho(BaseProgram_t data) {
     if (CaoDoThi1 == 0) {
         CaoDoThi1 = 1;
     }
-    uint16_t MulY1 = 116 * 256 / CaoDoThi1;
+    uint16_t MulY1 = 250 * 256 / CaoDoThi1;
     uint16_t VDCentral1 = CaoDoThi1 / 2;
     setGraphVDCentral(_SPAddressSmallGraphCO2, VDCentral1);
     setGraphMulY(_SPAddressSmallGraphCO2, MulY1);
@@ -1768,7 +1767,7 @@ void HMI::HienThiHeSoCalib(float GiaTri)
 void HMI::HienThiWarning(String text, uint8_t TrangSauKhiReturn)
 {
     _TrangSauKhiNhanReturnTrenWarning = TrangSauKhiReturn;
-    setText(_VPAddressWarningText, text);
+    setText(_VPAddressWarningText0, text);
     setPage(_WarningPage);
 }
 

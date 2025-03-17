@@ -174,9 +174,9 @@ void setup_PostGet()
     //     delay(1000);
     //     Serial.println("Connecting to WiFi...");
     // }
-    Serial.println("WiFi connected");
     MAC = WiFi.macAddress();
     MAC.replace(":", "");
+    Serial.print("WiFi connected, MAC: ");
     Serial.println(MAC);
 
     // Tạo một task mới để thực hiện GET
@@ -243,8 +243,8 @@ void loop_PostGet()
         {
             char data[100];
             CuongDoWiFi = map(constrain(WiFi.RSSI(), -100, -30), -100, -30, 0, 100);
-            Serial.print("RSSI: ");
-            Serial.println(CuongDoWiFi);
+            // Serial.print("RSSI: ");
+            // Serial.println(CuongDoWiFi);
             if (!BaseProgram.delayOffState)
             {
                 ThoiGianTat = 0;

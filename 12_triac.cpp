@@ -117,7 +117,6 @@ void triac::TimerTimoutTask(void* ptr) {
         gpio_set_level(pTriac->pin, 1);
         delayMicroseconds(100);
         gpio_set_level(pTriac->pin, 0);
-        portYIELD();
     }
 
 }

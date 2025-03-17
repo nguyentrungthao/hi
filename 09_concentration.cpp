@@ -104,10 +104,9 @@ void Concentration::taskTinhToanCO2(void* ptr) {
       break;
     }
     i++;
-    Serial.printf("CO2: %.2f, SaiSo: %.2f, output: %llu\n", pClass->nongDoThucCO2, SaiSo, thoiGianMoVan);
+    // Serial.printf("CO2: %.2f, SaiSo: %.2f, output: %llu\n", pClass->nongDoThucCO2, SaiSo, thoiGianMoVan);
     thoiGianMoVan = 0;
 
-    portYIELD();
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
 }

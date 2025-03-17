@@ -81,6 +81,7 @@ bool POSTGET::POSTDuLieuBoard(String DuLieu)
     if (DuLieu.isEmpty())
     {
         Serial.printf("\n\n\t DuLieu TRONG \n\n");
+        return 0;
     }
     try
     {
@@ -166,7 +167,6 @@ String POSTGET::GETLenhGuiXuongBoard()
 #if defined(debug) && defined(POST_GET)
                 Serial.print(millis() - ms);
                 Serial.print("(ms) for GET ");
-                Serial.println(data);
 #endif
 
                 return data;
