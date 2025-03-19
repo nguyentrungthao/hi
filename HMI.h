@@ -19,8 +19,10 @@ typedef enum
     HMI_SET_SETPOINT_TEMP,
     HMI_SET_SETPOINT_CO2,
     HMI_SET_CALIB_NHIET,
-    HMI_SET_CALIB_CO2,
-    HMI_RESET_CALIB,
+    HMI_SET_CALIB_SPAN_CO2,
+    HMI_SET_CALIB_ZERO_CO2,
+    HMI_RESET_CALIB_NHIET,
+    HMI_RESET_CALIB_CO2,
     // HMI_SET_FLAP,
     HMI_SET_DELAYOFF,
     HMI_SET_DELAYOFF_ONOFF,
@@ -245,10 +247,12 @@ protected:
     static void _NutVaoChucNangCalibNhiet_(int32_t lastBytes, void* args);
     static void _NutVaoChucNangCalibCO2_(int32_t lastBytes, void* args);
     static void _NutEditCalibTemp_(int32_t lastBytes, void* args);
-    static void _NutEditCalibCO2_(int32_t lastBytes, void* args);
+    static void _NutEditCalibSpanCO2_(int32_t lastBytes, void* args);
+    static void _NutEditCalibZeroCO2_(int32_t lastBytes, void* args);
     static void _NutEnterTrangCalibNhiet_(int32_t lastBytes, void* args);
     static void _NutEnterTrangCalibCO2_(int32_t lastBytes, void* args);
-    static void _NutResetHeSoCalib_(int32_t lastBytes, void* args);
+    static void _NutResetHeSoCalibNhiet_(int32_t lastBytes, void* args);
+    static void _NutResetHeSoCalibCO2_(int32_t lastBytes, void* args);
 
     // static void _NutSetFlap_(int32_t lastBytes, void* args);
     static void _NutEnterTrangFlap_(int32_t lastBytes, void* args); // Không dùng nữa

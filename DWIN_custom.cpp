@@ -590,7 +590,7 @@ String DWIN::handle() {
     // delay(50);
     int inhex;
     if (_dwinSerial->read() == 0x5A && _dwinSerial->read() == 0xA5) {
-      inhex = _dwinSerial->read();  // số ký tự nhận được nhận rồi vứt
+      inhex = _dwinSerial->read();  // độ dài chuỗi dữ liệu
 
       if (_dwinSerial->read() == 0x83) {
         isFirstByte = true;

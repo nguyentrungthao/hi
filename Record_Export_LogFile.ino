@@ -145,7 +145,7 @@ void writeRecord(fs::FS& fs, RecordData_t record)
   File file;
   if (!fs.exists(filename))
   {
-    strcpy(strData, "Time(D/M/Y H:M:S),Setpoint,Temperature,Fan(%),Flap(%),\n");
+    strcpy(strData, "Time(D/M/Y H:M:S),TempSetpoint,Temperature(℃),CO2Setpoint,CO2Concentration(%),Fan(%)\n");
     file = fs.open(filename, FILE_APPEND);
     if (file)
     {
@@ -172,7 +172,7 @@ void writeRecord(fs::FS& fs, RecordData_t record)
   //   record.setpointTemp, record.valueTemp, record.fan, record.flap);
   sprintf(strData, "%02u/%02u/%4u %02u:%02u:%02u,%.1f,%.1f,%u,\n",
     record.day, record.month, record.year + 2000, record.hour, record.minute, record.second,
-    record.setpointTemp, record.valueTemp, record.fan);
+    record.setpointTemp, record.valueTemp, record.setpointCO2, record.valueCO2, record.fan);
   recordCount += file.write((const uint8_t*)strData, strlen(strData));
 
   file.close();

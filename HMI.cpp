@@ -90,10 +90,12 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueChooseCalibTemp, _NutVaoChucNangCalibNhiet_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueChooseCalibCO2, _NutVaoChucNangCalibCO2_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEditCalibTemp, _NutEditCalibTemp_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEditCalibCO2, _NutEditCalibCO2_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibSpanCO2, _NutEditCalibSpanCO2_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibZeroCO2, _NutEditCalibZeroCO2_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibTemp, _NutEnterTrangCalibNhiet_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibCO2, _NutEnterTrangCalibCO2_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibCO2, _NutResetHeSoCalib_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibCO2, _NutResetHeSoCalibCO2_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibTemp, _NutResetHeSoCalibNhiet_, this);
 
     // DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetFlap, _NutSetFlap_, this);
     // DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterFlap, _NutEnterTrangFlap_, this);
@@ -122,7 +124,7 @@ void HMI::KhoiTao(void)
 
     DWIN::addButtonEvent(_VPAddressEnterProgramLoop, _AllKeyValue, _NutEnterChayProgramVoiChuKyDuocChon_, this);
     DWIN::addButtonEvent(_VPAddressInfButton, _AllKeyValue, _NutInfTrongTrangChonChuKyChayProgram_, this);
-    DWIN::addButtonEvent(_VPAddressSetProgramLoop, _AllKeyValue, _NutCaiChuKyChayProgram_, this);
+    // DWIN::addButtonEvent(_VPAddressSetProgramLoop, _AllKeyValue, _NutCaiChuKyChayProgram_, this);
 
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSterilization, _NutVaoChucNangTietTrung_, this);
     DWIN::addButtonEvent(_VPAddressCaiThoiGianTietTrung, _AllKeyValue, _NutCaiThoiGianTietTrung_, this);
@@ -209,7 +211,7 @@ void HMI::_XuLyBanPhim_(int32_t lastBytes, void* args)
         hmiPtr->_CapslockEnable = !hmiPtr->_CapslockEnable;
         if (hmiPtr->_CapslockEnable)
         {
-            hmiPtr->setVP(_VPAddressIconLowercaseKeyboard, 2);
+            hmiPtr->setVP(_VPAddressIconLowercaseKeyboard, 1);
         }
         else
         {
@@ -1038,19 +1040,26 @@ void HMI::_NutVaoChucNangCalibNhiet_(int32_t lastBytes, void* args) {
     hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
     hmiPtr->setPage(_CalibTempPage);
 }
+
 void HMI::_NutVaoChucNangCalibCO2_(int32_t lastBytes, void* args) {
     HMI* hmiPtr = (HMI*)args;
     // hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
     hmiPtr->setPage(_CalibCO2Page);
 }
 
-
-void HMI::_NutResetHeSoCalib_(int32_t lastBytes, void* args)
+void HMI::_NutResetHeSoCalibNhiet_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
-    hmiPtr->_set_event.type = HMI_RESET_CALIB;
+    hmiPtr->_set_event.type = HMI_RESET_CALIB_NHIET;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
+    // hmiPtr->setPage(_HomePage);
+}
+void HMI::_NutResetHeSoCalibCO2_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = HMI_RESET_CALIB_CO2;
+    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     // hmiPtr->setPage(_HomePage);
 }
 
@@ -1071,16 +1080,33 @@ void HMI::_NutEditCalibTemp_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->setPage(_NumericKeypadPage);
 }
-void HMI::_NutEditCalibCO2_(int32_t lastBytes, void* args)
+void HMI::_NutEditCalibSpanCO2_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterEnter = _CalibCO2Page;
     hmiPtr->_set_event.pageAfterReturn = _CalibCO2Page;
-    hmiPtr->_set_event.maxValue = 30;
-    hmiPtr->_set_event.minValue = -0.5;
-    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressStdCO2Text;
+    hmiPtr->_set_event.maxValue = 20;
+    hmiPtr->_set_event.minValue = 0.5;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressStdSpanCO2Text;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->setPage(_NumericKeypadPage);
+}
+void HMI::_NutEditCalibZeroCO2_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = UNDEFINED;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.pageAfterEnter = _CalibCO2Page;
+    hmiPtr->_set_event.pageAfterReturn = _CalibCO2Page;
+    hmiPtr->_set_event.maxValue = 0.5;
+    hmiPtr->_set_event.minValue = 0;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressStdZeroText;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
     hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
@@ -1094,7 +1120,10 @@ void HMI::_NutEnterTrangCalibNhiet_(int32_t lastBytes, void* args)
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = HMI_SET_CALIB_NHIET;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
-    hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressStdTempText, 6).toFloat();
+    String giaTriChuan = hmiPtr->getText(_VPAddressStdTempText, 6);
+    if (giaTriChuan == "") return;
+    hmiPtr->_set_event.f_value = giaTriChuan.toFloat();
+    hmiPtr->setText(_VPAddressStdTempText, "");
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
     // hmiPtr->setPage(_SettingsPage);
@@ -1103,9 +1132,9 @@ void HMI::_NutEnterTrangCalibNhiet_(int32_t lastBytes, void* args)
 void HMI::_NutEnterTrangCalibCO2_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
-    hmiPtr->_set_event.type = HMI_SET_CALIB_CO2;
+    hmiPtr->_set_event.type = HMI_SET_CALIB_SPAN_CO2;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
-    hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressStdCO2Text, 6).toFloat();
+    hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressStdSpanCO2Text, 6).toFloat();
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     // hmiPtr->setPage(_SettingsPage);
 }
@@ -1318,6 +1347,7 @@ void HMI::_NutVaoChucNangProgram_(int32_t lastBytes, void* args)
     hmiPtr->_hmiGetDataCallback(HMI_GET_PROGRAM_LIST, NULL);
     hmiPtr->_TenChuongTrinh = "";
     hmiPtr->_TenChuongTrinhTruocDo = "";
+    hmiPtr->setText(_VPAddressCurrentProgramNameText, hmiPtr->_TenChuongTrinh);
     hmiPtr->setPage(_ProgramPage);
 }
 
@@ -1343,6 +1373,7 @@ void HMI::_NutChonProgram_(int32_t lastBytes, void* args)
         hmiPtr->setTextColor(_SPAddressProgramNameText1 + hmiPtr->_ChiMucChuongTrinhTruocDo * 0x0010, 0x03, _BlueColor);
         hmiPtr->_ChiMucChuongTrinhTruocDo = 0xFFFF;
     }
+    hmiPtr->setText(_VPAddressCurrentProgramNameText, hmiPtr->_TenChuongTrinh);
     Serial.println(hmiPtr->_TenChuongTrinh);
 }
 
@@ -1832,12 +1863,18 @@ void HMI::_NutEnterTrongTrangProgram_(int32_t lastBytes, void* args)
     HMI* hmiPtr = (HMI*)args;
     if (hmiPtr->_TenChuongTrinh != "")
     {
-        //     hmiPtr->_set_event.type = HMI_RUN_PROGRAM_MODE;
-        //     hmiPtr->_set_event.text = hmiPtr->_TenChuongTrinh;
-        //     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+        hmiPtr->_set_event.type = UNDEFINED;
+        hmiPtr->_set_event.displayType = HMI_INT;
+        hmiPtr->_set_event.maxValue = 255;
+        hmiPtr->_set_event.minValue = 1;
+        hmiPtr->_set_event.textLen = 3;
+        hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressProgramLoopText;
+        hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressProgramLoopText;
         hmiPtr->_set_event.pageAfterReturn = _ProgramPage;
+        hmiPtr->_set_event.pageAfterEnter = _ProgramPage;
         hmiPtr->_ChuoiBanPhimDangNhap = "1";
         hmiPtr->setText(_VPAddressProgramLoopText, "1");
+        hmiPtr->setText(_VPAddressKeyboardWarningText, "");
         hmiPtr->setPage(_ProgramLoopPage);
     }
 }
@@ -1867,23 +1904,23 @@ void HMI::_NutInfTrongTrangChonChuKyChayProgram_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressProgramLoopText, "Inf");
 }
 
-void HMI::_NutCaiChuKyChayProgram_(int32_t lastBytes, void* args)
-{
-    HMI* hmiPtr = (HMI*)args;
-    hmiPtr->_set_event.type = UNDEFINED;
-    hmiPtr->_set_event.displayType = HMI_INT;
-    hmiPtr->_set_event.maxValue = 255;
-    hmiPtr->_set_event.minValue = 1;
-    hmiPtr->_set_event.textLen = 3;
-    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressProgramLoopText;
-    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
-    hmiPtr->_set_event.pageAfterReturn = _ProgramLoopPage;
-    hmiPtr->_set_event.pageAfterEnter = _ProgramLoopPage;
-    hmiPtr->_ChuoiBanPhimDangNhap = "1";
-    hmiPtr->setText(_VPAddressKeyboardInputText, "1");
-    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
-    hmiPtr->setPage(_NumericKeypadPage);
-}
+// void HMI::_NutCaiChuKyChayProgram_(int32_t lastBytes, void* args)
+// {
+//     HMI* hmiPtr = (HMI*)args;
+//     hmiPtr->_set_event.type = UNDEFINED;
+//     hmiPtr->_set_event.displayType = HMI_INT;
+//     hmiPtr->_set_event.maxValue = 255;
+//     hmiPtr->_set_event.minValue = 1;
+//     hmiPtr->_set_event.textLen = 3;
+//     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressProgramLoopText;
+//     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+//     hmiPtr->_set_event.pageAfterReturn = _ProgramLoopPage;
+//     hmiPtr->_set_event.pageAfterEnter = _ProgramLoopPage;
+//     hmiPtr->_ChuoiBanPhimDangNhap = "1";
+//     hmiPtr->setText(_VPAddressKeyboardInputText, "1");
+//     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+//     hmiPtr->setPage(_NumericKeypadPage);
+// }
 
 void HMI::_NutVaoChucNangTietTrung_(int32_t lastBytes, void* args)
 {
@@ -2087,7 +2124,6 @@ void HMI::_CacNutChonPhuongThucUpdate_(int32_t lastBytes, void* args)
         hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
         break;
     case _KeyValueNutChonUpdateBangFOTA:
-        // hmiPtr->_set_event.type = HMI_FIRMWARE_FOTA;
         if (WiFi.status() == WL_CONNECTED)
         {
             // Gửi yêu cầu Cập nhật firmware OTA
@@ -2150,6 +2186,10 @@ void HMI::_CacNutTrangFOTA_(int32_t lastBytes, void* args)
         {
             break;
         }
+        hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+
+        // Connect wifi
+        hmiPtr->_set_event.type = HMI_CONNECT_OR_DISCONNECT_WIFI;
         hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 
         // Gửi yêu cầu Cập nhật firmware OTA

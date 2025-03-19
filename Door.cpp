@@ -34,7 +34,7 @@ void DOOR::taskDoor(void* ptr) {
   uint32_t notifyNum;
   while (1) {
     xTaskNotifyWait(pdFALSE, pdTRUE, &notifyNum, portMAX_DELAY);
-    delay(10);
+    delay(100);
     if (pDoor->TrangThai() == DOOR_CLOSE && pDoor->m_pCloseFuncCallBack != NULL) {
       pDoor->m_pCloseFuncCallBack(pDoor->pClosePrameter);
     }

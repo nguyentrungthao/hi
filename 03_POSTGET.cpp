@@ -6,10 +6,10 @@
 #include <WiFi.h> // Thư viện WiFi của ESP32.
 #include <RTClib.h>
 
-#define URL_GETLenhGuiXuongBoard "https://App.IoTVision.vn/api/LABone_KingIncu_DuLieuGuiXuongBoard?CheDo=1&key="
-#define URL_CapNhatCODE "https://App.IoTVision.vn/api/LABone_KingIncu_DuLieuGuiXuongBoard"
-#define URL_POSTDuLieuTuBoardLenServer "https://App.IoTVision.vn/api/LABone_KingIncu_DuLieu"
-#define URL_POSTGETThongSoBoard "https://App.IoTVision.vn/api/LABone_KingIncu_ThongSoCaiDatBoard"
+#define URL_GETLenhGuiXuongBoard "https://App.IoTVision.vn/api/LABone_KingIncuCO2_DuLieuGuiXuongBoard?CheDo=1&key="
+#define URL_CapNhatCODE "https://App.IoTVision.vn/api/LABone_KingIncuCO2_DuLieuGuiXuongBoard"
+#define URL_POSTDuLieuTuBoardLenServer "https://App.IoTVision.vn/api/LABone_KingIncuCO2_DuLieu"
+#define URL_POSTGETThongSoBoard "https://App.IoTVision.vn/api/LABone_KingIncuCO2_ThongSoCaiDatBoard"
 #define URL_GETThoiGian "https://App.IoTVision.vn/api/ThoiGian"
 
 // Thiết lập thời gian timeout.

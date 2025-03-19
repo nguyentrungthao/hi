@@ -95,7 +95,7 @@ public:
     // void logDEBUG();
     
     void KhoiDongLaiCamBien();
-    void XoaToanBoGiaTriCalib();
+    IRCO2_StatusTydef XoaToanBoGiaTriCalib();
     IRCO2_StatusTydef CalibGiaTriThuc(float giaTriChuan);
     IRCO2_StatusTydef CalibDiem0(float giaTri0Chuan);
     void CalibApSuat(uint32_t thoiGianMoVan);

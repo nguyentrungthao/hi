@@ -2,6 +2,7 @@
 #define _HMI_PARAM_H_
 
 // Danh sach cac trang
+#define _EndIntroPage 0x3C // 60
 #define _WarningPage 0x3D  // 61
 #define _HomePage 0x46  // 70
 #define _SettingsPage 0x48  // 72
@@ -30,6 +31,7 @@
 #define _InfoPage 0x64  // 100
 #define _CalibChoosePage 0x65  // 101
 #define _CalibCO2Page 0x66  // 102
+#define _SleepPage 0x67 // 103
 
 
 /* Sử dụng 0xFFFF để làm mã KeyValue cho việc cấu hình hàm addButtonEvent có nghĩa là với bất kỳ
@@ -78,12 +80,13 @@
 #define _KeyValueSwapGraph 0x1C
 #define _KeyValueSetAlarmUnderCO2 0x1F
 #define _KeyValueSetAlarmOverCO2 0x20
-#define _KeyValueEditCalibCO2 0x21
+#define _KeyValueEnterCalibSpanCO2 0x21
+#define _KeyValueEnterCalibZeroCO2 0x24
 #define _KeyValueResetCalibCO2 0x22
 #define _KeyValueChooseCalibCO2 0x1D
 #define _KeyValueChooseCalibTemp 0x1E
 #define _KeyValueEnterCalibCO2 0x23
-
+#define _KeyValuePage103Wakeup 0x24
 
 
 #pragma region VP các nút  Segment
@@ -128,6 +131,7 @@
 #define _KeyValueProgram3 3
 #define _KeyValueProgram4 4
 #define _KeyValueProgram5 5
+#define _KeyValueProgram6 6
 
 #define _VPAddressProgramFunction 0x500E
 #define _KeyValueProgramUp 1
@@ -173,6 +177,11 @@
 #define _KeyValueNutWiFiID 1
 #define _KeyValueNutPassWifi 2
 #define _KeyValueNutKetNoiWiFi 3
+#define _KeyValueNutScanWifi 4
+#define _KeyValueNutChonSSID1 5
+#define _KeyValueNutChonSSID2 6
+#define _KeyValueNutChonSSID3 7
+#define _KeyValueNutChonSSID4 8
 
 // Truc them
 #pragma region VP cac nut trang Cai mau khau admin
@@ -185,8 +194,8 @@
 #pragma region NumericKeypad
 #define _VPAddressNumericKeypad 0x5300
 
-#pragma region ICON VP Address
 
+#pragma region ICON VP Address
 #define _VPAddressIconRun 0x6000
 #define _VPAddressIconQuat 0x6001
 #define _VPAddressIconCua 0x6002
@@ -233,6 +242,7 @@
 #define _VPAddressProgramNameText3 _VPAddressProgramNameText2 + 20 // 8228
 #define _VPAddressProgramNameText4 _VPAddressProgramNameText3 + 20 // 823C
 #define _VPAddressProgramNameText5 _VPAddressProgramNameText4 + 20 // 8250
+#define _VPAddressProgramNameText6 _VPAddressProgramNameText5 + 20 // 8278
 
 #define _VPAddressGraphYValueText1 0x8300
 #define _VPAddressGraphYValueText2 0x8305
@@ -262,12 +272,6 @@
 #define _VPAddressNumSegmentText3 _VPAddressNumSegmentText2 + 2
 #define _VPAddressNumSegmentText4 _VPAddressNumSegmentText3 + 2
 #define _VPAddressNumSegmentText5 _VPAddressNumSegmentText4 + 2
-
-#define _VPAddressTotalNumOfSegmentsText1 0x9101
-#define _VPAddressTotalNumOfSegmentsText2 _VPAddressTotalNumOfSegmentsText1 + 2
-#define _VPAddressTotalNumOfSegmentsText3 _VPAddressTotalNumOfSegmentsText2 + 2
-#define _VPAddressTotalNumOfSegmentsText4 _VPAddressTotalNumOfSegmentsText3 + 2
-#define _VPAddressTotalNumOfSegmentsText5 _VPAddressTotalNumOfSegmentsText4 + 2
 
 #define _VPAddressSegmentSetpointText1 0x900A // Có 5 ô, mỗi ô tối đa 5 ký tự
 #define _VPAddressSegmentSetpointText2 _VPAddressSegmentSetpointText1 + 5
@@ -310,15 +314,17 @@
 #define _VPAddressNumProgramText3 _VPAddressNumProgramText2 + 2
 #define _VPAddressNumProgramText4 _VPAddressNumProgramText3 + 2
 #define _VPAddressNumProgramText5 _VPAddressNumProgramText4 + 2
+#define _VPAddressNumProgramText6 _VPAddressNumProgramText5 + 2
 
-
+#define _VPAddressTotalNumOfSegmentsText1 0x9103
+#define _VPAddressTotalNumOfSegmentsText2 _VPAddressTotalNumOfSegmentsText1 + 2
+#define _VPAddressTotalNumOfSegmentsText3 _VPAddressTotalNumOfSegmentsText2 + 2
+#define _VPAddressTotalNumOfSegmentsText4 _VPAddressTotalNumOfSegmentsText3 + 2
+#define _VPAddressTotalNumOfSegmentsText5 _VPAddressTotalNumOfSegmentsText4 + 2
+#define _VPAddressTotalNumOfSegmentsText6 _VPAddressTotalNumOfSegmentsText5 + 2
 
 #define _VPAddressKeyboardWarningText 0xA010
 #define _VPAddressWarningText0 0xA020            // 50 ky tu
-#define _VPAddressWarningText1 0xA020            // 50 ky tu
-#define _VPAddressWarningText2 0xA020            // 50 ky tu
-#define _VPAddressWarningText3 0xA020            // 50 ky tu
-#define _VPAddressWarningText4 0xA020            // 50 ky tu
 
 #define _VPAddressCurrentProgramNameText 0xA052 // 20 ky tu
 #define _VPAddressProgramLoopText 0xA072        // 3 ký tự
@@ -366,8 +372,8 @@
 #define _VPAddressSegmentCO2MaxText4 (_VPAddressSegmentCO2MaxText3 + 5)
 #define _VPAddressSegmentCO2MaxText5 (_VPAddressSegmentCO2MaxText4 + 5)
 
-#define _VPAddressCalibCO2Text 0xB05F // 5 ký tự
-#define _VPAddressStdCO2Text 0xB064 // 5 ký tự
+#define _VPAddressStdZeroText 0xB05F // 5 ký tự
+#define _VPAddressStdSpanCO2Text 0xB064 // 5 ký tự
 
 #define _VPAddressGraphY_R_ValueText1 0xB069
 #define _VPAddressGraphY_R_ValueText2 0xB06E
@@ -375,6 +381,20 @@
 #define _VPAddressGraphY_R_ValueText4 0xB078
 #define _VPAddressGraphY_R_ValueText5 0xB07D
 #define _VPAddressGraphY_R_ValueText6 0xB082
+#define _VPAddressWarningText1 0xB0B4            // 50 ky tu
+#define _VPAddressWarningText2 0xB0E6            // 50 ky tu
+#define _VPAddressWarningText3 0xB118            // 50 ky tu
+#define _VPAddressWarningText4 0xB14A            // 50 ky tu
+
+#define _VPAddressCalibCO2TextInfor 0xB17C //20 ký tự
+
+#define _VPAddressPage94SSID1 0xB190 // 30 ký tư
+#define _VPAddressPage94SSID2 0xB1AE
+#define _VPAddressPage94SSID3 0xB1CC
+#define _VPAddressPage94SSID4 0xB1EA 
+
+
+
 
 #pragma region SP Address
 
@@ -383,12 +403,16 @@
 #define _SPAddressProgramNameText3 0xC020
 #define _SPAddressProgramNameText4 0xC030
 #define _SPAddressProgramNameText5 0xC040
+#define _SPAddressProgramNameText5 0xC050
 
-#define _SPAddressSmallGraph1 0xC050
-#define _SPAddressLargeGraph 0xC060
-#define _SPAddressSmallGraph2 0xC070
-#define _SPAddressSmallGraphCO2 0xC080
-#define _SPAddressLargeGraphCO2 0xC090
+#define _SPAddressSmallGraph1 0xC150
+#define _SPAddressLargeGraph 0xC160
+
+#define _SPAddressSmallGraphCO2 0xC180
+#define _SPAddressLargeGraphCO2 0xC190
+
+#pragma region VP control brightness 
+#define  _VPAddressBrightness 0xC500
 
 #pragma region Mã màu
 

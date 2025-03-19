@@ -236,20 +236,33 @@ void loop_PostGet()
         }
     }
     delay(100);
-    // %d%d;%.1f;%.1f;%d;%d;21:34:13 01/12/2025
+    //-----------------------------------------------------------------------------------------
+    // Chuỗi dulieu sẽ gồm K1MODERSSI;CO2CaiDat;NongDoCO2ThucTe;NhietDoCaiDat;NhietDoThucTe;ThoiGianONCaiDat;ThoiGianDaON;RTC
+    // Ví dụ: 175;500;27.9;32.5;32.49;130;80.6;21:34:13 30/07/2023
+    // nghĩa là
+    // s00: K1 = 1
+    // s01: Độ mạnh WiFI = 75%
+    // s1: Tốc độ CO2 cài đặt = 500 (RPM)
+    // s2: Tốc độ CO2 thực tế hiện tại = 27.9 (RPM)
+    // s3: Nhiệt độ cài đặt: 32.5 (độ C)
+    // s4: Nhiệt độ thực tế: 32.49 (độ C)
+    // s5: Thời gian ON cài đặt = 130 (phút)
+    // s6: Thời gian đã ON = 80,6 (phút )
+    // s7: Thời gian thực RTC trên board = 30/07/2023 21:34:13
     if (millis() - preTime > 1000)
     {
         if (WiFi.status() == WL_CONNECTED)
         {
             char data[100];
             CuongDoWiFi = map(constrain(WiFi.RSSI(), -100, -30), -100, -30, 0, 100);
-            // Serial.print("RSSI: ");
-            // Serial.println(CuongDoWiFi);
+
             if (!BaseProgram.delayOffState)
             {
                 ThoiGianTat = 0;
                 // _time.getRemainingTime();
-                snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat, (uint32_t)_time.getElapsedTime() / 60, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
+                snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u",
+                    BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointCO2, BaseProgram.CO2, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat,
+                    (uint32_t)_time.getElapsedTime() / 60, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
             }
             else
             {
@@ -258,11 +271,15 @@ void loop_PostGet()
                 Serial.println(ThoiGianTat);
                 if (FlagNhietDoXacLap)
                 {
-                    snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat, (uint32_t)_time.getRemainingTime() / 60, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
+                    snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u",
+                        BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointCO2, BaseProgram.CO2, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat,
+                        (uint32_t)_time.getRemainingTime() / 60, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
                 }
                 else
                 {
-                    snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u", BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat, ThoiGianTat, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
+                    snprintf(data, sizeof(data), "%d%u;%.1f;%.1f;%.1f;%.1f;%d;%d;%02u:%02u:%02u %02u/%02u/%4u",
+                        BaseProgram.machineState, CuongDoWiFi, BaseProgram.programData.setPointCO2, BaseProgram.CO2, BaseProgram.programData.setPointTemp, BaseProgram.temperature, ThoiGianTat,
+                        ThoiGianTat, RTCnow.hour(), RTCnow.minute(), RTCnow.second(), RTCnow.day(), RTCnow.month(), RTCnow.year());
                 }
 
                 Serial.print("ThoiGianChayConLai ");

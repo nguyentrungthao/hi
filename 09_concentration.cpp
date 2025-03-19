@@ -141,8 +141,8 @@ void Concentration::KhoiDongLaiCamBien() {
   this->SensorReset();
 }
 //* xóa hết các giá trị calib, đưa các giá trị calib về gốc
-void Concentration::XoaToanBoGiaTriCalib() {
-  this->SetFactoryDefault();
+IRCO2_StatusTydef Concentration::XoaToanBoGiaTriCalib() {
+  return this->SetFactoryDefault();
 }
 //* gửi giá trị để cảm biến tự động điều chỉnh
 IRCO2_StatusTydef Concentration::CalibGiaTriThuc(float giaTriChuan) {
@@ -157,7 +157,7 @@ IRCO2_StatusTydef Concentration::CalibGiaTriThuc(float giaTriChuan) {
       Serial.println("CALIB SPAN CO2 OKE");
       return IRCO2_OK;
     }
-    delay(10);
+    delay(50);
   }
 
   return IRCO2_ERR_VAL;
@@ -175,7 +175,7 @@ IRCO2_StatusTydef Concentration::CalibDiem0(float giaTri0Chuan) {
       Serial.println("CALIB ZERO CO2 OKE");
       return IRCO2_OK;
     }
-    delay(10);
+    delay(50);
   }
   return IRCO2_ERR_VAL;
 }

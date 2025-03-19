@@ -115,7 +115,7 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
 
   while (1) {
 
-    pHeater->NhietDoLocBuong = pHeater->LocCamBienBuong.updateEstimate(pHeater->DocGiaTriCamBien(pHeater->PT100_buong));
+    pHeater->NhietDoLocBuong = pHeater->LocCamBienBuong.updateEstimate(pHeater->DocGiaTriCamBien(pHeater->PT100_buong)) + pHeater->HeSoCalib;
 
     switch (pHeater->step) {
     case 0:  //tắt máy
@@ -261,7 +261,7 @@ void HEATER::KhoiTaoCamBien() {
   PT100_3.enable50Hz(true);
   delay(10);
   for (uint8_t i = 0; i < 20; i++) {
-    NhietDoLocBuong = LocCamBienBuong.updateEstimate(PT100_buong.temperature(MAX31865_DIEN_TRO_CAM_BIEN, MAX31865_DIEN_TRO_THAM_CHIEU));  //* lọc giá trị đọc
+    NhietDoLocBuong = LocCamBienBuong.updateEstimate(PT100_buong.temperature(MAX31865_DIEN_TRO_CAM_BIEN, MAX31865_DIEN_TRO_THAM_CHIEU)) + HeSoCalib ;  //* lọc giá trị đọc
   }
 }
 float HEATER::DocGiaTriCamBien(Adafruit_MAX31865& xPt100) {
