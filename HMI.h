@@ -88,6 +88,7 @@ typedef enum
     HMI_GET_DELAYOFF,
     HMI_GET_CALIB,
     HMI_CHECK_LIST,
+    HMI_GET_SCAN_SSID_WIFI
 } hmi_get_type_t;
 
 typedef enum
@@ -153,7 +154,7 @@ public:
     void VeDoThiNhiet(float value, time_t time, int offset);
     void VeDoThiCO2(float value, time_t time, int offset);
     void VeDoThi(BaseProgram_t data);
-    void SetupDoThiNho(BaseProgram_t data);
+    void setupDoThiDoiSetpoint(BaseProgram_t data);
     void XoaDoThi(void);
 
     void HienThiNhietDo(float GiaTri);
@@ -181,6 +182,7 @@ public:
     void HienThiVongLapChuongTrinhConLai(int GiaTri, int Tong);
     void HienThiVongLapChuongTrinhConLai(String text);
     void HienThiHeSoCalib(float GiaTri);
+    void HienThiWarning(std::vector<String> warningVector, uint8_t TrangSauKhiReturn);
     void HienThiWarning(String text, uint8_t TrangSauKhiReturn);
     void HienThiIconRemoveWater(bool TrangThai);
     void HienThiIconRemoveSample(bool TrangThai);
@@ -195,6 +197,7 @@ public:
     void HienThiTrangThaiKetNoiWiFi(String text); // truc them
     void HienThiSSIDWiFi(String text);
     void HienThiPasswordWiFi(String text);
+    void HienThiListSSIDWifi(std::vector<String> vectorSSID);
     void HienThiIconUSB(bool TrangThai);
     bool SoSanhPassWord(String EnteredPassword);
     void ThayDoiUserAdminPassword(String EnteredPassword);
@@ -232,7 +235,7 @@ protected:
         float minValue = 200;
         float valueStep = 0;
         time_t timeArr[9];
-        uint16_t valueArr[6];
+        int32_t valueArr[6];
         int16_t count = 0;
         bool flag = 0;
     };

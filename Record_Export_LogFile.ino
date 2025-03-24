@@ -125,7 +125,7 @@ void deleteExistingFile(fs::FS& fs, int index)
 void writeRecord(fs::FS& fs, RecordData_t record)
 {
   char filename[20];
-  char strData[64];
+  char strData[200];
   snprintf(filename, sizeof(filename), "%s/data%d.csv", LOG_DIR_PATH, fileIndex);
 
   if (!fs.exists(LOG_DIR_PATH))
@@ -145,7 +145,7 @@ void writeRecord(fs::FS& fs, RecordData_t record)
   File file;
   if (!fs.exists(filename))
   {
-    strcpy(strData, "Time(D/M/Y H:M:S),TempSetpoint,Temperature(℃),CO2Setpoint,CO2Concentration(%),Fan(%)\n");
+    strcpy(strData, "Time(D/M/Y H:M:S),TempSetpoint,Temperature(oC),CO2Setpoint,CO2Concentration(%),Fan(%)\n");
     file = fs.open(filename, FILE_APPEND);
     if (file)
     {
@@ -166,17 +166,13 @@ void writeRecord(fs::FS& fs, RecordData_t record)
     return;
   }
 
-  // Ghi dữ liệu bản ghi vào file
-  // sprintf(strData, "%02u/%02u/%4u %02u:%02u:%02u,%.1f,%.1f,%u,%u,\n",
-  //   record.day, record.month, record.year + 2000, record.hour, record.minute, record.second,
-  //   record.setpointTemp, record.valueTemp, record.fan, record.flap);
-  sprintf(strData, "%02u/%02u/%4u %02u:%02u:%02u,%.1f,%.1f,%u,\n",
+
+  sprintf(strData, "%02u/%02u/%4u %02u:%02u:%02u,%.1f,%.1f,%0.1f,%0.1f,%u\n",
     record.day, record.month, record.year + 2000, record.hour, record.minute, record.second,
     record.setpointTemp, record.valueTemp, record.setpointCO2, record.valueCO2, record.fan);
   recordCount += file.write((const uint8_t*)strData, strlen(strData));
 
   file.close();
-
   // Cập nhật trạng thái
 
   Serial.printf("%s: fileIndex: %d recordCount: %d byte\n", __func__, fileIndex, recordCount);

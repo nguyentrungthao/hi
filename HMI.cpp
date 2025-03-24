@@ -751,7 +751,7 @@ void HMI::_CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void* args)
         hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter;
         hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressCurrentProgramNameText;
         hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
-        hmiPtr->_set_event.textLen = 10;
+        hmiPtr->_set_event.textLen = 15;
         hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(_VPAddressCurrentProgramNameText, 16);
         hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
         hmiPtr->setText(_VPAddressKeyboardWarningText, "");
@@ -1394,7 +1394,7 @@ void HMI::_CacNutThaoTacTrongTrangProgram_(int32_t lastBytes, void* args)
     case _KeyValueProgramAdd:
         hmiPtr->_set_event.type = HMI_ADD_PROGRAM;
         hmiPtr->_set_event.displayType = HMI_TEXT;
-        hmiPtr->_set_event.textLen = 10;
+        hmiPtr->_set_event.textLen = 30;
         hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressCurrentProgramNameText;
         hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
         hmiPtr->_set_event.pageAfterReturn = _ProgramPage;
@@ -1550,46 +1550,93 @@ void HMI::VeDoThi(BaseProgram_t data) {
     sendIntArray(0x82, arrayy, 14);
 }
 
-void HMI::SetupDoThiNho(BaseProgram_t data) {
-    //xử lý thông số cho nhiệt 
-    // thông số cho cột Y 
-    int16_t YL0 = ((int16_t)(data.temperature));
-    if (YL0 < 0) YL0 = 0;
-    int16_t stepYL0 = (((int16_t)(data.programData.setPointTemp)) - YL0) * 10 / 4;
-    for (uint8_t i = 0; i < 6; i++) {
-        _DuLieuDoThiNhietDo.valueArr[i] = (YL0 * 10 + i * stepYL0);
-        setText(_VPAddressGraphYValueText1 + i * 5, String(_DuLieuDoThiNhietDo.valueArr[i] / 10.0f, 1));
-    }
-    // thông số cho đồ thị 
-    int16_t CaoDoThi0 = 5 * ((((int16_t)(data.programData.setPointTemp)) - YL0) * 10 / 4);
-    if (CaoDoThi0 == 0) {
-        CaoDoThi0 = 1;
-    }
-    uint16_t MulY0 = 250 * 256 / CaoDoThi0;
-    uint16_t VDCentral0 = CaoDoThi0 / 2;
-    setGraphVDCentral(_SPAddressSmallGraph1, VDCentral0);
-    setGraphMulY(_SPAddressSmallGraph1, MulY0);
+void HMI::setupDoThiDoiSetpoint(BaseProgram_t data) {
 
-    //xử lý thông số cho CO2 
-    // thông số cho cột Y 
-    int16_t YL1 = ((int16_t)(data.CO2));
-    if (YL1 < 0) YL1 = 0;
-    int16_t stepYL1 = (((int16_t)(data.programData.setPointCO2)) - YL1) * 10 / 4;
-    for (uint8_t i = 0; i < 6; i++) {
-        _DuLieuDoThiCO2.valueArr[i] = (YL1 * 10 + i * stepYL1);
-        setText(_VPAddressGraphY_R_ValueText1 + i * 5, String(_DuLieuDoThiCO2.valueArr[i] / 10.0f, 1));
-    }
-    // thông số cho đồ thị 
-    int16_t CaoDoThi1 = 5 * ((((uint16_t)(data.programData.setPointCO2)) - YL1) * 10 / 4);
-    if (CaoDoThi1 == 0) {
-        CaoDoThi1 = 1;
-    }
-    uint16_t MulY1 = 250 * 256 / CaoDoThi1;
-    uint16_t VDCentral1 = CaoDoThi1 / 2;
-    setGraphVDCentral(_SPAddressSmallGraphCO2, VDCentral1);
-    setGraphMulY(_SPAddressSmallGraphCO2, MulY1);
+    static float setPointTemp;
+    static float setPointCO2;
 
-    Serial.printf("VDCentral0 : %lu, MulY0 : %lu, VDCentral1 : %lu, MulY1 : %lu\n", VDCentral0, MulY0, VDCentral1, MulY1);
+    if (abs(setPointTemp - data.programData.setPointTemp) > 0.1) {
+        setPointTemp = data.programData.setPointTemp;
+        int32_t stepYL0;
+        if (fabs(setPointTemp - data.temperature) > 1) {
+            if (setPointTemp > data.temperature) {
+                _DuLieuDoThiNhietDo.valueArr[4] = (int32_t)(round(setPointTemp));
+                stepYL0 = (_DuLieuDoThiNhietDo.valueArr[4] - (int32_t)(data.temperature)) * 10 / 3;
+                _DuLieuDoThiNhietDo.valueArr[0] = _DuLieuDoThiNhietDo.valueArr[4] * 10 - stepYL0 * 4;
+            }
+            else {
+                _DuLieuDoThiNhietDo.valueArr[1] = (int32_t)(round(setPointTemp));
+                stepYL0 = ((int32_t)(data.temperature) - _DuLieuDoThiNhietDo.valueArr[1]) * 10 / 3;
+                _DuLieuDoThiNhietDo.valueArr[0] = _DuLieuDoThiNhietDo.valueArr[1] * 10 - stepYL0;
+            }   
+        }
+        else {
+            stepYL0 = 10;
+            _DuLieuDoThiNhietDo.valueArr[3] = (int32_t)(round(setPointTemp));
+            _DuLieuDoThiNhietDo.valueArr[0] = _DuLieuDoThiNhietDo.valueArr[3] * 10 - stepYL0 * 3;
+        }
+
+        for (uint8_t i = 0; i < 6; i++) {
+            _DuLieuDoThiNhietDo.valueArr[i] = _DuLieuDoThiNhietDo.valueArr[0] + i * stepYL0;
+
+        }
+
+        int32_t CaoDoThi0 = _DuLieuDoThiNhietDo.valueArr[5] - _DuLieuDoThiNhietDo.valueArr[0];
+        if (CaoDoThi0 == 0) {
+            CaoDoThi0 = 2;
+        }
+        int32_t MulY0 = 240 * 256 / CaoDoThi0;
+        int32_t VDCentral0 = CaoDoThi0 / 2;
+        for (uint8_t i = 0; i < 6; i++) {
+            setText(_VPAddressGraphYValueText1 + i * 5, String(_DuLieuDoThiNhietDo.valueArr[i] / 10.0f, 1));
+        }
+        setGraphVDCentral(_SPAddressSmallGraph1, VDCentral0);
+        setGraphMulY(_SPAddressSmallGraph1, MulY0);
+        setGraphVDCentral(_SPAddressLargeGraph, VDCentral0);
+        setGraphMulY(_SPAddressLargeGraph, MulY0);
+    }
+
+
+    if (abs(setPointCO2 - data.programData.setPointCO2) > 0.1) {
+        setPointCO2 = data.programData.setPointCO2;
+        int32_t stepYL0;
+        if (fabs(setPointCO2 - data.CO2) > 1) {
+            if (setPointCO2 > data.CO2) {
+                _DuLieuDoThiCO2.valueArr[4] = (int32_t)(round(setPointCO2));
+                stepYL0 = (_DuLieuDoThiCO2.valueArr[4] - (int32_t)(data.CO2)) * 10 / 3;
+                _DuLieuDoThiCO2.valueArr[0] = _DuLieuDoThiCO2.valueArr[4] * 10 - stepYL0 * 4;
+            }
+            else {
+                _DuLieuDoThiCO2.valueArr[1] = (int32_t)(round(setPointCO2));
+                stepYL0 = ((int32_t)(data.CO2) - _DuLieuDoThiCO2.valueArr[1]) * 10 / 3;
+                _DuLieuDoThiCO2.valueArr[0] = _DuLieuDoThiCO2.valueArr[1] * 10 - stepYL0;
+            }
+        }
+        else {
+            stepYL0 = 10;
+            _DuLieuDoThiCO2.valueArr[2] = (int32_t)(round(setPointCO2));
+            _DuLieuDoThiCO2.valueArr[0] = _DuLieuDoThiCO2.valueArr[2] * 10 - stepYL0 * 2;
+        }
+
+        for (uint8_t i = 0; i < 6; i++) {
+            _DuLieuDoThiCO2.valueArr[i] = _DuLieuDoThiCO2.valueArr[0] + i * stepYL0;
+
+        }
+
+        int32_t CaoDoThi0 = _DuLieuDoThiCO2.valueArr[5] - _DuLieuDoThiCO2.valueArr[0];
+        if (CaoDoThi0 == 0) {
+            CaoDoThi0 = 2;
+        }
+        int32_t MulY0 = 240 * 256 / CaoDoThi0;
+        int32_t VDCentral0 = CaoDoThi0 / 2;
+        for (uint8_t i = 0; i < 6; i++) {
+            setText(_VPAddressGraphY_R_ValueText1 + i * 5, String(_DuLieuDoThiCO2.valueArr[i] / 10.0f, 1));
+        }
+        setGraphVDCentral(_SPAddressSmallGraphCO2, VDCentral0);
+        setGraphMulY(_SPAddressSmallGraphCO2, MulY0);
+        setGraphVDCentral(_SPAddressLargeGraphCO2, VDCentral0);
+        setGraphMulY(_SPAddressLargeGraphCO2, MulY0);
+    }
 }
 
 void HMI::XoaDoThi(void)
@@ -1795,12 +1842,24 @@ void HMI::HienThiHeSoCalib(float GiaTri)
     setText(_VPAddressCalibTempText, String(GiaTri, 1));
 }
 
-void HMI::HienThiWarning(String text, uint8_t TrangSauKhiReturn)
+void HMI::HienThiWarning(std::vector<String> warningVector, uint8_t TrangSauKhiReturn)
 {
+    _TrangSauKhiNhanReturnTrenWarning = TrangSauKhiReturn;
+    constexpr uint32_t step = _VPAddressWarningText1 - _VPAddressWarningText0;
+    for (uint8_t i = 0; i < 4; i++) {
+        setText(_VPAddressWarningText0 + i * step, "");
+    }
+    for (uint8_t i = 0; !warningVector.empty(); i++) {
+        setText(_VPAddressWarningText0 + i * step, warningVector.at(i));
+    }
+    setPage(_WarningPage);
+}
+void HMI::HienThiWarning(String text, uint8_t TrangSauKhiReturn) {
     _TrangSauKhiNhanReturnTrenWarning = TrangSauKhiReturn;
     setText(_VPAddressWarningText0, text);
     setPage(_WarningPage);
 }
+
 
 void HMI::HienThiTenProgramDangEdit(String text)
 {
@@ -1852,6 +1911,13 @@ void HMI::HienThiSSIDWiFi(String text)
 {
     setText(_VPAddressTextSSIDWifi, text);
 }
+void HMI::HienThiListSSIDWifi(std::vector<String> vectorSSID) {
+    for (uint16_t i = 0; i < 4; i++) {
+        Serial.println("SSID: " + vectorSSID.at(i));
+        setText(_VPAddressPage94SSID1 + 30 * i, vectorSSID.at(i));
+    }
+}
+
 
 void HMI::HienThiPasswordWiFi(String text)
 {
@@ -2079,7 +2145,17 @@ void HMI::_NutTroVeTrongTrangWarning_(int32_t lastBytes, void* args)
 void HMI::_NutXoaDoThi_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
-    hmiPtr->XoaDoThi();
+    switch (lastBytes)
+    {
+    case _KeyValueResetGraphTemp:
+        hmiPtr->resetGraph(0);
+        break;
+    case _KeyValueResetGraphCO2:
+        hmiPtr->resetGraph(1);
+        break;
+    default:
+        break;
+    }
 }
 
 void HMI::_NutDataRecord_(int32_t lastBytes, void* args)
@@ -2277,6 +2353,15 @@ void HMI::_CacNutTrangWiFi_(int32_t lastBytes, void* arg)
         // Connect wifi
         hmiPtr->_set_event.type = HMI_CONNECT_OR_DISCONNECT_WIFI;
         hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+        break;
+    case _KeyValueNutScanWifi:
+        // hmiPtr->_set_event.type = HMI_GET_SCAN_SSID_WIFI;
+        hmiPtr->_hmiGetDataCallback(HMI_GET_SCAN_SSID_WIFI, NULL);
+        break;
+    case _KeyValueNutChonSSID1:
+    case _KeyValueNutChonSSID2:
+    case _KeyValueNutChonSSID3:
+    case _KeyValueNutChonSSID4:
         break;
     default:
         break;

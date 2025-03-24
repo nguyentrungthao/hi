@@ -77,7 +77,7 @@ IRCO2_StatusTydef IRCO2::GetSensorFeedback() {
     result = this->ProcessString(_buffer);
   }
   else {
-    Serial.printf("CO2 sai frame %x %x\n", _buffer[0], _buffer[i - 1]);
+    ESP_LOGE(__FILE__,"CO2 sai frame %x %x\n", _buffer[0], _buffer[i - 1]);
   }
   memset(_buffer, 0, 40);
   return result;

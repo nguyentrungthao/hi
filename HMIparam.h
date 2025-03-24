@@ -160,6 +160,8 @@
 
 #pragma region VP cac nut reset Graph
 #define _VPAddressResetGraph 0x5019
+#define _KeyValueResetGraphTemp 0
+#define _KeyValueResetGraphCO2 1
 
 #pragma region VP cac nut chuc nang Update
 #define _VPAddressCacNutChonPhuongThucUpdate 0x501A
@@ -324,7 +326,6 @@
 #define _VPAddressTotalNumOfSegmentsText6 _VPAddressTotalNumOfSegmentsText5 + 2
 
 #define _VPAddressKeyboardWarningText 0xA010
-#define _VPAddressWarningText0 0xA020            // 50 ky tu
 
 #define _VPAddressCurrentProgramNameText 0xA052 // 20 ky tu
 #define _VPAddressProgramLoopText 0xA072        // 3 ký tự
@@ -381,17 +382,19 @@
 #define _VPAddressGraphY_R_ValueText4 0xB078
 #define _VPAddressGraphY_R_ValueText5 0xB07D
 #define _VPAddressGraphY_R_ValueText6 0xB082
-#define _VPAddressWarningText1 0xB0B4            // 50 ky tu
-#define _VPAddressWarningText2 0xB0E6            // 50 ky tu
-#define _VPAddressWarningText3 0xB118            // 50 ky tu
-#define _VPAddressWarningText4 0xB14A            // 50 ky tu
 
-#define _VPAddressCalibCO2TextInfor 0xB17C //20 ký tự
+#define _VPAddressWarningText0 0xB0B4            // 50 ky tu
+#define _VPAddressWarningText1 0xB0E6            // 50 ky tu
+#define _VPAddressWarningText2 0xB118            // 50 ky tu
+#define _VPAddressWarningText3 0xB14A            // 50 ky tu
+#define _VPAddressWarningText4 0xB17C            // 50 ky tu
 
-#define _VPAddressPage94SSID1 0xB190 // 30 ký tư
-#define _VPAddressPage94SSID2 0xB1AE
-#define _VPAddressPage94SSID3 0xB1CC
-#define _VPAddressPage94SSID4 0xB1EA 
+#define _VPAddressCalibCO2TextInfor 0xB1AE  //20 ký tự
+
+#define _VPAddressPage94SSID1 0xB1C2 // 30 ký tư
+#define _VPAddressPage94SSID2 0xB1E0
+#define _VPAddressPage94SSID3 0xB1FE
+#define _VPAddressPage94SSID4 0xB21C 
 
 
 

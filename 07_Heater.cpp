@@ -1,14 +1,14 @@
 #include "07_Heater.h"
 
 HEATER::HEATER()
-  : PID(), triac((gpio_num_t)TRIAC2_PIN) {
+  : PID(), triac((gpio_num_t)TRIAC4_PIN) {
 }
 
 void HEATER::KhoiTao(void) {
   KhoiTaoCamBien();
   KhoiTaoThongSoPID();
   KhoiTaoTriac();
-  xTaskCreate(TaskDieuKhienNhiet, "CTR_TEMP", 4096, (void*)this, (configMAX_PRIORITIES - 3), &taskHandleDieuKhienNhiet);
+  xTaskCreate(TaskDieuKhienNhiet, "tính Nhiệt", 4096, (void*)this, (configMAX_PRIORITIES - 3), &taskHandleDieuKhienNhiet);
 }
 
 void HEATER::CaiDatNhietDo(float setpoint) {
@@ -287,6 +287,6 @@ void HEATER::KhoiTaoTriac(void) {
   //! triac::configACDETPIN(ACDET_PIN); 
   //!không trực tiếp gọi vì heater cần tín hiệu từ ACDET điều khiển số chu kỳ dẫn của triac
   pinMode(ACDET_PIN, INPUT);
-  xTaskCreate(TaskNgatACDET, "ngat", 8196, this, (configMAX_PRIORITIES - 2), &taskHandleNgatACDET);
+  xTaskCreate(TaskNgatACDET, "ngatACDET", 8196, this, (configMAX_PRIORITIES - 2), &taskHandleNgatACDET);
   attachInterruptArg(ACDET_PIN, interupt, this, FALLING);
 }
