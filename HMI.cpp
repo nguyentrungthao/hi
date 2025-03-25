@@ -567,28 +567,6 @@ void HMI::_NutEditTocDoQuatTrangSegment_(int32_t lastBytes, void* args)
     }
 }
 
-// void HMI::_NutEditFlapTrangSegment_(int32_t lastBytes, void* args)
-// {
-//     HMI* hmiPtr = (HMI*)args;
-//     hmiPtr->_set_event.type = HMI_EDIT_SEG_AIRFLAP;
-//     hmiPtr->_set_event.displayType = HMI_INT;
-//     hmiPtr->_set_event.pageAfterReturn = _SegmentAdjPage;
-//     hmiPtr->_set_event.pageAfterEnter = _SegmentAdjPage;
-//     hmiPtr->_set_event.maxValue = 100;
-//     hmiPtr->_set_event.minValue = 0;
-//     hmiPtr->_set_event.textLen = 5;
-//     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSegmentAirFlapText1 + lastBytes * 5;
-//     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
-//     hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
-//     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
-//     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
-//     hmiPtr->_set_event.indexList = lastBytes;
-//     if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
-//     {
-//         hmiPtr->DWIN::setPage(_FlapNumericKeypadPage);
-//     }
-// }
-
 void HMI::_NutEditTempMinTrangSegment_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
@@ -1394,7 +1372,7 @@ void HMI::_CacNutThaoTacTrongTrangProgram_(int32_t lastBytes, void* args)
     case _KeyValueProgramAdd:
         hmiPtr->_set_event.type = HMI_ADD_PROGRAM;
         hmiPtr->_set_event.displayType = HMI_TEXT;
-        hmiPtr->_set_event.textLen = 30;
+        hmiPtr->_set_event.textLen = 15;
         hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressCurrentProgramNameText;
         hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
         hmiPtr->_set_event.pageAfterReturn = _ProgramPage;
@@ -2362,6 +2340,7 @@ void HMI::_CacNutTrangWiFi_(int32_t lastBytes, void* arg)
     case _KeyValueNutChonSSID2:
     case _KeyValueNutChonSSID3:
     case _KeyValueNutChonSSID4:
+        hmiPtr->setText(_VPAddressTextSSIDWifi, hmiPtr->getText(_VPAddressPage94SSID1 + (lastBytes - _KeyValueNutChonSSID1) * 30, 30));
         break;
     default:
         break;

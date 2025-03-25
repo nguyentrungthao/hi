@@ -43,7 +43,7 @@ int d0 = 6;
 bool onebit = true;
 
 // Thông tin Wi-Fi
-const char* ssid = "LABone:KingLab-HUYlab";
+const char* ssid = "LABone_Phong_Hoan_Thien";
 const char* password = "66668888";
 
 const uint8_t RxPin = 14;  // Chân Rx1 trên ESP32
@@ -94,12 +94,13 @@ TaskHandle_t TaskExportDataHdl = NULL;
 TaskHandle_t TaskUpdateFirmwareHdl = NULL;
 TaskHandle_t TaskMainHdl;
 TaskHandle_t TaskKetNoiWiFiHdl;  // truc them
-SemaphoreHandle_t SemaKetNoiWiFi;  // truc them
+QueueHandle_t KetNoiWiFiQueue;  // truc them
 
 
 String WifiSSID = "";
 String WifiPassword = "";
 WiFiConfig_t WiFiConfig;
+bool bTrangThaiWifi = false;
 
 uint8_t countTest = 0;
 int8_t GiaTriThanhCuon = 0;
@@ -142,6 +143,7 @@ void callBackCloseDoor(void* ptr);
 static void triggeONICONNhiet(void*);
 static void triggeOFFICONNhiet(void*);
 void callBackSoftTimerChoDWIN(TimerHandle_t xTimer);
+void hienThiList(int i);
 
 //các task
 void TaskHMI(void*);
@@ -159,7 +161,7 @@ void setup() {
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
 
-  SemaKetNoiWiFi = xSemaphoreCreateBinary();  // truc them
+  KetNoiWiFiQueue = xQueueCreate(2, sizeof(FrameDataQueue_t));
   QueueUpdateFirmware = xQueueCreate(2, sizeof(MethodUpdates_t));
   recvHMIQueue = xQueueCreate(10, sizeof(FrameDataQueue_t));
 
@@ -215,7 +217,7 @@ void setup() {
   delay(5);
   xTaskCreateUniversal(TaskMain, "tskMain", 8192, NULL, 3, &TaskMainHdl, -1);
   delay(5);
-  xTaskCreateUniversal(TaskHMI, "tskHMI", 8192, NULL, 2, &TaskHMIHdl, -1);
+  xTaskCreateUniversal(TaskHMI, "tskHMI", 15000, NULL, 2, &TaskHMIHdl, -1);
   delay(5);
 }
 
@@ -231,13 +233,13 @@ void loop() {
     //     http.begin();
   }
   // }
-  if (millis() - t > 1000) {
-    t = millis();
-    char buffer[1024];  // Bộ nhớ lưu danh sách task
-    Serial.printf("Task Name\tState\tPrio\tStack Left\tTask Num\n");
-    vTaskList(buffer);       // Lấy danh sách task
-    Serial.printf("%s\n", buffer);  // In ra Serial
-  }
+  // if (millis() - t > 1000) {
+  //   t = millis();
+  //   char buffer[1024];  // Bộ nhớ lưu danh sách task
+  //   Serial.printf("Task Name\tState\tPrio\tStack Left\tTask Num\n");
+  //   vTaskList(buffer);       // Lấy danh sách task
+  //   Serial.printf("%s\n", buffer);  // In ra Serial
+  // }
   delay(1);
 }
 
@@ -358,8 +360,11 @@ void khoiTaoSDCARD() {
     Serial.print("Thong tin Wifi: ");
     Serial.print(WifiSSID + " ");
     Serial.println(WifiPassword);
-    if (WiFiConfig.state) {
-      xSemaphoreGive(SemaKetNoiWiFi);
+    if (WiFiConfig.state && KetNoiWiFiQueue) {
+      FrameDataQueue_t data = {
+        .event = eEVENT_CONNECT_WIFI,
+      };
+      xQueueSend(KetNoiWiFiQueue, &data, 10);
     }
   }
 }
@@ -796,13 +801,6 @@ void hmiSetEvent(const hmi_set_event_t& event) {
       Serial.printf("Set segment fanspeed %u: %u\n", event.indexList + listPageStartPosition, ProgramList[event.indexList + listPageStartPosition].fanSpeed);
     }
     break;
-    // case HMI_EDIT_SEG_AIRFLAP:
-    //     if (ProgramList.size() > event.indexList + listPageStartPosition)
-    //     {
-    //         ProgramList.at(event.indexList + listPageStartPosition).flap = event.f_value;
-    //         Serial.printf("Set segment air flap %u: %u\n", event.indexList + listPageStartPosition, ProgramList[event.indexList + listPageStartPosition].flap);
-    //     }
-    //     break;
   case HMI_EDIT_SEG_TEMPMIN:
     if (ProgramList.size() > event.indexList + listPageStartPosition) {
       ProgramList.at(event.indexList + listPageStartPosition).tempMin = event.f_value;
@@ -842,7 +840,6 @@ void hmiSetEvent(const hmi_set_event_t& event) {
     newProgram.delayOffDay = 0;
     newProgram.delayOffHour = 1;
     newProgram.delayOffMinute = 1;
-    // newProgram.flap = 10;
     if (ProgramList.size() < (int)event.indexList + listPageStartPosition) {
       ProgramList.push_back(newProgram);
       if (ProgramList.size() >= 5) {
@@ -1056,11 +1053,6 @@ void hmiSetEvent(const hmi_set_event_t& event) {
     countTest++;
     Serial.println("Scroll: " + String((int)event.f_value));
     GiaTriThanhCuon = (int)event.f_value;
-    // if(TrangThaiThanhCuon == false && millis() - ThoiGian2LanChamThanhCuon > 200) {
-    //     GiaTriThanhCuonTruocDo = GiaTriThanhCuon;
-    //     TrangThaiThanhCuon = true;
-    //     ThoiGian2LanChamThanhCuon = millis();
-    // }
     if (millis() - ThoiGian2LanChamThanhCuon > 200) {
       GiaTriThanhCuonTruocDo = GiaTriThanhCuon;
       TrangThaiThanhCuon = false;
@@ -1071,9 +1063,21 @@ void hmiSetEvent(const hmi_set_event_t& event) {
     ThoiGian2LanChamThanhCuon = millis();
     break;
   case HMI_CONNECT_OR_DISCONNECT_WIFI:
+  {
     Serial.println("HMI_CONNECT_OR_DISCONNECT_WIFI");
-    xSemaphoreGive(SemaKetNoiWiFi);
-    break;
+    FrameDataQueue_t data;
+    if (bTrangThaiWifi == true) {
+      data.event = eEVENT_DISCONNECT_WIFI;
+    }
+    else {
+      data.event = eEVENT_CONNECT_WIFI;
+    }
+    if (KetNoiWiFiQueue) {
+      xQueueSend(KetNoiWiFiQueue, &data, 0);
+    }
+  }
+
+  break;
   case HMI_CHANGE_ADMIN_PASSWORD:
     Serial.print("Password: ");
     Serial.println(event.text);
@@ -1086,252 +1090,12 @@ void hmiSetEvent(const hmi_set_event_t& event) {
 }
 int programStart = 0, programEnd = 0;
 bool hmiGetEvent(hmi_get_type_t event, void* args) {
-  int i = 0;
-  time_t timeNow;
-  File file, root;
-  switch (event) {
-  case HMI_CHECK_LIST:
-    if (*((uint8_t*)args) + listPageStartPosition >= ProgramList.size()) {
-      return 0;
-    }
-    break;
-  case HMI_GET_RTC:
-    // timeNow = now();
-    _dwin.HienThiNgay(_time.getDay());
-    _dwin.HienThiThang(_time.getMonth());
-    _dwin.HienThiNam(_time.getYear());
-    _dwin.HienThiGio(_time.getHour());
-    _dwin.HienThiPhut(_time.getMinute());
-    break;
-  case HMI_GET_DELAYOFF:
-    _dwin.HienThiNgay(BaseProgram.programData.delayOffDay);
-    _dwin.HienThiGio(BaseProgram.programData.delayOffHour);
-    _dwin.HienThiPhut(BaseProgram.programData.delayOffMinute);
-    break;
-  case HMI_GET_ALARM:
-    _dwin.HienThiNhietDoCanhBao(BaseProgram.programData.tempMin, BaseProgram.programData.tempMax);
-    _dwin.HienThiCO2CanhBao(BaseProgram.programData.CO2Min, BaseProgram.programData.CO2Max);
-    break;
-  case HMI_GET_PROGRAM_LIST:
-    programListIndex = 0;
-    root = SD_MMC.open("/program");
-    if (!root) {
-      Serial.println("Failed to open directory");
-      return 0;
-    }
-    if (!root.isDirectory()) {
-      Serial.println("/program is not a directory");
-      return 0;
-    }
-    file = root.openNextFile();
-    programStart = 0;
-    while (file) {
-      Serial.print("File: ");
-      String name = file.name();
-      Serial.println(name);
-      _dwin.HienThiTenChuongTrinhTrenHang(programListIndex, programListIndex + 1, name, file.size() / sizeof(Program_t), __func__);
-      file = root.openNextFile();
-      programListIndex++;
-      if (programListIndex % 6 == 0) {
-        break;
-      }
-    }
-    if (programListIndex < 6) {
-      for (int8_t i = programListIndex; i < 6; i++) {
-        _dwin.XoaDuLieuHienThiTenChuongTrinhTrenHang(i);
-      }
-    }
-    Serial.println("HMI_GET_PROGRAM_LIST");
-    break;
-  case HMI_GET_NEXT_PROGRAM_LIST:
-    if (programListIndex - programStart == 0) {
-      programStart -= 6;
-    }
-    else {
-      programStart = (programListIndex / 6) * 6;
-    }
-    programListIndex = 0;
-    Serial.printf("programStart: %d\n", programStart);
-    Serial.printf("programListIndex: %d\n", programListIndex);
-    root = SD_MMC.open("/program");
-    if (!root) {
-      Serial.println("Failed to open directory");
-      return 0;
-    }
-    if (!root.isDirectory()) {
-      Serial.println("/program is not a directory");
-      return 0;
-    }
-    file = root.openNextFile();
-    while (file) {
-      Serial.print("File: ");
-      Serial.println(file.name());
-      if (programListIndex >= programStart) {
-        _dwin.HienThiTenChuongTrinhTrenHang(programListIndex - programStart, programListIndex + 1, file.name(), file.size() / sizeof(Program_t), __func__);
-        file.close();
-      }
-      file = root.openNextFile();
-      programListIndex++;
-      if (programListIndex % 6 == 0 && programListIndex > programStart) {
-        file.close();
-        break;
-      }
-    }
-    if (programListIndex % 6 != 0) {
-      for (int8_t i = programListIndex - programStart; i < 6; i++) {
-        _dwin.XoaDuLieuHienThiTenChuongTrinhTrenHang(i);
-      }
-    }
-    break;
-  case HMI_GET_BACK_PROGRAM_LIST:
-    if (programStart >= 6) {
-      programStart -= 6;
-    }
-    else if (programStart == 0) {
-      return 0;
-    }
-    else {
-      programStart = 0;
-    }
-    programListIndex = 0;
-    root = SD_MMC.open("/program");
-    if (!root) {
-      Serial.println("Failed to open directory");
-      return 0;
-    }
-    if (!root.isDirectory()) {
-      Serial.println("/program is not a directory");
-      return 0;
-    }
-    file = root.openNextFile();
-    while (file) {
-      Serial.print("File: ");
-      Serial.println(file.name());
-      if (programListIndex >= programStart) {
-        _dwin.HienThiTenChuongTrinhTrenHang(programListIndex - programStart, programListIndex + 1, file.name(), file.size() / sizeof(Program_t), __func__);
-        file.close();
-      }
-      file = root.openNextFile();
-      programListIndex++;
-      if (programListIndex % 6 == 0 && programListIndex > programStart) {
-        file.close();
-        break;
-      }
-    }
-    if (programListIndex % 6 != 0) {
-      for (int8_t i = programListIndex - programStart; i < 6; i++) {
-        _dwin.XoaDuLieuHienThiTenChuongTrinhTrenHang(i);
-      }
-    }
+  static FrameDataQueue_t xDataHMIGetEvent;
+  if (recvHMIQueue == NULL) return 0;
+  xDataHMIGetEvent.event = event;
+  xDataHMIGetEvent.pvData = args;
+  xQueueSend(recvHMIQueue, &xDataHMIGetEvent, 0);
 
-    break;
-  case HMI_GET_SEGMENT_LIST:
-    Serial.println("List_segment");
-    listPageStartPosition = 0;
-    if (ProgramList.size() >= 5) {
-      listLength = 5;
-    }
-    else {
-      listLength = ProgramList.size();
-    }
-    goto HienThiSegmentList;
-    break;
-  case HMI_GET_NEXT_SEGMENT_LIST:
-    if (ProgramList.size() > listPageStartPosition + 5) {
-      listPageStartPosition += 5;
-      listLength = ProgramList.size() - listPageStartPosition;
-      if (listLength > 5) {
-        listLength = 5;
-      }
-    }
-    else if (ProgramList.size() <= 5) {
-      listLength = ProgramList.size();
-    }
-    else if (ProgramList.size() <= listPageStartPosition + 5) {
-      listLength = ProgramList.size() - listPageStartPosition;
-    }
-    else {
-      Serial.println("Segment List is full");
-    }
-    goto HienThiSegmentList;
-    break;
-  case HMI_GET_BACK_SEGMENT_LIST:
-    if (listPageStartPosition - 5 >= 0) {
-      listPageStartPosition -= 5;
-      listLength = 5;
-    }
-    else if (ProgramList.size() <= 5) {
-      listPageStartPosition = 0;
-      listLength = ProgramList.size();
-    }
-    else if (listPageStartPosition - 5 < 0) {
-      listPageStartPosition = 0;
-      listLength = 5;
-    }
-    goto HienThiSegmentList;
-    break;
-  case HMI_REFRESH_SEGMENT_LIST:
-    if (ProgramList.size() <= 5) {
-      listLength = ProgramList.size();
-    }
-    else if (ProgramList.size() <= listPageStartPosition + 5) {
-      listLength = ProgramList.size() - listPageStartPosition;
-    }
-    goto HienThiSegmentList;
-    break;
-  case HMI_GET_SEGMENT_DELAYOFF:
-    _dwin.HienThiNgay((ProgramList[*((uint8_t*)args) + listPageStartPosition].delayOffDay));
-    _dwin.HienThiGio((ProgramList[*((uint8_t*)args) + listPageStartPosition].delayOffHour));
-    _dwin.HienThiPhut((ProgramList[*((uint8_t*)args) + listPageStartPosition].delayOffMinute));
-    break;
-  case HMI_GET_CALIB:
-    _dwin.HienThiHeSoCalib(GetCalib(BaseProgram.programData.setPointTemp));
-    break;
-  case HMI_GET_SCAN_SSID_WIFI:
-  {
-    // WiFi.disconnect();
-    // delay(100);
-    int n = WiFi.scanNetworks();
-    Serial.println("scan done");
-    std::vector<String> vectorSSID;
-    for (uint8_t i = 0; i < 4; i++) {
-      if (i < n) {
-        vectorSSID.push_back(WiFi.SSID(i));
-      }
-      else {
-        vectorSSID.push_back("");
-      } 
-    } 
-    _dwin.HienThiListSSIDWifi(vectorSSID);
-  }
-  break;
-  default:
-    break;
-  }
-  return 1;
-
-HienThiSegmentList:
-  for (i = listPageStartPosition; i < 5 + listPageStartPosition; i++) {
-    if (i < listLength + listPageStartPosition) {
-      Program_t programData = ProgramList[i];
-      _dwin.HienThiDuLieuSegmentTrenHang((i - listPageStartPosition),
-        i + 1,
-        programData.setPointTemp,
-        programData.setPointCO2,
-        programData.delayOffDay,
-        programData.delayOffHour,
-        programData.delayOffMinute,
-        programData.fanSpeed,
-        // programData.flap,
-        programData.tempMin,
-        programData.tempMax,
-        programData.CO2Min,
-        programData.CO2Max);
-    }
-    else {
-      _dwin.XoaDuLieuHienThiSegmentTrenHang(i - listPageStartPosition);
-    }
-  }
   return 1;
 }
 
@@ -1377,6 +1141,29 @@ static void triggeOFFICONCO2(void*) {
   xQueueSend(recvHMIQueue, &data, 0);
 }
 
+void hienThiList(int i) {
+  for (i = listPageStartPosition; i < 5 + listPageStartPosition; i++) {
+    if (i < listLength + listPageStartPosition) {
+      Program_t programData = ProgramList[i];
+      _dwin.HienThiDuLieuSegmentTrenHang((i - listPageStartPosition),
+        i + 1,
+        programData.setPointTemp,
+        programData.setPointCO2,
+        programData.delayOffDay,
+        programData.delayOffHour,
+        programData.delayOffMinute,
+        programData.fanSpeed,
+        // programData.flap,
+        programData.tempMin,
+        programData.tempMax,
+        programData.CO2Min,
+        programData.CO2Max);
+    }
+    else {
+      _dwin.XoaDuLieuHienThiSegmentTrenHang(i - listPageStartPosition);
+    }
+  }
+}
 
 
 
@@ -1464,52 +1251,115 @@ void TaskUpdateFirmware(void*) {
   }
 }
 
+void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
+  static FrameDataQueue_t data;
+  static String ErrMessage;
+  switch (event) {
+  case ARDUINO_EVENT_WIFI_READY:
+    Serial.println("WiFi interface ready");
+    break;
+  case ARDUINO_EVENT_WIFI_SCAN_DONE:
+    Serial.println("Completed scan for access points");
+    break;
+  case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+    Serial.println("Connected to access point");
+    data.event = eEVENT_CONNECT_WIFI_SUCCESS;
+    if (KetNoiWiFiQueue)
+      xQueueSend(KetNoiWiFiQueue, &data, 0);
+    break;
+  case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+    Serial.println("Disconnected from WiFi access point");
+    Serial.print("WiFi lost connection. Reason: ");
+    Serial.println(info.wifi_sta_disconnected.reason);
+
+    switch (info.wifi_sta_disconnected.reason) {
+    case WIFI_REASON_NO_AP_FOUND:
+      ErrMessage = "No Wifi Name";
+      break;
+    case WIFI_REASON_AUTH_FAIL:
+    case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+      ErrMessage = "Wrong Password";
+      break;
+    case WIFI_REASON_ASSOC_LEAVE:
+      ErrMessage = "Disconnected";
+      break;
+    default:
+      ErrMessage = "lost - retrying";
+      break;
+    }
+    data.event = eEVENT_LOST_WIFI_CONNECTION;
+    data.pvData = (void*)&ErrMessage;
+    if (KetNoiWiFiQueue)
+      xQueueSend(KetNoiWiFiQueue, &data, 0);
+    data.event = eEVENT_ICON_WIFI;
+    data.pvData = NULL;
+    if (recvHMIQueue)
+      xQueueSend(recvHMIQueue, &data, 0);
+    break;
+  default:
+    Serial.printf("Err case [WiFi-event] event: %d\n", event);
+    break;
+  }
+}
+
 // truc them
 // Sửa lại các hàm icon, hiển thị gọi bên HMI.h
 void TaskKetNoiWiFi(void*) {
-  for (;;) {
-    xSemaphoreTake(SemaKetNoiWiFi, portMAX_DELAY);
-    Serial.println("TaskKetNoiWiFi RUN");
-    _dwin.HienThiTrangThaiKetNoiWiFi("");
+  FrameDataQueue_t data;
+  bool trangThaiKetNoi = false;
+  WiFi.onEvent(WiFiEvent);
 
-    if (WiFi.status() != WL_CONNECTED) {
-      // Kết nối Wi-Fi
+  for (;;) {
+    xQueueReceive(KetNoiWiFiQueue, &data, portMAX_DELAY);
+    Serial.printf("%s nhận event: %d, data nhận được %s\n", __func__, data.event, data.pvData == NULL ? "NULL" : "NOT NULL");
+    // _dwin.HienThiTrangThaiKetNoiWiFi("");
+
+    switch ((WifiEvent_t)data.event) {
+    case eEVENT_CONNECT_WIFI:
       Serial.println("Connecting to " + WifiSSID);
       _dwin.HienThiTrangThaiKetNoiWiFi("Connecting");
       WiFi.begin(WifiSSID.c_str(), WifiPassword.c_str());
-
-      uint8_t u8Try = 30;
-      while (u8Try--) {
-        if (WiFi.status() == WL_CONNECTED) {
-          _dwin.setVP(_VPAddressIonConnect, 2);
-          _dwin.HienThiTrangThaiKetNoiWiFi("MAC: " + String(WiFi.macAddress()));
-          _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
-          strcpy(WiFiConfig.ssid, WifiSSID.c_str());
-          strcpy(WiFiConfig.password, WifiPassword.c_str());
-          WiFiConfig.state = true;
-          setup_PostGet();
-          // setupMQTT();
-          break;
-        }
-        delay(500);
-      }
-      if (WiFi.status() != WL_CONNECTED) {
-        _dwin.setVP(_VPAddressIonConnect, 0);
-        _dwin.HienThiTrangThaiKetNoiWiFi("Failed to connect");
-      }
-    }
-    else {
+      WiFiConfig.state = true;
+      SDMMCFile.writeFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
+      bTrangThaiWifi = true;
+      continue;
+    case eEVENT_DISCONNECT_WIFI:
+    {
+      int8_t i8Try = 5;
       _dwin.HienThiTrangThaiKetNoiWiFi("Disconnected");
       Serial.println("disconnect to " + WifiSSID);
       _dwin.setVP(_VPAddressIonConnect, 0);
       _dwin.setVP(_VPAddressIconWiFi, 0);
       WiFiConfig.state = false;
-      uint8_t u8Try = 15;
-      WiFi.disconnect();
-      while (WiFi.status() == WL_CONNECTED && u8Try--) {
-      }
+      do {
+        WiFi.disconnect();
+        WiFi.mode(WIFI_OFF);
+        delay(100);
+      } while (WiFi.status() == WL_CONNECTED && i8Try--);
+      SDMMCFile.writeFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
+      bTrangThaiWifi = false;
     }
-    SDMMCFile.writeFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
+    break;
+    case eEVENT_CONNECT_WIFI_SUCCESS:
+      _dwin.setVP(_VPAddressIonConnect, 2);
+      _dwin.HienThiTrangThaiKetNoiWiFi("MAC: " + String(WiFi.macAddress()));
+      _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
+      strcpy(WiFiConfig.ssid, WifiSSID.c_str());
+      strcpy(WiFiConfig.password, WifiPassword.c_str());
+      setup_PostGet();
+      break;
+    case eEVENT_LOST_WIFI_CONNECTION:
+    {
+      _dwin.setVP(_VPAddressIconWiFi, 0);
+      if (!data.pvData || bTrangThaiWifi == false) continue;
+      String message = *((String*)data.pvData);
+      _dwin.HienThiTrangThaiKetNoiWiFi(message);
+      WiFi.begin(WifiSSID.c_str(), WifiPassword.c_str());
+    }
+    break;
+    default:
+      break;
+    }
     UBaseType_t stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
     Serial.printf("%s: Task's stack high water mark: %lu words\n", __func__, stackHighWaterMark);
   }
@@ -1722,11 +1572,16 @@ void TaskMain(void*) {
 
 void TaskHMI(void*) {
   FrameDataQueue_t data;
+  FrameDataQueue_t dataSent;
+
   while (1) {
     xQueueReceive(recvHMIQueue, &data, portMAX_DELAY);
     // Serial.printf("%s nhận event: %d, data nhận được %s\n", __func__, data.event, data.pvData == NULL ? "NULL" : "NOT NULL");
+    int i = 0;
+    time_t timeNow;
+    File file, root;
 
-    switch ((EventTaskHMI_t)data.event) {
+    switch ((hmi_get_type_t)data.event) {
     case eEVENT_ICON_NHIET:
       if (_Heater.TrangThaiThanhGiaNhiet() == 1) {  // gia nhiet
         _dwin.HienThiIconGiaNhiet(1);
@@ -1854,6 +1709,227 @@ void TaskHMI(void*) {
         _dwin.setPage(_HomePage);
       }
       break;
+    case HMI_CHECK_LIST:
+      if (data.pvData == NULL) continue;
+      if (*((uint8_t*)data.pvData) + listPageStartPosition >= ProgramList.size()) {
+        continue;
+      }
+      break;
+    case HMI_GET_RTC:
+      // timeNow = now();
+      _dwin.HienThiNgay(_time.getDay());
+      _dwin.HienThiThang(_time.getMonth());
+      _dwin.HienThiNam(_time.getYear());
+      _dwin.HienThiGio(_time.getHour());
+      _dwin.HienThiPhut(_time.getMinute());
+      break;
+    case HMI_GET_DELAYOFF:
+      _dwin.HienThiNgay(BaseProgram.programData.delayOffDay);
+      _dwin.HienThiGio(BaseProgram.programData.delayOffHour);
+      _dwin.HienThiPhut(BaseProgram.programData.delayOffMinute);
+      break;
+    case HMI_GET_ALARM:
+      _dwin.HienThiNhietDoCanhBao(BaseProgram.programData.tempMin, BaseProgram.programData.tempMax);
+      _dwin.HienThiCO2CanhBao(BaseProgram.programData.CO2Min, BaseProgram.programData.CO2Max);
+      break;
+    case HMI_GET_PROGRAM_LIST:
+      programListIndex = 0;
+      root = SD_MMC.open("/program");
+      if (!root) {
+        Serial.println("Failed to open directory");
+        continue;
+      }
+      if (!root.isDirectory()) {
+        Serial.println("/program is not a directory");
+        continue;
+      }
+      file = root.openNextFile();
+      programStart = 0;
+      while (file) {
+        Serial.print("File: ");
+        String name = file.name();
+        Serial.println(name);
+        _dwin.HienThiTenChuongTrinhTrenHang(programListIndex, programListIndex + 1, name, file.size() / sizeof(Program_t), __func__);
+        file = root.openNextFile();
+        programListIndex++;
+        if (programListIndex % 6 == 0) {
+          break;
+        }
+      }
+      if (programListIndex < 6) {
+        for (int8_t i = programListIndex; i < 6; i++) {
+          _dwin.XoaDuLieuHienThiTenChuongTrinhTrenHang(i);
+        }
+      }
+      Serial.println("HMI_GET_PROGRAM_LIST");
+      break;
+    case HMI_GET_NEXT_PROGRAM_LIST:
+      if (programListIndex - programStart == 0) {
+        programStart -= 6;
+      }
+      else {
+        programStart = (programListIndex / 6) * 6;
+      }
+      programListIndex = 0;
+      Serial.printf("programStart: %d\n", programStart);
+      Serial.printf("programListIndex: %d\n", programListIndex);
+      root = SD_MMC.open("/program");
+      if (!root) {
+        Serial.println("Failed to open directory");
+        continue;
+      }
+      if (!root.isDirectory()) {
+        Serial.println("/program is not a directory");
+        continue;
+      }
+      file = root.openNextFile();
+      while (file) {
+        Serial.print("File: ");
+        Serial.println(file.name());
+        if (programListIndex >= programStart) {
+          _dwin.HienThiTenChuongTrinhTrenHang(programListIndex - programStart, programListIndex + 1, file.name(), file.size() / sizeof(Program_t), __func__);
+          file.close();
+        }
+        file = root.openNextFile();
+        programListIndex++;
+        if (programListIndex % 6 == 0 && programListIndex > programStart) {
+          file.close();
+          break;
+        }
+      }
+      if (programListIndex % 6 != 0) {
+        for (int8_t i = programListIndex - programStart; i < 6; i++) {
+          _dwin.XoaDuLieuHienThiTenChuongTrinhTrenHang(i);
+        }
+      }
+      break;
+    case HMI_GET_BACK_PROGRAM_LIST:
+      if (programStart >= 6) {
+        programStart -= 6;
+      }
+      else if (programStart == 0) {
+        continue;
+      }
+      else {
+        programStart = 0;
+      }
+      programListIndex = 0;
+      root = SD_MMC.open("/program");
+      if (!root) {
+        Serial.println("Failed to open directory");
+        continue;
+      }
+      if (!root.isDirectory()) {
+        Serial.println("/program is not a directory");
+        continue;
+      }
+      file = root.openNextFile();
+      while (file) {
+        Serial.print("File: ");
+        Serial.println(file.name());
+        if (programListIndex >= programStart) {
+          _dwin.HienThiTenChuongTrinhTrenHang(programListIndex - programStart, programListIndex + 1, file.name(), file.size() / sizeof(Program_t), __func__);
+          file.close();
+        }
+        file = root.openNextFile();
+        programListIndex++;
+        if (programListIndex % 6 == 0 && programListIndex > programStart) {
+          file.close();
+          break;
+        }
+      }
+      if (programListIndex % 6 != 0) {
+        for (int8_t i = programListIndex - programStart; i < 6; i++) {
+          _dwin.XoaDuLieuHienThiTenChuongTrinhTrenHang(i);
+        }
+      }
+
+      break;
+    case HMI_GET_SEGMENT_LIST:
+      Serial.println("List_segment");
+      listPageStartPosition = 0;
+      if (ProgramList.size() >= 5) {
+        listLength = 5;
+      }
+      else {
+        listLength = ProgramList.size();
+      }
+      hienThiList(i);
+      break;
+    case HMI_GET_NEXT_SEGMENT_LIST:
+      if (ProgramList.size() > listPageStartPosition + 5) {
+        listPageStartPosition += 5;
+        listLength = ProgramList.size() - listPageStartPosition;
+        if (listLength > 5) {
+          listLength = 5;
+        }
+      }
+      else if (ProgramList.size() <= 5) {
+        listLength = ProgramList.size();
+      }
+      else if (ProgramList.size() <= listPageStartPosition + 5) {
+        listLength = ProgramList.size() - listPageStartPosition;
+      }
+      else {
+        Serial.println("Segment List is full");
+      }
+      hienThiList(i);
+      break;
+    case HMI_GET_BACK_SEGMENT_LIST:
+      if (listPageStartPosition - 5 >= 0) {
+        listPageStartPosition -= 5;
+        listLength = 5;
+      }
+      else if (ProgramList.size() <= 5) {
+        listPageStartPosition = 0;
+        listLength = ProgramList.size();
+      }
+      else if (listPageStartPosition - 5 < 0) {
+        listPageStartPosition = 0;
+        listLength = 5;
+      }
+      hienThiList(i);
+      break;
+    case HMI_REFRESH_SEGMENT_LIST:
+      if (ProgramList.size() <= 5) {
+        listLength = ProgramList.size();
+      }
+      else if (ProgramList.size() <= listPageStartPosition + 5) {
+        listLength = ProgramList.size() - listPageStartPosition;
+      }
+      hienThiList(i);
+      break;
+    case HMI_GET_SEGMENT_DELAYOFF:
+      if (data.pvData == NULL) continue;
+      _dwin.HienThiNgay((ProgramList[*((uint8_t*)data.pvData) + listPageStartPosition].delayOffDay));
+      _dwin.HienThiGio((ProgramList[*((uint8_t*)data.pvData) + listPageStartPosition].delayOffHour));
+      _dwin.HienThiPhut((ProgramList[*((uint8_t*)data.pvData) + listPageStartPosition].delayOffMinute));
+      break;
+    case HMI_GET_CALIB:
+      _dwin.HienThiHeSoCalib(GetCalib(BaseProgram.programData.setPointTemp));
+      break;
+    case HMI_GET_SCAN_SSID_WIFI:
+    {
+      if (WiFi.status() == WL_DISCONNECTED) {
+        dataSent.event = eEVENT_DISCONNECT_WIFI;
+        if (KetNoiWiFiQueue) {
+          xQueueSend(KetNoiWiFiQueue, &dataSent, 0);
+        }
+      }
+      int16_t n = WiFi.scanNetworks();
+      Serial.printf("scan done %d\n", n);
+      std::vector<String> vectorSSID;
+      for (int8_t i = 0; i < 4; i++) {
+        if (i < n) {
+          vectorSSID.push_back(WiFi.SSID(i));
+        }
+        else {
+          vectorSSID.push_back("");
+        }
+      }
+      _dwin.HienThiListSSIDWifi(vectorSSID);
+    }
+    break;
     default:
       Serial.printf("%s nhận UNDEFINE event \n", __func__);
       break;

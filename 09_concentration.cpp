@@ -28,7 +28,7 @@ void Concentration::KhoiTaoCO2() {
 
   this->TatDieuKhienCO2();
   //khởi tạo task tính toán thời gian điều khiển van khí
-  xTaskCreate(taskTinhToanCO2, "tính CO2", 8196, (void*)this, (configMAX_PRIORITIES - 3), &taskTinhToan);
+  xTaskCreate(taskTinhToanCO2, "tính CO2", 8096, (void*)this, (configMAX_PRIORITIES - 3), &taskTinhToan);
   delay(1000);
 }
 

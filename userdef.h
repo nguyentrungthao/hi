@@ -94,20 +94,20 @@ struct PIDData {
     int TGgianhiet;
 };
 
-enum EventTaskHMI_t {
-    eEVENT_ICON_NHIET = 0,
-    eEVENT_ICON_CO2,
-    eEVENT_ICON_CUA,
+// enum EventTaskHMI_t {
+//     eEVENT_ICON_NHIET = 0,
+//     eEVENT_ICON_CO2,
+//     eEVENT_ICON_CUA,
     
-    eEVENT_ICON_FAN,
-    eEVENT_ICON_USB,
-    eEVENT_ICON_WIFI,
-    eEVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
-    eEVENT_HIEN_THI_THOI_GIAN,
-    eEVENT_VE_DO_THI,
-    eEVENT_WARNING,
-    eEVENT_REFRESH,
-};
+//     eEVENT_ICON_FAN,
+//     eEVENT_ICON_USB,
+//     eEVENT_ICON_WIFI,
+//     eEVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
+//     eEVENT_HIEN_THI_THOI_GIAN,
+//     eEVENT_VE_DO_THI,
+//     eEVENT_WARNING,
+//     eEVENT_REFRESH,
+// };
 
 struct FrameDataQueue_t {
     int32_t event;
@@ -119,7 +119,12 @@ typedef enum {
     MAIN_UPDATE_FOTA,
 } MethodUpdates_t;
 
-
+typedef enum {
+    eEVENT_CONNECT_WIFI,
+    eEVENT_DISCONNECT_WIFI,
+    eEVENT_CONNECT_WIFI_SUCCESS,
+    eEVENT_LOST_WIFI_CONNECTION,
+} WifiEvent_t;
 
 #define _CHECK_AND_WARNING_PAGE(condition, message, returnPage) do { \
     if (condition) { \
