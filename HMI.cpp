@@ -65,10 +65,10 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetSetpointTemp, _NutCaiNhietDoSetpoint_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetSetpointCO2, _NutCaiCO2Setpoint_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetFanSpeed, _NutCaiTocDoQuat_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValuePage103Wakeup, _NutThucDay_, this);
     DWIN::addButtonEvent(_VPAddressSegmentSetpointButton, _AllKeyValue, _NutEditSetpointTrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentSetpointCO2Button, _AllKeyValue, _NutEditSetpointCO2TrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentFanSpeedButton, _AllKeyValue, _NutEditTocDoQuatTrangSegment_, this);
-    // DWIN::addButtonEvent(_VPAddressSegmentFlapButton, _AllKeyValue, _NutEditFlapTrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentTempMinButton, _AllKeyValue, _NutEditTempMinTrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentTempMaxButton, _AllKeyValue, _NutEditTempMaxTrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentCO2MinButton, _AllKeyValue, _NutEditCO2MinTrangSegment_, this);
@@ -477,6 +477,13 @@ void HMI::_NutCaiTocDoQuat_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_FanNumericKeypadPage);
+}
+
+void HMI::_NutThucDay_(int32_t lastBytes, void* args)
+{
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_hmiGetDataCallback(eHMI_EVENT_REFRESH, NULL);
+    hmiPtr->DWIN::setPage(_HomePage);
 }
 
 void HMI::_NutCaiThoiGianTatMay_(int32_t lastBytes, void* args)

@@ -8,14 +8,14 @@
 #define PATH_RECORD "/record.dat"
 #define PATH_LOG "/log"
 
-typedef enum 
+typedef enum
 {
     PROGRAM_MODE,
     QUICK_MODE,
     STERILIZATION_MODE,
 } RunMode_t;
 
-typedef struct 
+typedef struct
 {
     float setPointTemp;
     float tempMax;
@@ -30,7 +30,7 @@ typedef struct
     int8_t delayOffMinute;
 } Program_t;
 
-typedef struct 
+typedef struct
 {
     Program_t programData;
     float temperature;
@@ -39,13 +39,13 @@ typedef struct
     bool delayOffState;
 } BaseProgram_t;
 
-typedef struct 
+typedef struct
 {
     float Setpoint;
     float value;
 } CalibData_t;
 
-typedef struct 
+typedef struct
 {
     float setpointTemp;
     float valueTemp;
@@ -58,14 +58,14 @@ typedef struct
     uint8_t year;
     uint8_t hour;
     uint8_t minute;
-    uint8_t second; 
+    uint8_t second;
 } RecordData_t;
 
 typedef struct {
     char ssid[30];
     char password[30];
     bool state;
-} WiFiConfig_t; 
+} WiFiConfig_t;
 
 // Program structure definition
 typedef struct
@@ -95,23 +95,23 @@ struct PIDData {
 };
 
 // enum EventTaskHMI_t {
-//     eEVENT_ICON_NHIET = 0,
-//     eEVENT_ICON_CO2,
-//     eEVENT_ICON_CUA,
-    
-//     eEVENT_ICON_FAN,
-//     eEVENT_ICON_USB,
-//     eEVENT_ICON_WIFI,
-//     eEVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
-//     eEVENT_HIEN_THI_THOI_GIAN,
-//     eEVENT_VE_DO_THI,
-//     eEVENT_WARNING,
-//     eEVENT_REFRESH,
+//     eHMI_EVENT_ICON_NHIET = 0,
+//     eHMI_EVENT_ICON_CO2,
+//     eHMI_EVENT_ICON_CUA,
+
+//     eHMI_EVENT_ICON_FAN,
+//     eHMI_EVENT_ICON_USB,
+//     eHMI_EVENT_ICON_WIFI,
+//     eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
+//     eHMI_EVENT_HIEN_THI_THOI_GIAN,
+//     eHMI_EVENT_VE_DO_THI,
+//     eHMI_EVENT_WARNING,
+//     eHMI_EVENT_REFRESH,
 // };
 
 struct FrameDataQueue_t {
     int32_t event;
-    void* pvData;   
+    void* pvData;
 };
 
 typedef enum {

@@ -35,9 +35,9 @@ DWIN::DWIN(HardwareSerial& port) {
 #elif defined(ESP32)
 DWIN::DWIN(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, long baud)
   : listenerCallback(NULL),
-    _baudrate(baud),
-    _rxPin(receivePin),
-    _txPin(transmitPin) {
+  _baudrate(baud),
+  _rxPin(receivePin),
+  _txPin(transmitPin) {
   port.begin(baud, SERIAL_8N1, receivePin, transmitPin);
   init((HardwareSerial*)&port);
 }
@@ -135,7 +135,7 @@ void DWIN::restartHMI() {  // HEX(5A A5 07 82 00 04 55 aa 5a a5 )
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
   delay(10);
-  //readDWIN();
+  readDWIN();
 }
 
 // SET DWIN Brightness
@@ -151,7 +151,7 @@ void DWIN::setBrightness(uint8_t brightness) {
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 
 // GET DWIN Brightness
@@ -190,7 +190,7 @@ void DWIN::setPage(uint8_t page) {
   // }
   // Serial.println();
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 // Play a sound
 void DWIN::playSound(uint8_t soundID) {
@@ -206,7 +206,7 @@ void DWIN::playSound(uint8_t soundID) {
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 
 // Get Current Page ID
@@ -239,7 +239,7 @@ void DWIN::setRTC(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 // upHMI_DATE the software RTC The first two digits of the year are automatically added
 void DWIN::setRTCSOFT(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday, uint8_t hour, uint8_t minute, uint8_t second) {
@@ -255,7 +255,7 @@ void DWIN::setRTCSOFT(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday,
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 // Set Text on VP Address
 void DWIN::setText(long address, String textData) {
@@ -268,7 +268,7 @@ void DWIN::setText(long address, String textData) {
   }
   uint8_t sendBuffer[8 + dataLen];
   uint8_t startCMD[] = { CMD_HEAD1, CMD_HEAD2, (uint8_t)(dataLen + 5), CMD_WRITE,
-                         (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address)&0xFF) };
+                         (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address) & 0xFF) };
 
   memcpy(sendBuffer, startCMD, sizeof(startCMD));
   memcpy(sendBuffer + 6, dataCMD, sizeof(dataCMD));
@@ -285,7 +285,7 @@ void DWIN::setText(long address, String textData) {
   // Serial.println();  // Xuống dòng sau khi in hết sendBuffer
 
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 // Set Byte Data on VP Address makes more sense alias of below
 void DWIN::setVPByte(long address, uint8_t data) {
@@ -297,14 +297,14 @@ void DWIN::setVP(long address, uint8_t data) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address)&0xFF), 0x00, data };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address) & 0xFF), 0x00, data };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 
 // Set WordData on VP Address
@@ -314,14 +314,14 @@ void DWIN::setVPWord(long address, int data) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address)&0xFF), (uint8_t)((data >> 8) & 0xFF), (uint8_t)((data)&0xFF) };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address) & 0xFF), (uint8_t)((data >> 8) & 0xFF), (uint8_t)((data) & 0xFF) };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 
 // read WordData from VP Address you can read sequential multiple words returned in rx event
@@ -331,7 +331,7 @@ void DWIN::readVPWord(long address, uint8_t numWords) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_READ, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address)&0xFF), numWords };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_READ, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address) & 0xFF), numWords };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
@@ -347,7 +347,7 @@ uint8_t DWIN::readVPByte(long address, bool hiByte) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_READ, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address)&0xFF), 0x1 };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_READ, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address) & 0xFF), 0x1 };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
@@ -366,14 +366,14 @@ void DWIN::norReadWrite(bool write, long VPAddress, long NORAddress) {
     dataLen += 2;
   }
   uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, 0x00, 0x08, readWrite, (uint8_t)((NORAddress >> 16) & 0xFF), (uint8_t)((NORAddress >> 8) & 0xFF),
-                                      (uint8_t)((NORAddress)&0xFF), (uint8_t)((VPAddress >> 8) & 0xFF), (uint8_t)((VPAddress)&0xFF), 0x00, 0x02 };
+                                      (uint8_t)((NORAddress) & 0xFF), (uint8_t)((VPAddress >> 8) & 0xFF), (uint8_t)((VPAddress) & 0xFF), 0x00, 0x02 };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
   delay(30);  // DWIN Docs say - appropriate delay - is this it?
 }
 // beep Buzzer for 1 Sec
@@ -382,21 +382,22 @@ void DWIN::beepHMI(int time) {
   // 0x5A, 0xA5, 0x05, 0x82, 0x00, 0xA0, 0x00, 0x7D
   if (time < 8) {
     time = 8;
-  } else {
+  }
+  else {
     time = time / 8;
   }
   uint8_t dataLen = 0x05;
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, 0x00, 0xA0, (uint8_t)((time >> 8) & 0xFF), (uint8_t)((time)&0xFF) };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, 0x00, 0xA0, (uint8_t)((time >> 8) & 0xFF), (uint8_t)((time) & 0xFF) };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 // set text color (16-bit RGB) on controls which allow it ie. text control.
 // changes the control sp address space (sp=description pointer) content see the DWIN docs.
@@ -407,14 +408,14 @@ void DWIN::setTextColor(long spAddress, long spOffset, long color) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((spAddress >> 8) & 0xFF), (uint8_t)((spAddress)&0xFF), (uint8_t)((color >> 8) & 0xFF), (uint8_t)((color)&0xFF) };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((spAddress >> 8) & 0xFF), (uint8_t)((spAddress) & 0xFF), (uint8_t)((color >> 8) & 0xFF), (uint8_t)((color) & 0xFF) };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 
 // set float value to 32bit DATA Variable
@@ -426,14 +427,14 @@ void DWIN::setFloatValue(long vpAddress, float fValue) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress)&0xFF), hx[3], hx[2], hx[1], hx[0] };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress) & 0xFF), hx[3], hx[2], hx[1], hx[0] };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 
 // Send array to the display we dont need the 5A A5 or
@@ -468,7 +469,7 @@ bool DWIN::sendArray(uint8_t dwinSendArray[], uint8_t arraySize) {
  * @param dwinIntArray mảng dữ liệu
  * @param arraySize số lượng phần tử trong mảng * 2 (vì mỗi phần tử là 1 word)
  */
-//
+ //
 void DWIN::sendIntArray(uint16_t instruction, uint16_t dwinIntArray[], uint8_t arraySize) {
 
   // turn our int array to array of bytes
@@ -484,7 +485,7 @@ void DWIN::sendIntArray(uint16_t instruction, uint16_t dwinIntArray[], uint8_t a
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[4 + sizeof(dwinSendByteArray) + (dataLen - arraySize)] = { CMD_HEAD1, CMD_HEAD2, (uint8_t)((dataLen + 1)), (uint8_t)((instruction)&0xFF) };
+  uint8_t sendBuffer[4 + sizeof(dwinSendByteArray) + (dataLen - arraySize)] = { CMD_HEAD1, CMD_HEAD2, (uint8_t)((dataLen + 1)), (uint8_t)((instruction) & 0xFF) };
   memcpy(sendBuffer + 4, dwinSendByteArray, sizeof(dwinSendByteArray));
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
@@ -500,8 +501,8 @@ void DWIN::sendIntArray(uint16_t instruction, uint16_t dwinIntArray[], uint8_t a
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
 
   // look for the ack. on write
-  if ((uint8_t)((instruction)&0xFF) == CMD_WRITE) {  // or some others?
-                                                     //readDWIN();
+  if ((uint8_t)((instruction) & 0xFF) == CMD_WRITE) {  // or some others?
+    readDWIN();
   }
 }
 
@@ -529,7 +530,8 @@ String DWIN::readDWIN() {
       int c = _dwinSerial->read();
       if (c < 0x10) {
         resp.concat(" 0" + String(c, HEX));
-      } else {
+      }
+      else {
         resp.concat(" " + String(c, HEX));
       }
       if (_dwinSerial->available() <= 0) {
@@ -567,7 +569,8 @@ uint16_t DWIN::calculateCRC(uint8_t* data, size_t length) {
       if (crc & 0x01) {
         crc >>= 1;      // Dịch phải
         crc ^= 0xA001;  // XOR với hằng số
-      } else {
+      }
+      else {
         crc >>= 1;  // Chỉ dịch phải
       }
     }
@@ -585,64 +588,45 @@ String DWIN::handle() {
   bool isSubstr = false;
   bool messageEnd = false;
   bool isFirstByte = false;
-  // unsigned long startTime = millis();
+
   while (_dwinSerial->available() > 0) {
-    // delay(50);
+    // delay(10);
     int inhex;
-    if (_dwinSerial->read() == 0x5A && _dwinSerial->read() == 0xA5) {
-      inhex = _dwinSerial->read();  // độ dài chuỗi dữ liệu
+    if (!(_dwinSerial->read() == 0x5A && _dwinSerial->read() == 0xA5)) return "";
+      
+    inhex = _dwinSerial->read();  // độ dài chuỗi dữ liệu
 
-      if (_dwinSerial->read() == 0x83) {
-        isFirstByte = true;
-        message = "";
-        address = "";
-        response = "";
-        response.concat("5A A5 " + checkHex(inhex - 2) + " 83 ");
+    if (_dwinSerial->read() != 0x83) return "";
+      
+    isFirstByte = true;
+    message = "";
+    address = "";
+    response = "";
+    response.concat("5A A5 " + checkHex(inhex - 2) + " 83 ");
 
-        if (_rawData.size() > 0) {
-          _rawData.clear();
-        }
-        _rawData.push_back(0x83);
-        for (int i = 2; i <= inhex; i++) {
-          _rawData.push_back((uint8_t)_dwinSerial->read());
-        }
-        if (_crc) {
-          uint32_t dataSize = _rawData.size();
-          uint16_t receivedCRC;
-          // Lấy 2 byte cuối của dữ liệu nhận được
-          memcpy((uint8_t*)&receivedCRC, _rawData.data() + (dataSize - 2), 2);
-          uint16_t calculatedCRC = calculateCRC(_rawData.data(), dataSize - 2);
-          if (receivedCRC == calculatedCRC) {
-            Serial.println("Serial check -> OK");
-          } else {
-            Serial.println("Serial check -> Fail");
-            continue;
-          }
-        }
-      } else {
-        String resp = "";
-        while (_dwinSerial->available() > 0) {
-          int c = _dwinSerial->read();
-          if (c == 0x83) {
-            Serial.printf("HMI BUG NẶNG\n");
-          }
-          if (_echo) {
-            if (c < 0x10) {
-              resp.concat(" 0" + String(c, HEX));
-            } else {
-              resp.concat(" " + String(c, HEX));
-            }
-            if (_dwinSerial->available() <= 0) {
-              Serial.println("->> " + resp);
-              break;
-            }
-          }
-        }
-        continue;
-      }
-    } else {
-      continue;
+    if (_rawData.size() > 0) {
+      _rawData.clear();
     }
+    _rawData.push_back(0x83);
+    for (int i = 2; i <= inhex; i++) {
+      _rawData.push_back((uint8_t)_dwinSerial->read());
+    }
+    if (_crc) {
+      uint32_t dataSize = _rawData.size();
+      uint16_t receivedCRC;
+      // Lấy 2 byte cuối của dữ liệu nhận được
+      memcpy((uint8_t*)&receivedCRC, _rawData.data() + (dataSize - 2), 2);
+      uint16_t calculatedCRC = calculateCRC(_rawData.data(), dataSize - 2);
+      if (receivedCRC == calculatedCRC) {
+        Serial.println("Serial check -> OK");
+      }
+      else {
+        Serial.println("Serial check -> Fail");
+        return "";
+      }
+    }
+
+
     int inhex2 = inhex;
     if (_crc) {
       inhex2 -= 2;
@@ -661,11 +645,13 @@ String DWIN::handle() {
           address.concat(checkHex(inByte));
         }
         continue;
-      } else {
+      }
+      else {
         if (messageEnd == false) {
           if (isSubstr && inByte != MAX_ASCII && inByte >= MIN_ASCII) {
             message += char(inByte);
-          } else {
+          }
+          else {
             if (inByte == MAX_ASCII) {
               messageEnd = true;
             }
@@ -691,21 +677,22 @@ String DWIN::handle() {
 
     for (HmiEvent eventElemen : _eventList) {
       switch (eventElemen.eventType) {
-        case DWIN_BUTTON:
-          if (eventElemen.vpAddr == info.vpAddr && eventElemen.lastBytes == 0xffff) {
-            eventElemen.callBack.buttonEvent(lastBytes, eventElemen.args);
-          } else if (eventElemen.vpAddr == info.vpAddr && eventElemen.lastBytes == info.lastBytes) {
-            eventElemen.callBack.buttonEvent(lastBytes, eventElemen.args);
-          }
-          break;
-        case DWIN_TEXT:
-          if (eventElemen.vpAddr == info.vpAddr) {
-            eventElemen.callBack.textReceivedEvent(message, eventElemen.args);  // truyen text nhan duoc
-          }
-          break;
-        default:
-          Serial.println("The event has not been registered");
-          break;
+      case DWIN_BUTTON:
+        if (eventElemen.vpAddr == info.vpAddr && eventElemen.lastBytes == 0xffff) {
+          eventElemen.callBack.buttonEvent(lastBytes, eventElemen.args);
+        }
+        else if (eventElemen.vpAddr == info.vpAddr && eventElemen.lastBytes == info.lastBytes) {
+          eventElemen.callBack.buttonEvent(lastBytes, eventElemen.args);
+        }
+        break;
+      case DWIN_TEXT:
+        if (eventElemen.vpAddr == info.vpAddr) {
+          eventElemen.callBack.textReceivedEvent(message, eventElemen.args);  // truyen text nhan duoc
+        }
+        break;
+      default:
+        Serial.println("The event has not been registered");
+        break;
       }
       delay(1);
     }
@@ -747,21 +734,24 @@ uint8_t DWIN::readCMDLastByte(bool hiByte) {
           if (receivedCRC == calculatedCRC) {
             previousByte = _rawData[dataSize - 4];
             lastByte = _rawData[dataSize - 3];
-            Serial.printf("Lastbyte: %u\n", lastByte);
-          } else {
+            // Serial.printf("Lastbyte: %u\n", lastByte);
+          }
+          else {
             Serial.println("CRC incorrect");
           }
         }
         _rawData.clear();
         break;
-      } else {
+      }
+      else {
         continue;
       }
     }
   }
   if (hiByte) {
     return previousByte;
-  } else {
+  }
+  else {
     return lastByte;
   }
 }
@@ -802,14 +792,14 @@ void DWIN::setInt16Value(uint16_t vpAddress, int16_t value) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress)&0xFF), (int8_t)((value >> 8) & 0xFF), (int8_t)((value)&0xFF) };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress) & 0xFF), (int8_t)((value >> 8) & 0xFF), (int8_t)((value) & 0xFF) };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  // //readDWIN();
+  readDWIN();
 }
 
 void DWIN::setInt32Value(uint16_t vpAddress, int32_t value) {
@@ -817,14 +807,14 @@ void DWIN::setInt32Value(uint16_t vpAddress, int32_t value) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress)&0xFF), (uint8_t)((value >> 24) & 0xFF), (int8_t)((value >> 16) & 0xFF), (int8_t)((value >> 8) & 0xFF), (int8_t)((value)&0xFF) };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress) & 0xFF), (uint8_t)((value >> 24) & 0xFF), (int8_t)((value >> 16) & 0xFF), (int8_t)((value >> 8) & 0xFF), (int8_t)((value) & 0xFF) };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer));
-  //readDWIN();
+  readDWIN();
 }
 
 void DWIN::setUint16Value(uint16_t vpAddress, uint16_t value) {
@@ -832,7 +822,7 @@ void DWIN::setUint16Value(uint16_t vpAddress, uint16_t value) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress)&0xFF), (uint8_t)((value >> 8) & 0xFF), (uint8_t)((value)&0xFF) };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress) & 0xFF), (uint8_t)((value >> 8) & 0xFF), (uint8_t)((value) & 0xFF) };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
@@ -846,7 +836,7 @@ void DWIN::setUint32Value(uint16_t vpAddress, uint32_t value) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress)&0xFF), (uint8_t)((value >> 24) & 0xFF), (uint8_t)((value >> 16) & 0xFF), (uint8_t)((value >> 8) & 0xFF), (uint8_t)((value)&0xFF) };
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_WRITE, (uint8_t)((vpAddress >> 8) & 0xFF), (uint8_t)((vpAddress) & 0xFF), (uint8_t)((value >> 24) & 0xFF), (uint8_t)((value >> 16) & 0xFF), (uint8_t)((value >> 8) & 0xFF), (uint8_t)((value) & 0xFF) };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
@@ -947,10 +937,12 @@ String DWIN::getText(uint16_t vpAddress, uint8_t lenText) {
         inhex = _dwinSerial->read();
         if (_dwinSerial->read() == 0x83) {
           isFirstByte = true;
-        } else {
+        }
+        else {
           continue;
         }
-      } else {
+      }
+      else {
         continue;
       }
       if (_crc) {
@@ -962,7 +954,8 @@ String DWIN::getText(uint16_t vpAddress, uint8_t lenText) {
           if (messageEnd == false) {
             if (isSubstr && inByte != MAX_ASCII && inByte >= MIN_ASCII) {
               message += char(inByte);
-            } else {
+            }
+            else {
               if (inByte == MAX_ASCII) {
                 messageEnd = true;
                 clearSerial();
@@ -1032,7 +1025,7 @@ void DWIN::setGraphMulY(uint16_t spAddr, int value) {
 }
 
 void DWIN::sendGraphValue(int channel, int value) {
-  uint8_t arr[] = { 0x82, 0x03, 0x10, 0x5A, 0xA5, 0x01, 0x00, (uint8_t)((channel)&0xFF), 0x01, (uint8_t)((value >> 8) & 0xFF), (uint8_t)((value)&0xFF) };
+  uint8_t arr[] = { 0x82, 0x03, 0x10, 0x5A, 0xA5, 0x01, 0x00, (uint8_t)((channel) & 0xFF), 0x01, (uint8_t)((value >> 8) & 0xFF), (uint8_t)((value) & 0xFF) };
   sendArray(arr, sizeof(arr) / sizeof(arr[0]));
 }
 
@@ -1086,7 +1079,7 @@ void DWIN::resetGraph(int channel) {
     sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
   }
   _dwinSerial->write(sendBuffer, sizeof(sendBuffer) / sizeof(sendBuffer[0]));
-  // //readDWIN();
+  readDWIN();
   flushSerial();
   clearSerial();
 }
@@ -1176,14 +1169,16 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
     if (isFirmwareFile(fileName) == false) {
       file.close();
       file = root.openNextFile();
-    } else {
+    }
+    else {
       break;
     }
   }
   if (!file) {
     Serial.println(" Not found HMI file");
     return true;
-  } else {
+  }
+  else {
     // Gửi lệnh bắt đầu cập nhật đến HMI
     uint8_t hexCodeFlash[] = { 0x82, 0x00, 0xfc, 0x55, 0xaa, 0x5a, 0xa5 };
     if (!this->sendArray(hexCodeFlash, sizeof(hexCodeFlash))) {
@@ -1222,7 +1217,7 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
           address = 0x8000 + j * 0x78;
           hexCode[0] = 0x82;
           hexCode[1] = (uint8_t)((address >> 8) & 0xFF);
-          hexCode[2] = (uint8_t)((address)&0xFF);
+          hexCode[2] = (uint8_t)((address) & 0xFF);
           totalSize += file.read((uint8_t*)(hexCode + 3), 240);
 
           if (!this->sendArray(hexCode, 0xF3)) {
@@ -1235,7 +1230,7 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
         address = 0x8000 + j * 0x78;
         hexCode[0] = 0x82;
         hexCode[1] = (uint8_t)((address >> 8) & 0xFF);
-        hexCode[2] = (uint8_t)((address)&0xFF);
+        hexCode[2] = (uint8_t)((address) & 0xFF);
         totalSize += file.read((uint8_t*)(hexCode + 3), 128);
 
         if (!this->sendArray(hexCode, 0x83)) {
@@ -1246,7 +1241,7 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
         // Gửi lệnh ghi dữ liệu từ RAM vào FLash
         int FlashAddrToWrite = fileIdx * 8 + i;
         {
-          uint8_t hexCodeFlash[] = { 0x82, 0x00, 0xaa, 0x5a, 0x02, (uint8_t)((FlashAddrToWrite >> 8) & 0xFF), (uint8_t)((FlashAddrToWrite)&0xFF), 0x80, 0x00, 0x17, 0x70, 0x00, 0x00, 0x00, 0x00 };
+          uint8_t hexCodeFlash[] = { 0x82, 0x00, 0xaa, 0x5a, 0x02, (uint8_t)((FlashAddrToWrite >> 8) & 0xFF), (uint8_t)((FlashAddrToWrite) & 0xFF), 0x80, 0x00, 0x17, 0x70, 0x00, 0x00, 0x00, 0x00 };
 
           if (!this->sendArray(hexCodeFlash, sizeof(hexCodeFlash))) {
             file.close();
@@ -1263,7 +1258,8 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
           this->sendArray(hexCodeFlash, sizeof(hexCodeFlash));
           if (readDWIN().indexOf("aa 01 00 02") >= 0) {
             break;
-          } else if (k >= 3) {
+          }
+          else if (k >= 3) {
             file.close();
             return false;
           }
@@ -1279,7 +1275,7 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
         address = 0x8000 + j * 0x78;
         hexCode[0] = 0x82;
         hexCode[1] = (uint8_t)((address >> 8) & 0xFF);
-        hexCode[2] = (uint8_t)((address)&0xFF);
+        hexCode[2] = (uint8_t)((address) & 0xFF);
 
         totalSize += file.read((uint8_t*)(hexCode + 3), 240);
         // Serial.write(hexCode, 0xF3);
@@ -1293,7 +1289,7 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
       address = 0x8000 + j * 0x78;
       hexCode[0] = 0x82;
       hexCode[1] = (uint8_t)((address >> 8) & 0xFF);
-      hexCode[2] = (uint8_t)((address)&0xFF);
+      hexCode[2] = (uint8_t)((address) & 0xFF);
       totalSize += file.read((uint8_t*)(hexCode + 3), (sizeFile % 0x8000) % 240);
       if (!this->sendArray(hexCode, (sizeFile % 0x8000) % 240 + 3)) {
         file.close();
@@ -1303,7 +1299,7 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
 
     int FlashAddrToWrite = fileIdx * 8 + sizeFile / 0x8000;
     {
-      uint8_t hexCodeFlash[] = { 0x82, 0x00, 0xaa, 0x5a, 0x02, (uint8_t)((FlashAddrToWrite >> 8) & 0xFF), (uint8_t)((FlashAddrToWrite)&0xFF), 0x80, 0x00, 0x17, 0x70, 0x00, 0x00, 0x00, 0x00 };
+      uint8_t hexCodeFlash[] = { 0x82, 0x00, 0xaa, 0x5a, 0x02, (uint8_t)((FlashAddrToWrite >> 8) & 0xFF), (uint8_t)((FlashAddrToWrite) & 0xFF), 0x80, 0x00, 0x17, 0x70, 0x00, 0x00, 0x00, 0x00 };
       if (!this->sendArray(hexCodeFlash, sizeof(hexCodeFlash))) {
         file.close();
         return false;
@@ -1315,7 +1311,8 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
       this->sendArray(hexCodeFlash, sizeof(hexCodeFlash));
       if (readDWIN().indexOf("aa 01 00 02") >= 0) {
         break;
-      } else if (k >= 3) {
+      }
+      else if (k >= 3) {
         file.close();
         return false;
       }
@@ -1332,7 +1329,8 @@ bool DWIN::updateHMI(fs::FS& filesystem, const char* dirPath) {
       if (isFirmwareFile(fileName) == false) {
         file.close();
         file = root.openNextFile();
-      } else {
+      }
+      else {
         break;
       }
     }

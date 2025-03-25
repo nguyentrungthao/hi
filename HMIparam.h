@@ -19,6 +19,7 @@
 #define _SegmentViewPage 0x54  // 84
 #define _NumericKeypadPage 0x55  // 85
 #define _KeyboardPage 0x56  // 86
+#define _SleepPage 0x58 // 88
 #define _DataRecordPage 0x5A  // 90
 #define _UpdatePage 0x5B  // 91
 #define _FOTAPage 0x5C  // 92
@@ -31,7 +32,6 @@
 #define _InfoPage 0x64  // 100
 #define _CalibChoosePage 0x65  // 101
 #define _CalibCO2Page 0x66  // 102
-#define _SleepPage 0x67 // 103
 
 
 /* Sử dụng 0xFFFF để làm mã KeyValue cho việc cấu hình hàm addButtonEvent có nghĩa là với bất kỳ
@@ -86,7 +86,7 @@
 #define _KeyValueChooseCalibCO2 0x1D
 #define _KeyValueChooseCalibTemp 0x1E
 #define _KeyValueEnterCalibCO2 0x23
-#define _KeyValuePage103Wakeup 0x24
+#define _KeyValuePage103Wakeup 0x25
 
 
 #pragma region VP các nút  Segment
@@ -95,7 +95,6 @@
 #define _VPAddressSegmentSetpointButton 0x5002
 #define _VPAddressSegmentDelayOffButton 0x5003
 #define _VPAddressSegmentFanSpeedButton 0x5004
-// #define _VPAddressSegmentFlapButton 0x5005
 #define _VPAddressSegmentSetpointCO2Button 0x5005
 #define _VPAddressSegmentTempMinButton 0x5006
 #define _VPAddressSegmentTempMaxButton 0x5007
@@ -396,7 +395,7 @@
 #define _VPAddressPage94SSID3 0xB1FE
 #define _VPAddressPage94SSID4 0xB21C 
 
-
+#define _VPAddressPage88Brightness 0xB23A
 
 
 #pragma region SP Address

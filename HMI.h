@@ -90,17 +90,20 @@ typedef enum
     HMI_CHECK_LIST,
     HMI_GET_SCAN_SSID_WIFI,
 
-    eEVENT_ICON_NHIET,
-    eEVENT_ICON_CO2,
-    eEVENT_ICON_CUA,
-    eEVENT_ICON_FAN,
-    eEVENT_ICON_USB,
-    eEVENT_ICON_WIFI,
-    eEVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
-    eEVENT_HIEN_THI_THOI_GIAN,
-    eEVENT_VE_DO_THI,
-    eEVENT_WARNING,
-    eEVENT_REFRESH,
+    eHMI_EVENT_ICON_NHIET,
+    eHMI_EVENT_ICON_CO2,
+    eHMI_EVENT_ICON_CUA,
+    eHMI_EVENT_ICON_FAN,
+
+    eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
+    eHMI_EVENT_HIEN_THI_THOI_GIAN,
+    eHMI_EVENT_ICON_USB,
+    eHMI_EVENT_ICON_WIFI,
+    eHMI_EVENT_VE_DO_THI,
+    eHMI_EVENT_WARNING,
+    eHMI_EVENT_REFRESH,
+
+    eHMI_EVENT_TIMEROUT_OFF,
 } hmi_get_type_t;
 
 typedef enum
@@ -269,8 +272,7 @@ protected:
     static void _NutResetHeSoCalibNhiet_(int32_t lastBytes, void* args);
     static void _NutResetHeSoCalibCO2_(int32_t lastBytes, void* args);
 
-    // static void _NutSetFlap_(int32_t lastBytes, void* args);
-    static void _NutEnterTrangFlap_(int32_t lastBytes, void* args); // Không dùng nữa
+    static void _NutThucDay_(int32_t lastBytes, void* args);
 
     static void _NutCaiDatThoiGianRTC_(int32_t lastBytes, void* args);
     static void _NutEnterTrangCaiRTC_(int32_t lastBytes, void* args);
