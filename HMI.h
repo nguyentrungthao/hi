@@ -70,7 +70,10 @@ typedef enum
     HMI_SET_PASSWORD,
     HMI_SET_SCROLLCHART,
     HMI_CONNECT_OR_DISCONNECT_WIFI, // truc them
-    HMI_CHANGE_ADMIN_PASSWORD
+    HMI_CHANGE_ADMIN_PASSWORD,
+    eHMI_SET_EVENT_WAKEUP,
+
+    HMI_SET_MAX_ENUM
 } hmi_set_type_t;
 typedef enum
 {
@@ -104,6 +107,8 @@ typedef enum
     eHMI_EVENT_REFRESH,
 
     eHMI_EVENT_TIMEROUT_OFF,
+
+    HMI_GET_MAX_ENUM
 } hmi_get_type_t;
 
 typedef enum

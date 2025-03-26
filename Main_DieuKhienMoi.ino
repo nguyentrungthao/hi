@@ -112,11 +112,16 @@ QueueHandle_t dataQueue;
 QueueHandle_t recvHMIQueue;
 QueueHandle_t QueueUpdateFirmware;
 
-const uint8_t u8NUMBER_OF_TIMER_DWIN = 8;
-uint32_t pu32ArgTimerDWIN[][2] = { { eHMI_EVENT_TIMEROUT_OFF, 600000},
-  {eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN, 1000}, {eHMI_EVENT_HIEN_THI_THOI_GIAN, 1000}, { eHMI_EVENT_ICON_USB, 1000},
-  { eHMI_EVENT_VE_DO_THI, 10000 }, { eHMI_EVENT_ICON_WIFI, 30000 }, {eHMI_EVENT_WARNING, 120000}, {eHMI_EVENT_REFRESH, 120000} };
-TimerHandle_t pxTimerDWINhdl[u8NUMBER_OF_TIMER_DWIN];
+const uint32_t pu32ArgTimerDWIN[][2] = { {eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN, 1000},
+                                    {eHMI_EVENT_HIEN_THI_THOI_GIAN, 1000},
+                                    {eHMI_EVENT_ICON_USB, 1000},
+                                    {eHMI_EVENT_VE_DO_THI, 10000},
+                                    {eHMI_EVENT_ICON_WIFI, 30000},
+                                    {eHMI_EVENT_WARNING, 120000},
+                                    {eHMI_EVENT_REFRESH, 120000} };
+constexpr uint8_t u8NUMBER_OF_TIMER_DWIN = sizeof(pu32ArgTimerDWIN) / sizeof(pu32ArgTimerDWIN[0]);
+TimerHandle_t* const pxTimerDWINhdl = (TimerHandle_t*)malloc(u8NUMBER_OF_TIMER_DWIN * sizeof(TimerHandle_t));
+TimerHandle_t xTimerSleep;
 
 // các hàm khởi tạo và hỗ trợ khởi tạo
 void khoiTaoDWIN();
@@ -127,8 +132,7 @@ void khoiTaoCO2();
 void khoiTaoCua();
 void listFilesInProgramDirectory(void);
 void TaoCacThuMucHeThongTrenSD(void);
-void KhoiTaoSoftTimerDinhThoiChoDWIN(void);
-
+void KhoiTaoSoftTimerDinhThoi(void);
 
 //các hàm chạy run time hoặc call back
 void BatMay(const char* funcCall);
@@ -145,6 +149,7 @@ static void triggeOFFICONNhiet(void*);
 void callBackSoftTimerChoDWIN(TimerHandle_t xTimer);
 void hienThiList(int i);
 void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info);
+void callBackSoftTimerSleep(TimerHandle_t xTimer);
 
 //các task
 void TaskHMI(void*);
@@ -153,6 +158,7 @@ void TaskUpdateFirmware(void*);
 void TaskKetNoiWiFi(void*);
 void TaskMain(void*);
 void TaskMonitor(void*);
+
 
 
 
@@ -220,12 +226,12 @@ void setup() {
   delay(5);
   xTaskCreateUniversal(TaskMain, "tskMain", 8192, NULL, 3, &TaskMainHdl, -1);
   delay(5);
-  xTaskCreateUniversal(TaskHMI, "tskHMI", 8192, NULL, 2, &TaskHMIHdl, -1);
+  xTaskCreateUniversal(TaskHMI, "tskHMI", 8192, NULL, 5, &TaskHMIHdl, -1);
   delay(5);
-  // xTaskCreateUniversal(TaskMonitor, "tskMonitor", 4096, NULL, 5, NULL, -1);
+  xTaskCreateUniversal(TaskMonitor, "tskMonitor", 4096, NULL, 1, NULL, -1);
   delay(5);
 
-  KhoiTaoSoftTimerDinhThoiChoDWIN();
+  KhoiTaoSoftTimerDinhThoi();
 }
 
 void loop() {
@@ -413,9 +419,7 @@ void khoiTaoCua() {
   data.event = eHMI_EVENT_ICON_CUA;
   xQueueSend(recvHMIQueue, &data, 0);
 }
-void KhoiTaoSoftTimerDinhThoiChoDWIN() {
-
-
+void KhoiTaoSoftTimerDinhThoi() {
 
   for (uint8_t i = 0; i < u8NUMBER_OF_TIMER_DWIN; i++) {
     Serial.printf("create timer event HMI %lu period %lu\n", pu32ArgTimerDWIN[i][0], pu32ArgTimerDWIN[i][1]);
@@ -427,18 +431,21 @@ void KhoiTaoSoftTimerDinhThoiChoDWIN() {
       pdTRUE,
       (void*)&(pu32ArgTimerDWIN[i][0]),
       callBackSoftTimerChoDWIN);
+  }
 
-  }
   for (uint8_t i = 0; i < u8NUMBER_OF_TIMER_DWIN; i++) {
-    xTimerStart(pxTimerDWINhdl[i], 10);
+    xTimerStart(pxTimerDWINhdl[i], 1000);
   }
+
+  xTimerSleep = xTimerCreate("SleepTimer", pdMS_TO_TICKS(600000), pdTRUE, (void*)eHMI_EVENT_TIMEROUT_OFF, callBackSoftTimerSleep);
+  xTimerStart(xTimerSleep, 1000);
 }
 void callBackSoftTimerChoDWIN(TimerHandle_t xTimer) {
   configASSERT(xTimer);
   FrameDataQueue_t dataFrameForDWIN;
   dataFrameForDWIN.event = *((uint32_t*)pvTimerGetTimerID(xTimer));
   if (recvHMIQueue == NULL) return;
-  xQueueSend(recvHMIQueue, &dataFrameForDWIN, 0);
+  xQueueSend(recvHMIQueue, &dataFrameForDWIN, 10);
 }
 void callBackOpenDoor(void* ptr) {
   //!check ptr trước khi dùng nhá
@@ -587,9 +594,8 @@ void hmiSetEvent(const hmi_set_event_t& event) {
   static int8_t XacNhanTietTrung = 0;
   static int32_t ThoiGian2LanChamThanhCuon = millis();
 
-  if (BaseProgram.machineState == true && pxTimerDWINhdl[0] != NULL) {
-    xTimerReset(pxTimerDWINhdl[0], 0);
-  }
+  Serial.printf("%s call, event %d\n", __func__, event.type);
+  xTimerReset(xTimerSleep, 10);
 
   switch (event.type) {
   case HMI_SET_RUN_ONOFF:
@@ -1098,6 +1104,11 @@ void hmiSetEvent(const hmi_set_event_t& event) {
     Serial.println(event.text);
     SDMMCFile.writeFile(ADMIN_PASSWORD, event.text.c_str());
     break;
+  case eHMI_SET_EVENT_WAKEUP:
+    for (uint8_t i = 0; i < u8NUMBER_OF_TIMER_DWIN; i++) {
+      xTimerStart(pxTimerDWINhdl[i], 1000);
+    }
+    break;
   default:
     Serial.println("UNDEFINE");
     break;
@@ -1178,7 +1189,6 @@ void hienThiList(int i) {
     }
   }
 }
-
 void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
   static FrameDataQueue_t data;
   static String ErrMessage;
@@ -1230,7 +1240,13 @@ void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
   }
 }
 
-
+void callBackSoftTimerSleep(TimerHandle_t xTimer) {
+  static FrameDataQueue_t data;
+  data.event = eHMI_EVENT_TIMEROUT_OFF;
+  if (recvHMIQueue) {
+    xQueueSend(recvHMIQueue, &data, 0);
+  }
+}
 
 
 
@@ -1332,6 +1348,10 @@ void TaskKetNoiWiFi(void*) {
       _dwin.HienThiTrangThaiKetNoiWiFi("Connecting");
       WiFi.begin(WifiSSID.c_str(), WifiPassword.c_str());
       WiFiConfig.state = true;
+      strncpy(WiFiConfig.ssid, WifiSSID.c_str(), 30);
+      strncpy(WiFiConfig.password, WifiPassword.c_str(), 30);
+      _dwin.HienThiSSIDWiFi(WifiSSID);
+      _dwin.HienThiPasswordWiFi(WifiPassword);
       SDMMCFile.writeFile(WIFICONFIG_PATH, (uint8_t*)&WiFiConfig, sizeof(WiFiConfig));
       bTrangThaiWifi = true;
       continue;
@@ -1413,7 +1433,8 @@ void TaskMain(void*) {
     chuKyRecord++;
 
     // Phần xác định nhiệt độ đã xác lập hay chưa
-    if (fabs(BaseProgram.temperature - BaseProgram.programData.setPointTemp) <= 0.15 && fabs(BaseProgram.CO2 - BaseProgram.programData.setPointCO2) <= 0.15) {
+    if (fabs(BaseProgram.temperature - BaseProgram.programData.setPointTemp) <= 0.15 &&
+      fabs(BaseProgram.CO2 - BaseProgram.programData.setPointCO2) <= 0.15) {
       if (FlagNhietDoXacLap == false) {
         if (BaseProgram.delayOffState) {
           DemThoiGianChay(true, DEM_XUONG);
@@ -1530,7 +1551,8 @@ void TaskMain(void*) {
       machineState = BaseProgram.machineState;
     }
     if (BaseProgram.machineState == true) {
-      xTimerReset(pxTimerDWINhdl[0], 100);
+      xTimerReset(xTimerSleep, 10);
+      Serial.printf("resetTimer pxTimerDWINhdl\n");
     }
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
@@ -1602,6 +1624,9 @@ void TaskHMI(void*) {
       if (BaseProgram.CO2 >= -0.5f && BaseProgram.CO2 <= 30.0f) {
         _dwin.HienThiCO2(BaseProgram.CO2);
       }
+      else if (BaseProgram.CO2 < -0.5f) {
+        _dwin.HienThiCO2("wait");
+      }
       else {
         _dwin.HienThiCO2("err");
       }
@@ -1672,7 +1697,7 @@ void TaskHMI(void*) {
       _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
       _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
       _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
-      _dwin.setBrightness(100);
+      _dwin.setBrightness(40);
       if (_dwin.getPage() == _EndIntroPage) {
         _dwin.setPage(_HomePage);
       }
@@ -1684,10 +1709,14 @@ void TaskHMI(void*) {
       }
       break;
     case eHMI_EVENT_TIMEROUT_OFF:
-      if (_dwin.getPage() == _HomePage) {
+    if (_dwin.getPage() == _HomePage) {
         Serial.printf("\t\tDWIN OFF\n");
+        //! chuyển hàm này vào demon task
+        for (uint8_t i = 0; i < u8NUMBER_OF_TIMER_DWIN; i++) {
+          xTimerStop(pxTimerDWINhdl[i], 1000);
+        }
         _dwin.Buzzer(800);
-        _dwin.setBrightness(10);
+        _dwin.setBrightness(5);
         _dwin.setPage(_SleepPage);
       }
     case HMI_GET_RTC:

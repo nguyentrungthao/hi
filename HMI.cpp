@@ -482,6 +482,8 @@ void HMI::_NutCaiTocDoQuat_(int32_t lastBytes, void* args)
 void HMI::_NutThucDay_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = eHMI_SET_EVENT_WAKEUP;
+    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_hmiGetDataCallback(eHMI_EVENT_REFRESH, NULL);
     hmiPtr->DWIN::setPage(_HomePage);
 }
@@ -1553,7 +1555,7 @@ void HMI::setupDoThiDoiSetpoint(BaseProgram_t data) {
                 _DuLieuDoThiNhietDo.valueArr[1] = (int32_t)(round(setPointTemp));
                 stepYL0 = ((int32_t)(data.temperature) - _DuLieuDoThiNhietDo.valueArr[1]) * 10 / 3;
                 _DuLieuDoThiNhietDo.valueArr[0] = _DuLieuDoThiNhietDo.valueArr[1] * 10 - stepYL0;
-            }   
+            }
         }
         else {
             stepYL0 = 10;
@@ -2299,7 +2301,6 @@ void HMI::_CacNutTrangWiFi_(int32_t lastBytes, void* arg)
         hmiPtr->setText(_VPAddressKeyboardWarningText, "");
         hmiPtr->setPage(_KeyboardPage);
         break;
-        break;
     case _KeyValueNutPassWifi:
         hmiPtr->_set_event.type = UNDEFINED;
         // hmiPtr->_set_event.displayType = HMI_EXTERNAL_PASSWORD;
@@ -2347,8 +2348,12 @@ void HMI::_CacNutTrangWiFi_(int32_t lastBytes, void* arg)
     case _KeyValueNutChonSSID2:
     case _KeyValueNutChonSSID3:
     case _KeyValueNutChonSSID4:
-        hmiPtr->setText(_VPAddressTextSSIDWifi, hmiPtr->getText(_VPAddressPage94SSID1 + (lastBytes - _KeyValueNutChonSSID1) * 30, 30));
-        break;
+    {
+        String string = hmiPtr->getText(_VPAddressPage94SSID1 + (lastBytes - _KeyValueNutChonSSID1) * 30, 30);
+        if (!string.isEmpty())
+            hmiPtr->setText(_VPAddressTextSSIDWifi, string);
+    }
+    break;
     default:
         break;
     }

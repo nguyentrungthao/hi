@@ -197,13 +197,19 @@ private:
     bool _noACK = false;   // No ack used with no response kernel 
     bool _retWord = false; // return word from rx event when true 
     bool _crc = false;
-
     bool cbfunc_valid;
+    bool _hiByte = false;
+    uint8_t _lastByte = -1;
+    uint8_t _previousByte = -1;
+    bool _wait_for_respone = false;
     hmiListener listenerCallback;
 
     void init(HardwareSerial* port);
 
     uint8_t readCMDLastByte(bool hiByte = 0);
+    uint8_t readCMDLastByteFromEvent(bool hiByte = 0);
+    uint8_t readCMDLastByteEvent(uint8_t length, uint8_t cmd);
+    size_t dwinWrite(const uint8_t* sendBuffer, size_t size);
     String readDWIN();
     String handle();
     String checkHex(uint8_t currentNo);
