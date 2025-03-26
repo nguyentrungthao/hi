@@ -196,7 +196,7 @@ void setup() {
   delay(10);
 
   delay(2000);
-  _dwin.echoEnabled(true);
+  // _dwin.echoEnabled(true);
   RunMode = QUICK_MODE;
   BaseProgram.machineState = false;
   BaseProgram.delayOffState = false;
@@ -222,7 +222,7 @@ void setup() {
   delay(5);
   xTaskCreateUniversal(TaskUpdateFirmware, "tskFirmware", 8192, NULL, 5, &TaskUpdateFirmwareHdl, -1);
   delay(5);
-  xTaskCreateUniversal(TaskKetNoiWiFi, "tskWifi", 8192, NULL, 1, &TaskKetNoiWiFiHdl, -1);  // truc them
+  xTaskCreateUniversal(TaskKetNoiWiFi, "tskWifi", 4096, NULL, 1, &TaskKetNoiWiFiHdl, -1);  // truc them
   delay(5);
   xTaskCreateUniversal(TaskMain, "tskMain", 8192, NULL, 3, &TaskMainHdl, -1);
   delay(5);
@@ -431,6 +431,10 @@ void KhoiTaoSoftTimerDinhThoi() {
       pdTRUE,
       (void*)&(pu32ArgTimerDWIN[i][0]),
       callBackSoftTimerChoDWIN);
+    if (pxTimerDWINhdl[i] == NULL) {
+      Serial.printf("hết bộ nhớ để tạo timer => reset\n");
+      abort();
+    }
   }
 
   for (uint8_t i = 0; i < u8NUMBER_OF_TIMER_DWIN; i++) {
@@ -438,6 +442,10 @@ void KhoiTaoSoftTimerDinhThoi() {
   }
 
   xTimerSleep = xTimerCreate("SleepTimer", pdMS_TO_TICKS(600000), pdTRUE, (void*)eHMI_EVENT_TIMEROUT_OFF, callBackSoftTimerSleep);
+  if (xTimerSleep == NULL) {
+    Serial.printf("hết bộ nhớ để tạo timer => reset\n");
+    abort();
+  }
   xTimerStart(xTimerSleep, 1000);
 }
 void callBackSoftTimerChoDWIN(TimerHandle_t xTimer) {
@@ -1552,7 +1560,6 @@ void TaskMain(void*) {
     }
     if (BaseProgram.machineState == true) {
       xTimerReset(xTimerSleep, 10);
-      Serial.printf("resetTimer pxTimerDWINhdl\n");
     }
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
@@ -1651,24 +1658,25 @@ void TaskHMI(void*) {
       std::vector<String> warningVector;
       String warningText = "";
       if (FlagNhietDoXacLap == true) {
+        String text = "Alarm: ";
         if (BaseProgram.temperature >= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMax) {
-          warningText += "Overheat ";
+          text += "Overheat ";
         }
         else if (BaseProgram.temperature <= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMin) {
-          warningText += "Underheat ";
+          text += "Underheat ";
         }
+        warningVector.push_back(text);
 
+        text.clear();
+        text = "Alarm: ";
         if (BaseProgram.CO2 >= BaseProgram.programData.setPointCO2 + BaseProgram.programData.CO2Max) {
-          warningText += "OverCO2 ";
+          text += "OverCO2 ";
         }
         else if (BaseProgram.CO2 <= BaseProgram.programData.setPointCO2 + BaseProgram.programData.CO2Min) {
-          warningText += "UnderCO2 ";
+          text += "UnderCO2 ";
         }
+        warningVector.push_back(text);
 
-        if (warningText.length() > 2) {
-          String text = "Alarm: " + warningText;
-          warningVector.push_back(text);
-        }
       }
 
       if (BaseProgram.temperature < -10 || BaseProgram.temperature >= 350) {
@@ -1680,7 +1688,6 @@ void TaskHMI(void*) {
         warningVector.push_back(warningText);
       }
 
-
       if (BaseProgram.machineState == true && _Heater.CheckNguonCongSuat() == false) {
         warningVector.push_back("Alarm: Thermal relay actived");
       }
@@ -1691,14 +1698,14 @@ void TaskHMI(void*) {
       }
     }
     break;
-    case eHMI_EVENT_REFRESH:  // ghi lại màn hình sau 10p
-      Serial.println("\t\tDWIN REFRESH\n");
-      _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
-      _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
-      _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
-      _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
-      _dwin.setBrightness(40);
+    case eHMI_EVENT_REFRESH:
       if (_dwin.getPage() == _EndIntroPage) {
+        Serial.println("\t\tDWIN REFRESH\n");
+        _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
+        _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
+        _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
+        _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
+        _dwin.setBrightness(40);
         _dwin.setPage(_HomePage);
       }
       break;

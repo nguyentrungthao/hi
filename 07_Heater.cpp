@@ -287,6 +287,6 @@ void HEATER::KhoiTaoTriac(void) {
   //! triac::configACDETPIN(ACDET_PIN); 
   //!không trực tiếp gọi vì heater cần tín hiệu từ ACDET điều khiển số chu kỳ dẫn của triac
   pinMode(ACDET_PIN, INPUT);
-  xTaskCreate(TaskNgatACDET, "ngatACDET", 8096, this, (configMAX_PRIORITIES - 2), &taskHandleNgatACDET);
+  xTaskCreate(TaskNgatACDET, "ngatACDET", 2048, this, (configMAX_PRIORITIES - 2), &taskHandleNgatACDET);
   attachInterruptArg(ACDET_PIN, interupt, this, FALLING);
 }

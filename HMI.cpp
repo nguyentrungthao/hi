@@ -1833,11 +1833,13 @@ void HMI::HienThiWarning(std::vector<String> warningVector, uint8_t TrangSauKhiR
 {
     _TrangSauKhiNhanReturnTrenWarning = TrangSauKhiReturn;
     constexpr uint32_t step = _VPAddressWarningText1 - _VPAddressWarningText0;
-    for (uint8_t i = 0; i < 4; i++) {
-        setText(_VPAddressWarningText0 + i * step, "");
-    }
-    for (uint8_t i = 0; !warningVector.empty(); i++) {
+    uint8_t i = 0;
+
+    for (; i < warningVector.size(); i++) {
         setText(_VPAddressWarningText0 + i * step, warningVector.at(i));
+    }
+    for (; i < 5; i++) {
+        setText(_VPAddressWarningText0 + i * step, "");
     }
     setPage(_WarningPage);
 }

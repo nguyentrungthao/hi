@@ -89,11 +89,12 @@ void DWIN::ackDisabled(bool noACK) {
 }
 
 size_t DWIN::dwinWrite(const uint8_t* sendBuffer, size_t size) {
+  size_t returnValue;
   if (sendBuffer) {
     _wait_for_respone = true;
-   return _dwinSerial->write(sendBuffer, size);
+    returnValue = _dwinSerial->write(sendBuffer, size);
   }
-  return -1;
+  return returnValue;
 }
 
 // Get Hardware Firmware Version of DWIN HMI
@@ -604,6 +605,8 @@ String DWIN::handle() {
   bool isFirstByte = false;
 
   if (_wait_for_respone) {
+    // delay(150);
+    // _wait_for_respone = false;
     return "";
   }
   while (_dwinSerial->available() > 0) {
@@ -644,15 +647,15 @@ String DWIN::handle() {
         }
       }
       break;
-      // case 0x82:
-      //   return readDWIN();
-      //   break;
-      // default:
-      // {
-      //   String retunString(readCMDLastByteEvent(inhex, cmd));
-      //   return retunString;
-      // }
-      //   break;
+      case 0x82:
+        return readDWIN();
+        break;
+      default:
+      {
+        String retunString(readCMDLastByteEvent(inhex, cmd));
+        return retunString;
+      }
+        break;
     }
 
     int inhex2 = inhex;
