@@ -163,6 +163,7 @@ void TaskMonitor(void*);
 
 
 
+// đây là nhánh backup master
 void setup() {
   esp_task_wdt_deinit();
   Serial.begin(115200);
