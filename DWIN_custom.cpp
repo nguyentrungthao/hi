@@ -937,10 +937,12 @@ int16_t DWIN::getInt16Value(uint16_t vpAddress) {
     while (_dwinSerial->available() > 0) {
       _dwinSerial->readBytes(data, sizeof(data) / sizeof(data[0]));
       if (data[0] == 0x5A && data[1] == 0xA5 && data[3] == 0x83 && ((uint16_t)data[4] << 8 | (uint16_t)data[5]) == vpAddress) {
+        _wait_for_respone = false;
         return data[7] << 8 | data[8];
       }
     }
   }
+  _wait_for_respone = false;
   return -1;
 }
 
@@ -957,10 +959,12 @@ int32_t DWIN::getInt32Value(uint16_t vpAddress) {
     while (_dwinSerial->available() > 0) {
       _dwinSerial->readBytes(data, sizeof(data) / sizeof(data[0]));
       if (data[0] == 0x5A && data[1] == 0xA5 && data[3] == 0x83 && ((uint16_t)data[4] << 8 | (uint16_t)data[5]) == vpAddress) {
+        _wait_for_respone = false;
         return data[7] << 24 | data[8] << 16 | data[9] << 8 | data[10];
       }
     }
   }
+  _wait_for_respone = false;
   return -1;
 }
 
@@ -976,10 +980,12 @@ uint16_t DWIN::getUint16Value(uint16_t vpAddress) {
     while (_dwinSerial->available() > 0) {
       _dwinSerial->readBytes(data, sizeof(data) / sizeof(data[0]));
       if (data[0] == 0x5A && data[1] == 0xA5 && data[3] == 0x83 && ((uint16_t)data[4] << 8 | (uint16_t)data[5]) == vpAddress) {
+        _wait_for_respone = false;
         return data[7] << 8 | data[8];
       }
     }
   }
+  _wait_for_respone = false;
   return 0;
 }
 
@@ -995,10 +1001,12 @@ uint32_t DWIN::getUint32Value(uint16_t vpAddress) {
     while (_dwinSerial->available() > 0) {
       _dwinSerial->readBytes(data, sizeof(data) / sizeof(data[0]));
       if (data[0] == 0x5A && data[1] == 0xA5 && data[3] == 0x83 && ((uint16_t)data[4] << 8 | (uint16_t)data[5]) == vpAddress) {
+        _wait_for_respone = false;
         return data[7] << 24 | data[8] << 16 | data[9] << 8 | data[10];
       }
     }
   }
+  _wait_for_respone = false;
   return -1;
 }
 
@@ -1040,6 +1048,7 @@ String DWIN::getText(uint16_t vpAddress, uint8_t lenText) {
               if (inByte == MAX_ASCII) {
                 messageEnd = true;
                 clearSerial();
+                _wait_for_respone = false;
                 return message;
               }
               isSubstr = true;
@@ -1051,6 +1060,7 @@ String DWIN::getText(uint16_t vpAddress, uint8_t lenText) {
     if (isFirstByte)
       break;
   }
+  _wait_for_respone = false;
   return "";
 }
 
@@ -1071,13 +1081,13 @@ float DWIN::getFloatValue(uint16_t vpAddress) {
     while (_dwinSerial->available() > 0) {
       _dwinSerial->readBytes(data, sizeof(data) / sizeof(data[0]));
       if (data[0] == 0x5A && data[1] == 0xA5 && data[3] == 0x83 && ((uint16_t)data[4] << 8 | (uint16_t)data[5]) == vpAddress) {
-
+        _wait_for_respone = false;
         hex2float.rawData = data[7] << 24 | data[8] << 16 | data[9] << 8 | data[10];
-
         return hex2float.floatData;
       }
     }
   }
+  _wait_for_respone = false;
   return -1;
 }
 
