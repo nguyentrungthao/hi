@@ -561,6 +561,7 @@ String DWIN::readDWIN() {
       }
     }
   }
+  _wait_for_respone = false;
   if (_echo) {
     Serial.println("->> Fail. Time out");
   }
@@ -605,12 +606,9 @@ String DWIN::handle() {
   bool isFirstByte = false;
 
   if (_wait_for_respone) {
-    // delay(150);
-    // _wait_for_respone = false;
     return "";
   }
   while (_dwinSerial->available() > 0) {
-    // delay(50);
     int inhex;
     if (!(_dwinSerial->read() == 0x5A && _dwinSerial->read() == 0xA5)) return "";
 

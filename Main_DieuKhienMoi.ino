@@ -163,7 +163,7 @@ void TaskMonitor(void*);
 
 
 
-// đây là nhánh backup master
+// đây là nhánh MASTER
 void setup() {
   esp_task_wdt_deinit();
   Serial.begin(115200);
@@ -212,7 +212,7 @@ void setup() {
   _dwin.HienThiSegmentDangChay("");
   _dwin.HienThiVongLapChuongTrinhConLai("");
   _dwin.HienThiIconSegment(false);
-  _dwin.setBrightness(40);
+  _dwin.setBrightness(50);
   _dwin.XoaDoThi();
 
   _dwin.HienThiThongTinVersion(__TIME__);
@@ -1700,15 +1700,19 @@ void TaskHMI(void*) {
     }
     break;
     case eHMI_EVENT_REFRESH:
-      if (_dwin.getPage() == _EndIntroPage) {
+    {
+      uint8_t page = _dwin.getPage();
+      if (page == _EndIntroPage || page == _SleepPage) {
         Serial.println("\t\tDWIN REFRESH\n");
         _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
         _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
         _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
         _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
-        _dwin.setBrightness(40);
+        _dwin.setBrightness(50);
         _dwin.setPage(_HomePage);
       }
+    }
+
       break;
     case HMI_CHECK_LIST:
       if (data.pvData == NULL) continue;
@@ -1724,11 +1728,10 @@ void TaskHMI(void*) {
           xTimerStop(pxTimerDWINhdl[i], 1000);
         }
         _dwin.Buzzer(800);
-        _dwin.setBrightness(5);
+        _dwin.setBrightness(1);
         _dwin.setPage(_SleepPage);
       }
     case HMI_GET_RTC:
-      // timeNow = now();
       _dwin.HienThiNgay(_time.getDay());
       _dwin.HienThiThang(_time.getMonth());
       _dwin.HienThiNam(_time.getYear());
