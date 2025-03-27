@@ -645,15 +645,15 @@ String DWIN::handle() {
         }
       }
       break;
-      case 0x82:
-        return readDWIN();
-        break;
-      default:
-      {
-        String retunString(readCMDLastByteEvent(inhex, cmd));
-        return retunString;
-      }
-        break;
+    case 0x82:
+      return readDWIN();
+      break;
+    default:
+    {
+      String retunString(readCMDLastByteEvent(inhex, cmd));
+      return retunString;
+    }
+    break;
     }
 
     int inhex2 = inhex;

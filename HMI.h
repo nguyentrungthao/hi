@@ -1,6 +1,17 @@
 #ifndef _HMI_H_
 #define _HMI_H_
 
+/**
+ *@file HMI.h
+ * @author HMI của master
+ * @brief
+ * @version 0.1
+ * @date 2025-03-27
+ *
+ * @copyright Copyright (c) 2025
+ *
+ */
+
 #include "DWIN_custom.h"
 #include "freertos/queue.h"
 #include <vector>
