@@ -13,6 +13,8 @@
 #define READ_TIMEOUT 100
 #define READ_TIMEOUT_UPDATE 10000
 
+static TaskHandle_t _DWINListenTdl;
+
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || defined(FORCEHWSERIAL)
 DWIN::DWIN(HardwareSerial& port, long baud) {
   port.begin(baud, SERIAL_8N1);
@@ -39,7 +41,13 @@ DWIN::DWIN(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, long b
   _rxPin(receivePin),
   _txPin(transmitPin) {
   port.begin(baud, SERIAL_8N1, receivePin, transmitPin);
+
   init((HardwareSerial*)&port);
+  xQueueReceiveUart = xQueueCreate(2, sizeof(FrameQueueUart_t));
+  if (xQueueReceiveUart == NULL) {
+    Serial.printf("không thể tạo queue uart event => RESET \n");
+    abort();
+  }
 }
 
 #elif defined(ESP8266)
@@ -220,6 +228,7 @@ void DWIN::playSound(uint8_t soundID) {
   readDWIN();
 }
 
+/*
 // Get Current Page ID
 uint8_t DWIN::getPage() {
   uint8_t dataLen = 0x04;
@@ -237,6 +246,23 @@ uint8_t DWIN::getPage() {
   return readCMDLastByte();
   // return readCMDLastByteFromEvent();
 
+}
+*/
+// Get Current Page ID
+uint8_t DWIN::getPage() {
+  uint8_t dataLen = 0x04;
+  if (_crc) {
+    dataLen += 2;
+  }
+  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_READ, 0x00, 0x14, 0x01 };
+  if (_crc) {
+    uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
+    sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
+    sendBuffer[sizeof(sendBuffer) - 1] = (crc >> 8) & 0xFF;
+  }
+  clearSerial();
+  dwinWrite(sendBuffer, sizeof(sendBuffer));
+  return readCMDLastByte();
 }
 // set the hardware RTC The first two digits of the year are automatically added
 void DWIN::setRTC(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second) {
@@ -344,7 +370,8 @@ void DWIN::readVPWord(long address, uint8_t numWords) {
   if (_crc) {
     dataLen += 2;
   }
-  uint8_t sendBuffer[3 + dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_READ, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address) & 0xFF), numWords };
+  dataLen += 3; // thêm 3 byte CMD_HEAD1, CMD_HEAD2, dataLen,
+  uint8_t sendBuffer[dataLen] = { CMD_HEAD1, CMD_HEAD2, dataLen, CMD_READ, (uint8_t)((address >> 8) & 0xFF), (uint8_t)((address) & 0xFF), numWords };
   if (_crc) {
     uint16_t crc = calculateCRC(sendBuffer + 3, sizeof(sendBuffer) - 5);
     sendBuffer[sizeof(sendBuffer) - 2] = crc & 0xFF;
@@ -561,6 +588,7 @@ String DWIN::readDWIN() {
       }
     }
   }
+  _wait_for_respone = false;
   if (_echo) {
     Serial.println("->> Fail. Time out");
   }
@@ -605,14 +633,11 @@ String DWIN::handle() {
   bool isFirstByte = false;
 
   if (_wait_for_respone) {
-    // delay(150);
-    // _wait_for_respone = false;
     return "";
   }
   while (_dwinSerial->available() > 0) {
-    // delay(50);
     int inhex;
-    if (!(_dwinSerial->read() == 0x5A && _dwinSerial->read() == 0xA5)) return "";
+    if (!(_dwinSerial->read() == 0x5A && _dwinSerial->read() == 0xA5)) continue;
 
     inhex = _dwinSerial->read();  // độ dài chuỗi dữ liệu
 
@@ -647,15 +672,15 @@ String DWIN::handle() {
         }
       }
       break;
-      case 0x82:
-        return readDWIN();
-        break;
-      default:
-      {
-        String retunString(readCMDLastByteEvent(inhex, cmd));
-        return retunString;
-      }
-        break;
+      // case 0x82:
+      //   return readDWIN();
+      //   break;
+      // default:
+      // {
+      //   String retunString(readCMDLastByteEvent(inhex, cmd));
+      //   return retunString;
+      // }
+      //   break;
     }
 
     int inhex2 = inhex;
@@ -700,33 +725,8 @@ String DWIN::handle() {
     if (listenerCallback != NULL) {
       listenerCallback(address, lastBytes, message, response);
     }
-
-    EventInfo info;
-    info.vpAddr = strtol(address.c_str(), NULL, 16);
-    info.lastBytes = lastBytes;
-
-    for (HmiEvent eventElemen : _eventList) {
-      switch (eventElemen.eventType) {
-      case DWIN_BUTTON:
-        if (eventElemen.vpAddr == info.vpAddr && eventElemen.lastBytes == 0xffff) {
-          eventElemen.callBack.buttonEvent(lastBytes, eventElemen.args);
-        }
-        else if (eventElemen.vpAddr == info.vpAddr && eventElemen.lastBytes == info.lastBytes) {
-          eventElemen.callBack.buttonEvent(lastBytes, eventElemen.args);
-        }
-        break;
-      case DWIN_TEXT:
-        if (eventElemen.vpAddr == info.vpAddr) {
-          eventElemen.callBack.textReceivedEvent(message, eventElemen.args);  // truyen text nhan duoc
-        }
-        break;
-      default:
-        Serial.println("The event has not been registered");
-        break;
-      }
-      delay(1);
-    }
   }
+
   if (isFirstByte && _echo) {
     Serial.println("Address :0x" + address + " | Data :0x" + String(lastBytes, HEX) + " | Message : " + message + " | Response " + response);
     Serial.println("_rawData: ");
@@ -848,24 +848,32 @@ void DWIN::clearSerial() {
   }
 }
 #pragma region Custom
-
-void DWIN::addButtonEvent(uint16_t vpAddr, int32_t lastBytes, HmiButtonEventCB_t ButtonEventCallback, void* args) {
-  HmiEvent event;
-  event.vpAddr = vpAddr;
-  event.lastBytes = lastBytes;
-  event.callBack.buttonEvent = ButtonEventCallback;
-  event.eventType = DWIN_BUTTON;
-  event.args = args;
-  _eventList.push_back(event);
+void DWIN::initUartEvent() {
+  _createHmiListenTask(this);
+  _dwinSerial->onReceive(_hmiUartEvent, true);
 }
 
-void DWIN::addTextReceivedEvent(uint16_t vpAddr, HmiTextReceivedEventCB_t TextEventCallback, void* args) {
-  HmiEvent event;
-  event.vpAddr = vpAddr;
-  event.callBack.textReceivedEvent = TextEventCallback;
-  event.eventType = DWIN_TEXT;
-  event.args = args;
-  _eventList.push_back(event);
+void DWIN::_hmiUartEvent(void) {
+  xTaskNotify(_DWINListenTdl, 0x01, eSetBits);
+}
+
+void DWIN::_hmiListenTask(void* args) {
+  DWIN* pxDwin = static_cast<DWIN*>(args);
+  uint32_t notifyNum;
+  for (;;) {
+    xTaskNotifyWait(pdFALSE, pdTRUE, &notifyNum, portMAX_DELAY);
+    pxDwin->listen();
+  }
+}
+
+void DWIN::_createHmiListenTask(void* args)
+{
+  xTaskCreateUniversal(_hmiListenTask, "DWINtask", 5120, this, (configMAX_PRIORITIES - 1), &_DWINListenTdl, -1);
+  if (_DWINListenTdl == NULL)
+  {
+    Serial.printf("DWINtask khởi tạo lỗi => reset\n");
+    abort();
+  }
 }
 
 void DWIN::setInt16Value(uint16_t vpAddress, int16_t value) {

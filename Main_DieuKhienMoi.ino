@@ -164,8 +164,11 @@ void TaskMonitor(void*);
 
 
 void setup() {
+
   esp_task_wdt_deinit();
   Serial.begin(115200);
+  Serial.printf("\t\tbrach DWIN_EVENT\n");
+  Serial.printf("\t\tTimer upload: %s", __TIME__);
   Wire.begin(10, 11);
 
   pinMode(RELAY_PIN, OUTPUT);
@@ -211,7 +214,7 @@ void setup() {
   _dwin.HienThiSegmentDangChay("");
   _dwin.HienThiVongLapChuongTrinhConLai("");
   _dwin.HienThiIconSegment(false);
-  _dwin.setBrightness(40);
+  _dwin.setBrightness(50);
   _dwin.XoaDoThi();
 
   _dwin.HienThiThongTinVersion(__TIME__);
@@ -228,7 +231,7 @@ void setup() {
   delay(5);
   xTaskCreateUniversal(TaskHMI, "tskHMI", 8192, NULL, 5, &TaskHMIHdl, -1);
   delay(5);
-  xTaskCreateUniversal(TaskMonitor, "tskMonitor", 4096, NULL, 1, NULL, -1);
+  // xTaskCreateUniversal(TaskMonitor, "tskMonitor", 4096, NULL, 1, NULL, -1);
   delay(5);
 
   KhoiTaoSoftTimerDinhThoi();
@@ -441,7 +444,7 @@ void KhoiTaoSoftTimerDinhThoi() {
     xTimerStart(pxTimerDWINhdl[i], 1000);
   }
 
-  xTimerSleep = xTimerCreate("SleepTimer", pdMS_TO_TICKS(600000), pdTRUE, (void*)eHMI_EVENT_TIMEROUT_OFF, callBackSoftTimerSleep);
+  xTimerSleep = xTimerCreate("SleepTimer", pdMS_TO_TICKS(5000), pdTRUE, NULL, callBackSoftTimerSleep);
   if (xTimerSleep == NULL) {
     Serial.printf("hết bộ nhớ để tạo timer => reset\n");
     abort();
@@ -1344,7 +1347,8 @@ void TaskKetNoiWiFi(void*) {
   FrameDataQueue_t data;
   bool trangThaiKetNoi = false;
   WiFi.onEvent(WiFiEvent);
-
+  String NameDevice = "AIC2 " + WiFi.macAddress();
+  WiFi.setHostname(NameDevice.c_str());
   for (;;) {
     xQueueReceive(KetNoiWiFiQueue, &data, portMAX_DELAY);
     Serial.printf("%s nhận event: %d, data nhận được %s\n", __func__, data.event, data.pvData == NULL ? "NULL" : "NOT NULL");
@@ -1386,6 +1390,7 @@ void TaskKetNoiWiFi(void*) {
       _dwin.setVP(_VPAddressIconWiFi, map(constrain(WiFi.RSSI(), -100, -40), -100, -40, 1, 4));
       strcpy(WiFiConfig.ssid, WifiSSID.c_str());
       strcpy(WiFiConfig.password, WifiPassword.c_str());
+
       setup_PostGet();
       break;
     case eEVENT_LOST_WIFI_CONNECTION:
@@ -1631,8 +1636,11 @@ void TaskHMI(void*) {
       if (BaseProgram.CO2 >= -0.5f && BaseProgram.CO2 <= 30.0f) {
         _dwin.HienThiCO2(BaseProgram.CO2);
       }
-      else if (BaseProgram.CO2 < -0.5f) {
-        _dwin.HienThiCO2("wait");
+      else if (abs(BaseProgram.CO2 - 2.0f) < 0.1f) {
+        _dwin.HienThiCO2("wait"); // đang khởi động 
+      }
+      else if (abs(BaseProgram.CO2 - 3.0f) < 0.1f) {
+        _dwin.HienThiCO2("OVL"); // quá giới hạn đo
       }
       else {
         _dwin.HienThiCO2("err");
@@ -1699,15 +1707,18 @@ void TaskHMI(void*) {
     }
     break;
     case eHMI_EVENT_REFRESH:
-      if (_dwin.getPage() == _EndIntroPage) {
+    {
+      uint8_t page = _dwin.getPage();
+      if (page == _EndIntroPage || page == _SleepPage) {
         Serial.println("\t\tDWIN REFRESH\n");
         _dwin.HienThiSetpointTemp(BaseProgram.programData.setPointTemp);
         _dwin.HienThiSetpointCO2(BaseProgram.programData.setPointCO2);
         _dwin.HienThiTocDoQuat(BaseProgram.programData.fanSpeed);
         _dwin.HienThiIconTrangThaiRun(BaseProgram.machineState);
-        _dwin.setBrightness(40);
+        _dwin.setBrightness(50);
         _dwin.setPage(_HomePage);
       }
+    }
       break;
     case HMI_CHECK_LIST:
       if (data.pvData == NULL) continue;
@@ -1723,7 +1734,7 @@ void TaskHMI(void*) {
           xTimerStop(pxTimerDWINhdl[i], 1000);
         }
         _dwin.Buzzer(800);
-        _dwin.setBrightness(5);
+        _dwin.setBrightness(1);
         _dwin.setPage(_SleepPage);
       }
     case HMI_GET_RTC:

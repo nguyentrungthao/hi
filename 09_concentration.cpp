@@ -72,11 +72,11 @@ void Concentration::ResetEventDOOR() {
 void Concentration::taskTinhToanCO2(void* ptr) {
   Concentration* pClass = static_cast<Concentration*>(ptr);
   TickType_t xLastWakeTime;
-  const TickType_t xFrequency = 10;
   xLastWakeTime = xTaskGetTickCount();
   float SaiSo = 0;
   int i = 0;
   uint64_t thoiGianMoVan;
+  constexpr uin16_t p
   while (1) {
     pClass->nongDoThucCO2 = pClass->LayGiaTriTuCamBien();
     //! kiểm tra giá trị đọc về từ cảm biến
@@ -85,7 +85,7 @@ void Concentration::taskTinhToanCO2(void* ptr) {
       i = 0;
       break;
     case 1:
-      if (i >= (CO2_SAMPLE_TIME / 1000) && (pClass->nongDoThucCO2 >= -0.5f && pClass->nongDoThucCO2 <= 30.0f)) {
+      if (i >= (CO2_SAMPLE_TIME / 1000) && (pClass->nongDoThucCO2 >= 0.0f && pClass->nongDoThucCO2 <= 30.0f)) {
         SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
         thoiGianMoVan = (uint64_t)pClass->getPIDcompute(SaiSo);
         pClass->turnOnPinAndDelayOff(thoiGianMoVan);

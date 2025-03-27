@@ -1,9 +1,9 @@
 /*
 * DWIN DGUS DWIN Library for Arduino
 * This Library Supports all Basic Function
-* Created by Tejeet ( tejeet@dwin.com.cn ) 
+* Created by Tejeet ( tejeet@dwin.com.cn )
 * UpHMI_DATEd by Satspares ( satspares@gmail.com )
-* Please Checkout Latest Offerings FROM DWIN 
+* Please Checkout Latest Offerings FROM DWIN
 * Here : https://www.dwin-global.com/
 */
 
@@ -12,21 +12,24 @@
 #define DWIN_H
 
 #if defined(ARDUINO) && ARDUINO >= 100
-    #include "Arduino.h"
-    #include  "HardwareSerial.h"
-    #include <FS.h>
-    #include <list>
-    using namespace std;
+#include "Arduino.h"
+#include  "HardwareSerial.h"
+#include <FS.h>
+#include <list>
+using namespace std;
 #else
-    #include "WProgram.h"
+#include "WProgram.h"
 #endif
 
 #ifndef ARDUINO_ARCH_RP2040 
- #ifndef ESP32
-    #include <SoftwareSerial.h>
- #endif   
+#ifndef ESP32
+#include <SoftwareSerial.h>
+#endif   
 #endif
 
+#ifndef MAX_BUFFER_RESPONE 
+#define MAX_BUFFER_RESPONE  255
+#endif //MAX_BUFFER_RESPONE 
 
 #define DWIN_DEFAULT_BAUD_RATE      115200
 // #define DWIN_DEFAULT_BAUD_RATE      537600
@@ -35,37 +38,46 @@
 
 //#define FORCEHWSERIAL
 
-class DWIN{
+typedef struct {
+    union {
+        uint8_t pu8Data;
+    };
+    uint8_t sizeofData;
+    uint16_t VPAddress;
+} FrameQueueUart_t;
+
+class DWIN {
 
 public:
     // Using AVR Board with Hardware Serial
-    #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || defined(FORCEHWSERIAL)
-     DWIN(HardwareSerial& port,long baud=DWIN_DEFAULT_BAUD_RATE);
-    
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || defined(FORCEHWSERIAL)
+    DWIN(HardwareSerial& port, long baud = DWIN_DEFAULT_BAUD_RATE);
+
     // Using Pico Board
-    #elif defined(ARDUINO_ARCH_RP2040)
-    DWIN(HardwareSerial& port, long baud , bool initSerial);
+#elif defined(ARDUINO_ARCH_RP2040)
+    DWIN(HardwareSerial& port, long baud, bool initSerial);
 
     //Using STM32 Arduino
-    #elif ARDUINO_ARCH_STM32
-    DWIN(HardwareSerial &port);
+#elif ARDUINO_ARCH_STM32
+    DWIN(HardwareSerial& port);
 
     // Using ESP32 Board
-    #elif defined(ESP32)
-    DWIN(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, long baud=DWIN_DEFAULT_BAUD_RATE);
-    
+#elif defined(ESP32)
+    DWIN(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, long baud = DWIN_DEFAULT_BAUD_RATE);
+
     // Using ESP8266 Board
-    #elif defined(ESP8266)
-    DWIN(uint8_t receivePin, uint8_t transmitPin, long baud=DWIN_DEFAULT_BAUD_RATE);
-    DWIN(SoftwareSerial& port, long baud=DWIN_DEFAULT_BAUD_RATE);
-    DWIN(Stream& port, long baud=DWIN_DEFAULT_BAUD_RATE);
+#elif defined(ESP8266)
+    DWIN(uint8_t receivePin, uint8_t transmitPin, long baud = DWIN_DEFAULT_BAUD_RATE);
+    DWIN(SoftwareSerial& port, long baud = DWIN_DEFAULT_BAUD_RATE);
+    DWIN(Stream& port, long baud = DWIN_DEFAULT_BAUD_RATE);
 
     // Using Arduino Board
-    #else
-    DWIN(uint8_t rx=ARDUINO_RX_PIN, uint8_t tx=ARDUINO_TX_PIN, long baud=DWIN_DEFAULT_BAUD_RATE);
-    #endif
+#else
+    DWIN(uint8_t rx = ARDUINO_RX_PIN, uint8_t tx = ARDUINO_TX_PIN, long baud = DWIN_DEFAULT_BAUD_RATE);
+#endif
 
     // PUBLIC Methods
+    void initUartEvent();
 
     // dont look for the ack on no response kernels
     void ackDisabled(bool noACK);
@@ -99,16 +111,17 @@ public:
     void setVPWord(long address, int data);
     // read WordData from VP Address you can read sequential multiple words (data returned in rx event) 
     void readVPWord(long address, uint8_t numWords);
+
     // read or write the NOR from/to VP must be on a even address 2 word are written or read
-    void norReadWrite(bool write,long VPAddress,long NORAddress);
-     // Play a sound
+    void norReadWrite(bool write, long VPAddress, long NORAddress);
+    // Play a sound
     void playSound(uint8_t soundID);
     // beep Buzzer
     void beepHMI(int time);
     // set the hardware RTC The first two digits of the year are automatically added
-    void setRTC( uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second);
+    void setRTC(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second);
     // upHMI_DATE the software RTC The first two digits of the year are automatically added
-    void setRTCSOFT( uint8_t year, uint8_t month, uint8_t day, uint8_t weekday, uint8_t hour, uint8_t minute, uint8_t second);
+    void setRTCSOFT(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday, uint8_t hour, uint8_t minute, uint8_t second);
     // set text color (16-bit RGB) on controls which allow it ie. text control.
     //  changes the control sp address space (sp=description pointer) content see the DWIN docs.  
     void setTextColor(long spAddress, long spOffset, long color);
@@ -120,7 +133,7 @@ public:
     //uint8_t hmiArray[] = {0x83,0x10,0x00,0x1};        // Read 0x1000 one word returns in the rx event
     //uint8_t hmiArray[] = {0x82,0x88,0x00,0x55,0xAA};  // Write 0x8800
     //hmi.sendArray(hmiArray,sizeof(hmiArray));
-    bool sendArray(uint8_t dwinSendArray[],uint8_t arraySize);
+    bool sendArray(uint8_t dwinSendArray[], uint8_t arraySize);
 
     // Send int array to the display we dont need the 5A A5 or size - words only
     // eg. Using Basic Graphic Control vp 0x5000 draw rectangle
@@ -130,8 +143,8 @@ public:
     //  display it
     //  hmi.sendIntArray(0x82,intArrayRect,sizeof(intArrayRect));
     //  hmi.sendIntArray(0x82,intArrayFill,sizeof(intArrayFill));
-    void sendIntArray(uint16_t instruction,uint16_t dwinIntArray[],uint8_t arraySize);
-// Custom -----------------------------------------------------------------------------------------------------
+    void sendIntArray(uint16_t instruction, uint16_t dwinIntArray[], uint8_t arraySize);
+    // Custom -----------------------------------------------------------------------------------------------------
     void setInt16Value(uint16_t vpAddress, int16_t value);  //ok
     void setInt32Value(uint16_t vpAddress, int32_t value);  // ok
     void setUint16Value(uint16_t vpAddress, uint16_t value);//ok
@@ -141,7 +154,7 @@ public:
     uint16_t getUint16Value(uint16_t vpAddress);    // ok
     uint32_t getUint32Value(uint16_t vpAddress);    // ok
 
-    String getText(uint16_t vpAddress,uint8_t lenText); // ok
+    String getText(uint16_t vpAddress, uint8_t lenText); // ok
     float getFloatValue(uint16_t vpAddress);    // ok
 
     // Callback Function
@@ -153,14 +166,9 @@ public:
     // Init the serial port in setup useful for Pico boards
     void initSerial(HardwareSerial& port, long baud);
 
-// Custom
-    
-    typedef void (*HmiButtonEventCB_t) (int32_t lastBytes, void *args);
-    typedef void (*HmiTextReceivedEventCB_t) (String text, void *args);
-    
+    // Custom
+
     void CRCEnabled(bool Enable = true);
-    void addButtonEvent(uint16_t vpAddr, int32_t lastBytes, HmiButtonEventCB_t ButtonEventCallback, void *args);
-    void addTextReceivedEvent(uint16_t vpAddr, HmiTextReceivedEventCB_t TextReceivedEventCallback, void *args);
     void setGraphYCentral(uint16_t spAddr, int value);
     void setGraphVDCentral(uint16_t spAddr, int value);
     void setGraphMulY(uint16_t spAddr, int value);
@@ -174,20 +182,20 @@ public:
     // Chỉ trả về False khi xảy ra lỗi trong quá trình cập nhật
     // Các trường hợp không tìm thấy thư mục hoặc file cập nhật 
     // Tức là không có bản cập nhật mới sẽ trả về true
-    bool updateHMI(fs::FS &filesystem, const char* dirPath);
+    bool updateHMI(fs::FS& filesystem, const char* dirPath);
 private:
 
-    #ifndef ARDUINO_ARCH_RP2040 
-     #ifndef ESP32
-     SoftwareSerial* localSWserial = nullptr; 
-     #endif   
-     #endif
+#ifndef ARDUINO_ARCH_RP2040 
+#ifndef ESP32
+    SoftwareSerial* localSWserial = nullptr;
+#endif   
+#endif
 
-    #if defined(ESP32)
-        HardwareSerial* _dwinSerial;
-    #else 
-        Stream* _dwinSerial;   // DWIN Serial interface
-    #endif
+#if defined(ESP32)
+    HardwareSerial* _dwinSerial;
+#else 
+    Stream* _dwinSerial;   // DWIN Serial interface
+#endif
     uint8_t _rxPin, _txPin;
     long _baudrate;
     bool _isSoft;          // Is serial interface software
@@ -205,6 +213,10 @@ private:
     hmiListener listenerCallback;
 
     void init(HardwareSerial* port);
+    void _createHmiListenTask(void* args);
+    static void _hmiListenTask(void* args);
+    static void _hmiUartEvent(void);
+
 
     uint8_t readCMDLastByte(bool hiByte = 0);
     uint8_t readCMDLastByteFromEvent(bool hiByte = 0);
@@ -213,34 +225,11 @@ private:
     String readDWIN();
     String handle();
     String checkHex(uint8_t currentNo);
-    bool isFirmwareFile(String &fileName);
+    bool isFirmwareFile(String& fileName);
     void flushSerial();
     void clearSerial();
     uint16_t calculateCRC(uint8_t* data, size_t length);
-// custom
-    typedef enum {
-        DWIN_BUTTON,
-        DWIN_TEXT,
-    } eventType_t;
-    class EventInfo{
-    public:
-        uint16_t vpAddr;
-        int32_t lastBytes;
-        eventType_t eventType;
-        String data;
-        void *args;
-    };
-    
-    class HmiEvent : public EventInfo {
-    public: 
-        union {
-            HmiButtonEventCB_t buttonEvent;
-            HmiTextReceivedEventCB_t textReceivedEvent;
-        }callBack;
-    };   
-    vector<HmiEvent> _eventList;
-    // list<HmiEvent> _eventList;
-    vector<uint8_t> _rawData;
+
 };
 
 

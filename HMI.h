@@ -222,11 +222,41 @@ public:
     bool SoSanhPassWord(String EnteredPassword);
     void ThayDoiUserAdminPassword(String EnteredPassword);
     void HienThiCheckAdminPasswordState(String text);
+    void addButtonEvent(uint16_t vpAddr, int32_t lastBytes, HmiButtonEventCB_t ButtonEventCallback, void* args);
+    void addTextReceivedEvent(uint16_t vpAddr, HmiTextReceivedEventCB_t TextReceivedEventCallback, void* args);
+
+    typedef void (*HmiButtonEventCB_t) (int32_t lastBytes, void* args);
+    typedef void (*HmiTextReceivedEventCB_t) (String text, void* args);
+    // custom
+    typedef enum {
+        DWIN_BUTTON,
+        DWIN_TEXT,
+    } eventType_t;
+    class EventInfo {
+    public:
+        uint16_t vpAddr;
+        int32_t lastBytes;
+        eventType_t eventType;
+        String data;
+        void* args;
+    };
+
+    class HmiEvent : public EventInfo {
+    public:
+        union {
+            HmiButtonEventCB_t buttonEvent;
+            HmiTextReceivedEventCB_t textReceivedEvent;
+        }callBack;
+    };
+    vector<HmiEvent> _eventList;
+    vector<uint8_t> _rawData;
+
+    QueueHandle_t xQueueReceiveUart;
+    // uin8_t u8DataRecv[MAX_BUFFER_RESPONE][2];
+
 protected:
-    HardwareSerial* _hmiSerial;
     hmiSetData_t _hmiSetDataCallback;
     hmiGetData_t _hmiGetDataCallback;
-    SemaphoreHandle_t _lock;
 
     String _ChuoiBanPhimDangNhap;
     bool _CapslockEnable;
