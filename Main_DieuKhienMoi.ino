@@ -171,12 +171,10 @@ void setup() {
 
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
-  pinMode(SERVO_PIN, OUTPUT);
-  digitalWrite(SERVO_PIN, LOW);
 
   KetNoiWiFiQueue = xQueueCreate(2, sizeof(FrameDataQueue_t));
   QueueUpdateFirmware = xQueueCreate(2, sizeof(MethodUpdates_t));
-  recvHMIQueue = xQueueCreate(10, sizeof(FrameDataQueue_t));
+  recvHMIQueue = xQueueCreate(20, sizeof(FrameDataQueue_t));
 
   khoiTaoRTC();
   delay(10);
@@ -197,7 +195,7 @@ void setup() {
   delay(10);
 
   delay(2000);
-  // _dwin.echoEnabled(true);
+  _dwin.echoEnabled(true);
   RunMode = QUICK_MODE;
   BaseProgram.machineState = false;
   BaseProgram.delayOffState = false;
@@ -229,7 +227,7 @@ void setup() {
   delay(5);
   xTaskCreateUniversal(TaskHMI, "tskHMI", 8192, NULL, 5, &TaskHMIHdl, -1);
   delay(5);
-  xTaskCreateUniversal(TaskMonitor, "tskMonitor", 4096, NULL, 1, NULL, -1);
+  // xTaskCreateUniversal(TaskMonitor, "tskMonitor", 4096, NULL, 1, NULL, -1);
   delay(5);
 
   KhoiTaoSoftTimerDinhThoi();
@@ -304,8 +302,6 @@ void khoiTaoSDCARD() {
   // Khôi phục thông số chương trình cơ sở.
   if (SDMMCFile.exists(PATH_BASEPROGRAM_DATA)) {
     SDMMCFile.readFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
-    if (BaseProgram.machineState == true) {
-    }
   }
   else {
     BaseProgram.programData.setPointTemp = 37;
@@ -442,7 +438,7 @@ void KhoiTaoSoftTimerDinhThoi() {
     xTimerStart(pxTimerDWINhdl[i], 1000);
   }
 
-  xTimerSleep = xTimerCreate("SleepTimer", pdMS_TO_TICKS(600000), pdTRUE, (void*)eHMI_EVENT_TIMEROUT_OFF, callBackSoftTimerSleep);
+  xTimerSleep = xTimerCreate("SleepTimer", pdMS_TO_TICKS(900000), pdTRUE, (void*)eHMI_EVENT_TIMEROUT_OFF, callBackSoftTimerSleep);
   if (xTimerSleep == NULL) {
     Serial.printf("hết bộ nhớ để tạo timer => reset\n");
     abort();
@@ -494,7 +490,7 @@ void BatMay(const char* funcCall) {
   static FrameDataQueue_t data;
   Serial.printf("\t\t\tBat may: call from %s\n", funcCall ? funcCall : "NULL");
   digitalWrite(RELAY_PIN, HIGH);
-  delay(30);
+  delay(10);
   data.event = eHMI_EVENT_WARNING;
   if (recvHMIQueue == NULL) {
     Serial.printf("\t\t\tQueue recvHMIQueue is NULL => Return\n");
@@ -503,7 +499,7 @@ void BatMay(const char* funcCall) {
   xQueueSend(recvHMIQueue, &data, 100);
   _Heater.BatDieuKhienNhietDo();
   _CO2.BatDieuKhienCO2();
-  SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
+  // SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
   if (_Door.TrangThai() == DOOR_OPEN) {
     _CO2.SetEventDOOR();
     _Heater.SetEventDOOR();
@@ -514,7 +510,7 @@ void TatMay(const char* funcCall) {
   _Heater.TatDieuKhienNhietDo();
   digitalWrite(RELAY_PIN, LOW);
   _CO2.TatDieuKhienCO2();
-  SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
+  // SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
 
 }
 

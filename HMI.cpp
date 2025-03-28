@@ -485,7 +485,6 @@ void HMI::_NutThucDay_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.type = eHMI_SET_EVENT_WAKEUP;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_hmiGetDataCallback(eHMI_EVENT_REFRESH, NULL);
-    hmiPtr->DWIN::setPage(_HomePage);
 }
 
 void HMI::_NutCaiThoiGianTatMay_(int32_t lastBytes, void* args)

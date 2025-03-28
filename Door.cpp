@@ -1,13 +1,13 @@
 #include "Door.h"
 
 void DOOR::KhoiTao(void) {
-  pinMode(DOOR_PIN, INPUT);
+  pinMode(PIN_DOOR, INPUT);
   xTaskCreate(taskDoor, "DoorTask", 4096, this, (configMAX_PRIORITIES - 3), &taskHandleDoor);
-  attachInterruptArg(DOOR_PIN, interupt, this, CHANGE);
+  attachInterruptArg(PIN_DOOR, interupt, this, CHANGE);
 }
 
 bool DOOR::TrangThai(void) {
-  return digitalRead(DOOR_PIN) ? DOOR_CLOSE : DOOR_OPEN;  // Return trạng thái cửa
+  return (digitalRead(PIN_DOOR) == DOOR_CLOSE) ? DOOR_CLOSE : DOOR_OPEN;  // Return trạng thái cửa
 }
 
 void DOOR::addOpenFuncCallBack(FuncCallBack pOpenFuncCallBack, void* ptr) {
