@@ -153,6 +153,16 @@ typedef struct
     int8_t textLen;
 } hmi_set_event_t;
 
+struct DuLieuDoThi_t
+{
+    uint16_t maxValue = 0;
+    uint16_t minValue = 0;
+    uint16_t MulY;
+    uint16_t VDCentral;
+    int16_t valueArr[6];
+    time_t timeArr[7];
+};
+
 typedef std::function<void(const hmi_set_event_t& event)> hmiSetData_t;
 typedef std::function<bool(hmi_get_type_t get, void* args)> hmiGetData_t;
 // typedef std::function<void(hmi_get_type_t get, int start, int length)> hmiGetDataList_t;
@@ -182,11 +192,10 @@ public:
     void XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row);
 
     void VeDoThi(float value, time_t time, int offset);
-    void VeDoThiNhiet(float value, time_t time, int offset);
-    void VeDoThiCO2(float value, time_t time, int offset);
     void VeDoThi(BaseProgram_t data);
-    void setupDoThiDoiSetpoint(BaseProgram_t data);
-    void XoaDoThi(void);
+    void KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom);
+    void ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom);
+    void XoaDoThi(BaseProgram_t data);
 
     void HienThiNhietDo(float GiaTri);
     void HienThiNhietDo(String text);
@@ -257,19 +266,6 @@ protected:
     String _ChuoiPassword;
     uint8_t _TrangSauKhiNhanReturnTrenWarning;
 
-    struct DuLieuDoThi_t
-    {
-        int YCentral;
-        int VDCentral;
-        int MulY;
-        float maxValue = 400;
-        float minValue = 200;
-        float valueStep = 0;
-        time_t timeArr[9];
-        int32_t valueArr[6];
-        int16_t count = 0;
-        bool flag = 0;
-    };
     DuLieuDoThi_t _DuLieuDoThiNhietDo;
     DuLieuDoThi_t _DuLieuDoThiCO2;
 

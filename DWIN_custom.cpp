@@ -1116,7 +1116,8 @@ void DWIN::setGraphMulY(uint16_t spAddr, int value) {
 }
 
 void DWIN::sendGraphValue(int channel, int value) {
-  uint8_t arr[] = { 0x82, 0x03, 0x10, 0x5A, 0xA5, 0x01, 0x00, (uint8_t)((channel) & 0xFF), 0x01, (uint8_t)((value >> 8) & 0xFF), (uint8_t)((value) & 0xFF) };
+  uint8_t arr[] = { 0x82, 0x03, 0x10, 0x5A, 0xA5, 0x01, 0x00, (uint8_t)((channel) & 0xFF), 0x01,
+    (uint8_t)((value >> 8) & 0xFF), (uint8_t)((value) & 0xFF) };
   sendArray(arr, sizeof(arr) / sizeof(arr[0]));
 }
 

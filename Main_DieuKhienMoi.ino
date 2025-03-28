@@ -115,7 +115,7 @@ QueueHandle_t QueueUpdateFirmware;
 const uint32_t pu32ArgTimerDWIN[][2] = { {eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN, 1000},
                                     {eHMI_EVENT_HIEN_THI_THOI_GIAN, 1000},
                                     {eHMI_EVENT_ICON_USB, 1000},
-                                    {eHMI_EVENT_VE_DO_THI, 10000},
+                                    {eHMI_EVENT_VE_DO_THI, 1000},
                                     {eHMI_EVENT_ICON_WIFI, 30000},
                                     {eHMI_EVENT_WARNING, 120000},
                                     {eHMI_EVENT_REFRESH, 120000} };
@@ -195,7 +195,7 @@ void setup() {
   delay(10);
 
   delay(2000);
-  _dwin.echoEnabled(true);
+  // _dwin.echoEnabled(true);
   RunMode = QUICK_MODE;
   BaseProgram.machineState = false;
   BaseProgram.delayOffState = false;
@@ -211,11 +211,10 @@ void setup() {
   _dwin.HienThiVongLapChuongTrinhConLai("");
   _dwin.HienThiIconSegment(false);
   _dwin.setBrightness(50);
-  _dwin.XoaDoThi();
+  _dwin.XoaDoThi(BaseProgram);
 
   _dwin.HienThiThongTinVersion(__TIME__);
   _dwin.setPage(_HomePage);
-  _dwin.setupDoThiDoiSetpoint(BaseProgram);
 
   xTaskCreateUniversal(TaskExportData, "tskExport", 8192, NULL, 4, &TaskExportDataHdl, -1);
   delay(5);
@@ -1541,7 +1540,6 @@ void TaskMain(void*) {
       }
     }
 
-    _dwin.setupDoThiDoiSetpoint(BaseProgram);
     _Heater.CaiDatNhietDo(BaseProgram.programData.setPointTemp);
     _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
     _CO2.CaiNongDoCO2(BaseProgram.programData.setPointCO2);

@@ -1443,218 +1443,175 @@ void HMI::_NutThayDoiTrangThaiChucNangHenGioTat_(int32_t lastBytes, void* args)
 
 void HMI::VeDoThi(float value, time_t time, int offset)
 {
-    value = value * 10;
-    char timeText[10];
-    if (_DuLieuDoThiNhietDo.minValue > value)
-    {
-        _DuLieuDoThiNhietDo.minValue = value - 10;
-        _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
+    // value = value * 10;
+    // char timeText[10];
+    // if (_DuLieuDoThiNhietDo.minValue > value)
+    // {
+    //     _DuLieuDoThiNhietDo.minValue = value - 10;
+    //     _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
 
-        // _DuLieuDoThiNhietDo.MulY = 116 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-        // setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
-        // setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
+    //     _DuLieuDoThiNhietDo.MulY = 116 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
+    //     setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
+    //     setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
 
-        _DuLieuDoThiNhietDo.MulY = 190 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-        setGraphVDCentral(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.VDCentral);
-        setGraphMulY(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.MulY);
+    //     _DuLieuDoThiNhietDo.MulY = 190 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
+    //     setGraphVDCentral(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.VDCentral);
+    //     setGraphMulY(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.MulY);
 
-        _DuLieuDoThiNhietDo.valueStep = (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue) / 5;
-        // setText(_VPAddressGraphYValueText1, String(_DuLieuDoThiNhietDo.minValue / 10, 1));
-        // for (float i = 1; i < 6; i++)
-        // {
-        //     setText(_VPAddressGraphYValueText1 + i * 5, String((_DuLieuDoThiNhietDo.minValue + i * _DuLieuDoThiNhietDo.valueStep) / 10, 1));
-        // }
+    //     _DuLieuDoThiNhietDo.valueStep = (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue) / 5;
+    //     setText(_VPAddressGraphYValueText1, String(_DuLieuDoThiNhietDo.minValue / 10, 1));
+    //     for (float i = 1; i < 6; i++)
+    //     {
+    //         setText(_VPAddressGraphYValueText1 + i * 5, String((_DuLieuDoThiNhietDo.minValue + i * _DuLieuDoThiNhietDo.valueStep) / 10, 1));
+    //     }
+    // }
+    // else if (_DuLieuDoThiNhietDo.maxValue < value)
+    // {
+    //     _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue + 10) * 1.25 + _DuLieuDoThiNhietDo.minValue + 10;
+    //     // _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue) * 1.25 + _DuLieuDoThiNhietDo.minValue;
+    //     _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
+
+    //     _DuLieuDoThiNhietDo.MulY = 116 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
+    //     setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
+    //     setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
+
+    //     _DuLieuDoThiNhietDo.MulY = 190 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
+    //     setGraphVDCentral(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.VDCentral);
+    //     setGraphMulY(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.MulY);
+
+    //     _DuLieuDoThiNhietDo.valueStep = (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue) / 5;
+    //     setText(_VPAddressGraphYValueText1, String(_DuLieuDoThiNhietDo.minValue / 10, 1));
+    //     for (float i = 1; i < 6; i++)
+    //     {
+    //         setText(_VPAddressGraphYValueText1 + i * 5, String((_DuLieuDoThiNhietDo.minValue + i * _DuLieuDoThiNhietDo.valueStep) / 10, 1));
+    //     }
+    // }
+    // _DuLieuDoThiNhietDo.count++;
+    // if (_DuLieuDoThiNhietDo.count % 30 == 0)
+    // {
+    //     if (_DuLieuDoThiNhietDo.flag == 0)
+    //     {
+    //         _DuLieuDoThiNhietDo.timeArr[(_DuLieuDoThiNhietDo.count / 30 - 1)] = time;
+    //         sprintf(timeText, "%02u:%02u:%02u", hour(time), minute(time), second(time));
+    //         setText(_VPAddressGraphXValueText1 + 10 * (_DuLieuDoThiNhietDo.count / 30 - 1), timeText);
+    //     }
+    // }
+    // else if (_DuLieuDoThiNhietDo.flag == 1)
+    // {
+    //     for (int8_t i = 0; i < 9; i++)
+    //     {
+    //         _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i] + offset;
+    //         sprintf(timeText, "%02u:%02u:%02u", hour(_DuLieuDoThiNhietDo.timeArr[i]), minute(_DuLieuDoThiNhietDo.timeArr[i]), second(_DuLieuDoThiNhietDo.timeArr[i]));
+    //         setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
+    //     }
+    //     if (second(time) != second(_DuLieuDoThiNhietDo.timeArr[8]))
+    //     {
+    //         Serial.println("update HMI_DATE RTC for graph");
+    //         _DuLieuDoThiNhietDo.timeArr[8] = time;
+    //         for (int8_t i = 7; i >= 0; i--)
+    //         {
+    //             _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i + 1] - 30 * offset;
+    //         }
+    //     }
+    // }
+    // if (_DuLieuDoThiNhietDo.count / 30 == 9)
+    // {
+    //     _DuLieuDoThiNhietDo.count = 0;
+    //     _DuLieuDoThiNhietDo.flag = 1;
+    // }
+    // sendGraphValue(0, (int)value);
+}
+
+void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom) {
+
+    curvePrameter.minValue = (uint16_t)(value) * 10;
+    curvePrameter.valueArr[0] = curvePrameter.minValue;
+    for (uint8_t i = 1; i < 6; i++) {
+        curvePrameter.valueArr[i] = curvePrameter.valueArr[0] + 10 * i;
     }
-    else if (_DuLieuDoThiNhietDo.maxValue < value)
-    {
-        _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue + 10) * 1.25 + _DuLieuDoThiNhietDo.minValue + 10;
-        // _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue) * 1.25 + _DuLieuDoThiNhietDo.minValue;
-        _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
-
-        // _DuLieuDoThiNhietDo.MulY = 116 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-        // setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
-        // setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
-
-        _DuLieuDoThiNhietDo.MulY = 190 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-        setGraphVDCentral(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.VDCentral);
-        setGraphMulY(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.MulY);
-
-        _DuLieuDoThiNhietDo.valueStep = (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue) / 5;
-        // setText(_VPAddressGraphYValueText1, String(_DuLieuDoThiNhietDo.minValue / 10, 1));
-        // for (float i = 1; i < 6; i++)
-        // {
-        //     setText(_VPAddressGraphYValueText1 + i * 5, String((_DuLieuDoThiNhietDo.minValue + i * _DuLieuDoThiNhietDo.valueStep) / 10, 1));
-        // }
+    curvePrameter.maxValue = curvePrameter.valueArr[5];
+    curvePrameter.VDCentral = (curvePrameter.valueArr[5] + curvePrameter.valueArr[0]) / 2;
+    curvePrameter.MulY = 240 * 256 / (curvePrameter.valueArr[5] - curvePrameter.valueArr[0]);
+    for (uint8_t i = 0; i < 6; i++) {
+        setText(VPyValueBase + i * 5, String(curvePrameter.valueArr[i] / 10.0f, 1));
     }
-    _DuLieuDoThiNhietDo.count++;
-    if (_DuLieuDoThiNhietDo.count % 30 == 0)
-    {
-        if (_DuLieuDoThiNhietDo.flag == 0)
-        {
-            _DuLieuDoThiNhietDo.timeArr[(_DuLieuDoThiNhietDo.count / 30 - 1)] = time;
-            sprintf(timeText, "%02u:%02u:%02u", hour(time), minute(time), second(time));
-            setText(_VPAddressGraphXValueText1 + 10 * (_DuLieuDoThiNhietDo.count / 30 - 1), timeText);
+    setGraphVDCentral(SPCurveMain, curvePrameter.VDCentral);
+    setGraphMulY(SPCurveMain, curvePrameter.MulY);
+    setGraphVDCentral(SPCurveZoom, curvePrameter.VDCentral);
+    setGraphMulY(SPCurveZoom, curvePrameter.MulY);
+    // Serial.printf("min %u, max %u, VD %u, Mul %u\n",
+    //     curvePrameter.minValue, curvePrameter.maxValue, VDCentral, MulY);
+}
+
+void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom) {
+    if (curvePrameter.maxValue == curvePrameter.minValue) {
+        KhoiTaoDoThi(value, curvePrameter, VPyValueBase, SPCurveMain, SPCurveZoom);
+    }
+
+    uint16_t u16Value = (uint16_t)(value * 10);
+    if (curvePrameter.minValue >= u16Value) {
+        curvePrameter.valueArr[0] -= 10;
+        curvePrameter.minValue = curvePrameter.valueArr[0];
+        uint16_t step = (curvePrameter.maxValue - curvePrameter.minValue) / 5;
+        for (uint8_t i = 1; i < 6; i++) {
+            curvePrameter.valueArr[i] = curvePrameter.valueArr[0] + step * i;
         }
-    }
-    else if (_DuLieuDoThiNhietDo.flag == 1)
-    {
-        for (int8_t i = 0; i < 9; i++)
-        {
-            _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i] + offset;
-            sprintf(timeText, "%02u:%02u:%02u", hour(_DuLieuDoThiNhietDo.timeArr[i]), minute(_DuLieuDoThiNhietDo.timeArr[i]), second(_DuLieuDoThiNhietDo.timeArr[i]));
-            setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
+        curvePrameter.maxValue = curvePrameter.valueArr[5];
+
+        curvePrameter.MulY = 240 * 256 / (curvePrameter.valueArr[5] - curvePrameter.valueArr[0]);
+        curvePrameter.VDCentral = (curvePrameter.valueArr[5] + curvePrameter.valueArr[0]) / 2;
+        for (uint8_t i = 0; i < 6; i++) {
+            setText(VPyValueBase + i * 5, String(curvePrameter.valueArr[i] / 10.0f, 1));
         }
-        if (second(time) != second(_DuLieuDoThiNhietDo.timeArr[8]))
-        {
-            Serial.println("update HMI_DATE RTC for graph");
-            _DuLieuDoThiNhietDo.timeArr[8] = time;
-            for (int8_t i = 7; i >= 0; i--)
-            {
-                _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i + 1] - 30 * offset;
-            }
+        setGraphVDCentral(SPCurveMain, curvePrameter.VDCentral);
+        setGraphMulY(SPCurveMain, curvePrameter.MulY);
+        setGraphVDCentral(SPCurveZoom, curvePrameter.VDCentral);
+        setGraphMulY(SPCurveZoom, curvePrameter.MulY);
+    }
+    else if (curvePrameter.maxValue <= u16Value) {
+        curvePrameter.maxValue = (uint16_t)(value) * 10 + 10;
+        curvePrameter.valueArr[5] = curvePrameter.maxValue;
+        uint16_t step = (curvePrameter.maxValue - curvePrameter.minValue) / 5;
+        curvePrameter.valueArr[0] = curvePrameter.valueArr[5] - step * 5;
+        curvePrameter.minValue = curvePrameter.valueArr[0];
+        for (uint8_t i = 1; i < 6; i++) {
+            curvePrameter.valueArr[i] = curvePrameter.valueArr[0] + step * i;
         }
+        curvePrameter.MulY = 240 * 256 / (curvePrameter.valueArr[5] - curvePrameter.valueArr[0]);
+        curvePrameter.VDCentral = (curvePrameter.valueArr[5] + curvePrameter.valueArr[0]) / 2;
+        for (uint8_t i = 0; i < 6; i++) {
+            setText(VPyValueBase + i * 5, String(curvePrameter.valueArr[i] / 10.0f, 1));
+        }
+        setGraphVDCentral(SPCurveMain, curvePrameter.VDCentral);
+        setGraphMulY(SPCurveMain, curvePrameter.MulY);
+        setGraphVDCentral(SPCurveZoom, curvePrameter.VDCentral);
+        setGraphMulY(SPCurveZoom, curvePrameter.MulY);
     }
-    if (_DuLieuDoThiNhietDo.count / 30 == 9)
-    {
-        _DuLieuDoThiNhietDo.count = 0;
-        _DuLieuDoThiNhietDo.flag = 1;
-    }
-    sendGraphValue(0, (int)value);
 }
 
 void HMI::VeDoThi(BaseProgram_t data) {
-    // for (uint8_t i = 0; i < 6; i++) {
-    //     setText(_VPAddressGraphYValueText1 + i * 5, String(_DuLieuDoThiNhietDo.valueArr[i] / 10.0f, 1));
-    //     setText(_VPAddressGraphY_R_ValueText1 + i * 5, String(_DuLieuDoThiCO2.valueArr[i] / 10.0f, 1));
-    // }
-    // sendGraphValue(1, (int)(data.temperature * 10) - _DuLieuDoThiNhietDo.valueArr[0]); // đồ thị nhiệt
-    // sendGraphValue(2, (int)(data.CO2 * 10) - _DuLieuDoThiCO2.valueArr[0] ); // đồ thị CO2
 
-    uint16_t temp = (uint16_t)(data.temperature * 10) - _DuLieuDoThiNhietDo.valueArr[0];
-    uint16_t CO2 = (uint16_t)(data.CO2 * 10) - _DuLieuDoThiCO2.valueArr[0];
+    ScaleDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph);
+    ScaleDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2);
+
+    uint16_t temp = (uint16_t)(data.temperature * 10);
+    uint16_t CO2 = (uint16_t)(data.CO2 * 10);
     uint16_t arrayy[] = { 0x0310, 0x5AA5, 0x0200, 0x0001, temp, 0x0101, CO2 };
+    Serial.printf("%u %u\t 
+        min % u, max % u, VD % u, Mul % u\t
+        min % u, max % u, VD % u, Mul % u\t\n", temp, CO2,
+        _DuLieuDoThiNhietDo.minValue, _DuLieuDoThiNhietDo.maxValue, _DuLieuDoThiNhietDo.VDCentral, _DuLieuDoThiNhietDo.MulY,
+        _DuLieuDoThiCO2.minValue, _DuLieuDoThiCO2.maxValue, _DuLieuDoThiCO2.VDCentral, _DuLieuDoThiCO2.MulY);
     sendIntArray(0x82, arrayy, 14);
 }
 
-void HMI::setupDoThiDoiSetpoint(BaseProgram_t data) {
-
-    static float setPointTemp;
-    static float setPointCO2;
-
-    if (abs(setPointTemp - data.programData.setPointTemp) > 0.1) {
-        setPointTemp = data.programData.setPointTemp;
-        int32_t stepYL0;
-        if (fabs(setPointTemp - data.temperature) > 1) {
-            if (setPointTemp > data.temperature) {
-                _DuLieuDoThiNhietDo.valueArr[4] = (int32_t)(round(setPointTemp));
-                stepYL0 = (_DuLieuDoThiNhietDo.valueArr[4] - (int32_t)(data.temperature)) * 10 / 3;
-                _DuLieuDoThiNhietDo.valueArr[0] = _DuLieuDoThiNhietDo.valueArr[4] * 10 - stepYL0 * 4;
-            }
-            else {
-                _DuLieuDoThiNhietDo.valueArr[1] = (int32_t)(round(setPointTemp));
-                stepYL0 = ((int32_t)(data.temperature) - _DuLieuDoThiNhietDo.valueArr[1]) * 10 / 3;
-                _DuLieuDoThiNhietDo.valueArr[0] = _DuLieuDoThiNhietDo.valueArr[1] * 10 - stepYL0;
-            }
-        }
-        else {
-            stepYL0 = 10;
-            _DuLieuDoThiNhietDo.valueArr[3] = (int32_t)(round(setPointTemp));
-            _DuLieuDoThiNhietDo.valueArr[0] = _DuLieuDoThiNhietDo.valueArr[3] * 10 - stepYL0 * 3;
-        }
-
-        for (uint8_t i = 0; i < 6; i++) {
-            _DuLieuDoThiNhietDo.valueArr[i] = _DuLieuDoThiNhietDo.valueArr[0] + i * stepYL0;
-
-        }
-
-        int32_t CaoDoThi0 = _DuLieuDoThiNhietDo.valueArr[5] - _DuLieuDoThiNhietDo.valueArr[0];
-        if (CaoDoThi0 == 0) {
-            CaoDoThi0 = 2;
-        }
-        int32_t MulY0 = 240 * 256 / CaoDoThi0;
-        int32_t VDCentral0 = CaoDoThi0 / 2;
-        for (uint8_t i = 0; i < 6; i++) {
-            setText(_VPAddressGraphYValueText1 + i * 5, String(_DuLieuDoThiNhietDo.valueArr[i] / 10.0f, 1));
-        }
-        setGraphVDCentral(_SPAddressSmallGraph1, VDCentral0);
-        setGraphMulY(_SPAddressSmallGraph1, MulY0);
-        setGraphVDCentral(_SPAddressLargeGraph, VDCentral0);
-        setGraphMulY(_SPAddressLargeGraph, MulY0);
-    }
-
-
-    if (abs(setPointCO2 - data.programData.setPointCO2) > 0.1) {
-        setPointCO2 = data.programData.setPointCO2;
-        int32_t stepYL0;
-        if (fabs(setPointCO2 - data.CO2) > 1) {
-            if (setPointCO2 > data.CO2) {
-                _DuLieuDoThiCO2.valueArr[4] = (int32_t)(round(setPointCO2));
-                stepYL0 = (_DuLieuDoThiCO2.valueArr[4] - (int32_t)(data.CO2)) * 10 / 3;
-                _DuLieuDoThiCO2.valueArr[0] = _DuLieuDoThiCO2.valueArr[4] * 10 - stepYL0 * 4;
-            }
-            else {
-                _DuLieuDoThiCO2.valueArr[1] = (int32_t)(round(setPointCO2));
-                stepYL0 = ((int32_t)(data.CO2) - _DuLieuDoThiCO2.valueArr[1]) * 10 / 3;
-                _DuLieuDoThiCO2.valueArr[0] = _DuLieuDoThiCO2.valueArr[1] * 10 - stepYL0;
-            }
-        }
-        else {
-            stepYL0 = 10;
-            _DuLieuDoThiCO2.valueArr[2] = (int32_t)(round(setPointCO2));
-            _DuLieuDoThiCO2.valueArr[0] = _DuLieuDoThiCO2.valueArr[2] * 10 - stepYL0 * 2;
-        }
-
-        for (uint8_t i = 0; i < 6; i++) {
-            _DuLieuDoThiCO2.valueArr[i] = _DuLieuDoThiCO2.valueArr[0] + i * stepYL0;
-
-        }
-
-        int32_t CaoDoThi0 = _DuLieuDoThiCO2.valueArr[5] - _DuLieuDoThiCO2.valueArr[0];
-        if (CaoDoThi0 == 0) {
-            CaoDoThi0 = 2;
-        }
-        int32_t MulY0 = 240 * 256 / CaoDoThi0;
-        int32_t VDCentral0 = CaoDoThi0 / 2;
-        for (uint8_t i = 0; i < 6; i++) {
-            setText(_VPAddressGraphY_R_ValueText1 + i * 5, String(_DuLieuDoThiCO2.valueArr[i] / 10.0f, 1));
-        }
-        setGraphVDCentral(_SPAddressSmallGraphCO2, VDCentral0);
-        setGraphMulY(_SPAddressSmallGraphCO2, MulY0);
-        setGraphVDCentral(_SPAddressLargeGraphCO2, VDCentral0);
-        setGraphMulY(_SPAddressLargeGraphCO2, MulY0);
-    }
-}
-
-void HMI::XoaDoThi(void)
+void HMI::XoaDoThi(BaseProgram_t data)
 {
-    _DuLieuDoThiNhietDo.count = 0;
-    _DuLieuDoThiNhietDo.flag = 0;
-    _DuLieuDoThiNhietDo.valueStep = 0;
-    _DuLieuDoThiNhietDo.minValue = 200;
-    _DuLieuDoThiNhietDo.maxValue = 400;
-    for (int8_t i = 0; i < 9; i++)
-    {
-        setText(_VPAddressGraphXValueText1 + 10 * i, "");
-    }
     resetGraph(0);
     resetGraph(1);
 
-    _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
-
-    // _DuLieuDoThiNhietDo.MulY = 150 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-    // setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
-    // setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
-
-    _DuLieuDoThiNhietDo.MulY = 190 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-    setGraphVDCentral(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.VDCentral);
-    setGraphMulY(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.MulY);
-
-    _DuLieuDoThiNhietDo.valueStep = (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue) / 5;
-    setText(_VPAddressGraphYValueText1, String(_DuLieuDoThiNhietDo.minValue / 10, 1));
-    for (float i = 1; i < 6; i++)
-    {
-        setText(_VPAddressGraphYValueText1 + i * 5, String((_DuLieuDoThiNhietDo.minValue + i * _DuLieuDoThiNhietDo.valueStep) / 10, 1));
-    }
+    KhoiTaoDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2);
+    KhoiTaoDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph);
 }
 
 void HMI::HienThiNhietDo(float GiaTri)
