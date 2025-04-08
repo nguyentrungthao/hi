@@ -19,6 +19,8 @@
 #include <userdef.h>
 #include "HMIparam.h"
 #include <Arduino.h>
+#include <ringBuffer.h>
+
 
 #define MANUFACTURER_PASSWORD "LABone2025"
 
@@ -155,10 +157,10 @@ typedef struct
 
 struct DuLieuDoThi_t
 {
-    uint16_t maxValue = 0;
-    uint16_t minValue = 0;
-    uint16_t MulY;
-    uint16_t VDCentral;
+    int16_t maxValue = 0;
+    int16_t minValue = 0;
+    int16_t MulY;
+    int16_t VDCentral;
     int16_t valueArr[6];
     time_t timeArr[7];
 };
@@ -195,6 +197,7 @@ public:
     void VeDoThi(BaseProgram_t data);
     void KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom);
     void ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom);
+    void ThoiGianDoThi(time_t time);
     void XoaDoThi(BaseProgram_t data);
 
     void HienThiNhietDo(float GiaTri);
@@ -268,6 +271,8 @@ protected:
 
     DuLieuDoThi_t _DuLieuDoThiNhietDo;
     DuLieuDoThi_t _DuLieuDoThiCO2;
+
+    RingBuffer _bufferThoiGianDoThi = RingBuffer(7, sizeof(time_t));
 
     void _createHmiListenTask(void* args);
     static void _hmiListenTask(void* args);

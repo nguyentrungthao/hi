@@ -271,6 +271,7 @@ void DWIN::setRTCSOFT(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday,
   readDWIN();
 }
 // Set Text on VP Address
+//5A A5 0F 82 80 00 41 42 20 20 20 41 42 FF FF AF FF 41 42 FF FF 01 20
 void DWIN::setText(long address, String textData) {
   uint8_t ffEnding[2] = { 0xFF, 0xFF };
   int dataLen = textData.length();
@@ -662,9 +663,6 @@ String DWIN::handle() {
     }
     for (int i = 2; i <= inhex2; i++) {
       int inByte = _rawData[i - 1];
-      // if (i == 1) {
-      //     response.concat(checkHex(inhex2) + " ");
-      // }
       if (i == (inhex2 - 1)) {
         previousByte = inByte;
       }

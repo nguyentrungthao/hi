@@ -1525,6 +1525,7 @@ void HMI::VeDoThi(float value, time_t time, int offset)
 void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom) {
 
     curvePrameter.minValue = (uint16_t)(value) * 10;
+    if (curvePrameter.minValue < 0) curvePrameter.minValue = 0;
     curvePrameter.valueArr[0] = curvePrameter.minValue;
     for (uint8_t i = 1; i < 6; i++) {
         curvePrameter.valueArr[i] = curvePrameter.valueArr[0] + 10 * i;
@@ -1539,20 +1540,54 @@ void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyVa
     setGraphMulY(SPCurveMain, curvePrameter.MulY);
     setGraphVDCentral(SPCurveZoom, curvePrameter.VDCentral);
     setGraphMulY(SPCurveZoom, curvePrameter.MulY);
-    // Serial.printf("min %u, max %u, VD %u, Mul %u\n",
-    //     curvePrameter.minValue, curvePrameter.maxValue, VDCentral, MulY);
 }
-
+// void ThoiGianDoThi(time_t time) {
+//     _DuLieuDoThiNhietDo.count++;
+//     if (_DuLieuDoThiNhietDo.count % 30 == 0)
+//     {
+//         if (_DuLieuDoThiNhietDo.flag == 0)
+//         {
+//             _DuLieuDoThiNhietDo.timeArr[(_DuLieuDoThiNhietDo.count / 30 - 1)] = time;
+//             sprintf(timeText, "%02u:%02u", hour(time), minute(time));
+//             setText(_VPAddressGraphXValueText1 + 10 * (_DuLieuDoThiNhietDo.count / 30 - 1), timeText);
+//         }
+//     }
+//     else if (_DuLieuDoThiNhietDo.flag == 1)
+//     {
+//         for (int8_t i = 0; i < 9; i++)
+//         {
+//             _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i] + offset;
+//             sprintf(timeText, "%02u:%02u:%02u", hour(_DuLieuDoThiNhietDo.timeArr[i]), minute(_DuLieuDoThiNhietDo.timeArr[i]), second(_DuLieuDoThiNhietDo.timeArr[i]));
+//             setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
+//         }
+//         if (second(time) != second(_DuLieuDoThiNhietDo.timeArr[8]))
+//         {
+//             Serial.println("update HMI_DATE RTC for graph");
+//             _DuLieuDoThiNhietDo.timeArr[8] = time;
+//             for (int8_t i = 7; i >= 0; i--)
+//             {
+//                 _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i + 1] - 30 * offset;
+//             }
+//         }
+//     }
+//     if (_DuLieuDoThiNhietDo.count / 30 == 9)
+//     {
+//         _DuLieuDoThiNhietDo.count = 0;
+//         _DuLieuDoThiNhietDo.flag = 1;
+//     }
+// }
 void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom) {
     if (curvePrameter.maxValue == curvePrameter.minValue) {
         KhoiTaoDoThi(value, curvePrameter, VPyValueBase, SPCurveMain, SPCurveZoom);
     }
 
-    uint16_t u16Value = (uint16_t)(value * 10);
+    int16_t u16Value = (uint16_t)(value * 10);
     if (curvePrameter.minValue >= u16Value) {
         curvePrameter.valueArr[0] -= 10;
+        if (curvePrameter.valueArr[0] < 0) curvePrameter.valueArr[0] = 0;
         curvePrameter.minValue = curvePrameter.valueArr[0];
-        uint16_t step = (curvePrameter.maxValue - curvePrameter.minValue) / 5;
+        int16_t step = (curvePrameter.maxValue - curvePrameter.minValue) / 5;
+        if (step < 0) step = 0;
         for (uint8_t i = 1; i < 6; i++) {
             curvePrameter.valueArr[i] = curvePrameter.valueArr[0] + step * i;
         }
@@ -1571,7 +1606,8 @@ void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValu
     else if (curvePrameter.maxValue <= u16Value) {
         curvePrameter.maxValue = (uint16_t)(value) * 10 + 10;
         curvePrameter.valueArr[5] = curvePrameter.maxValue;
-        uint16_t step = (curvePrameter.maxValue - curvePrameter.minValue) / 5;
+        int16_t step = (curvePrameter.maxValue - curvePrameter.minValue) / 5;
+        if (step < 0) step = 0;
         curvePrameter.valueArr[0] = curvePrameter.valueArr[5] - step * 5;
         curvePrameter.minValue = curvePrameter.valueArr[0];
         for (uint8_t i = 1; i < 6; i++) {
@@ -1594,12 +1630,10 @@ void HMI::VeDoThi(BaseProgram_t data) {
     ScaleDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph);
     ScaleDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2);
 
-    uint16_t temp = (uint16_t)(data.temperature * 10);
-    uint16_t CO2 = (uint16_t)(data.CO2 * 10);
+    int16_t temp = (uint16_t)(data.temperature * 10);
+    int16_t CO2 = (uint16_t)(data.CO2 * 10);
     uint16_t arrayy[] = { 0x0310, 0x5AA5, 0x0200, 0x0001, temp, 0x0101, CO2 };
-    Serial.printf("%u %u\t 
-        min % u, max % u, VD % u, Mul % u\t
-        min % u, max % u, VD % u, Mul % u\t\n", temp, CO2,
+    Serial.printf("%u %u\t min % u, max % u, VD % u, Mul % u\tmin % u, max % u, VD % u, Mul % u\t\n", temp, CO2,
         _DuLieuDoThiNhietDo.minValue, _DuLieuDoThiNhietDo.maxValue, _DuLieuDoThiNhietDo.VDCentral, _DuLieuDoThiNhietDo.MulY,
         _DuLieuDoThiCO2.minValue, _DuLieuDoThiCO2.maxValue, _DuLieuDoThiCO2.VDCentral, _DuLieuDoThiCO2.MulY);
     sendIntArray(0x82, arrayy, 14);
@@ -2095,7 +2129,7 @@ void HMI::_NutXoaDoThi_(int32_t lastBytes, void* args)
     case _KeyValueResetGraphTemp:
         hmiPtr->resetGraph(0);
         break;
-    case _KeyValueResetGraphCO2:
+        case _KeyValueResetGraphCO2:
         hmiPtr->resetGraph(1);
         break;
     default:

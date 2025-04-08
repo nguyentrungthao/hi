@@ -115,7 +115,8 @@ QueueHandle_t QueueUpdateFirmware;
 const uint32_t pu32ArgTimerDWIN[][2] = { {eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN, 1000},
                                     {eHMI_EVENT_HIEN_THI_THOI_GIAN, 1000},
                                     {eHMI_EVENT_ICON_USB, 1000},
-                                    {eHMI_EVENT_VE_DO_THI, 1000},
+                                    {eHMI_EVENT_ICON_FAN, 1000},
+                                    {eHMI_EVENT_VE_DO_THI, 10000},
                                     {eHMI_EVENT_ICON_WIFI, 30000},
                                     {eHMI_EVENT_WARNING, 120000},
                                     {eHMI_EVENT_REFRESH, 120000} };
@@ -489,7 +490,7 @@ void BatMay(const char* funcCall) {
   static FrameDataQueue_t data;
   Serial.printf("\t\t\tBat may: call from %s\n", funcCall ? funcCall : "NULL");
   digitalWrite(RELAY_PIN, HIGH);
-  delay(10);
+  delay(100);
   data.event = eHMI_EVENT_WARNING;
   if (recvHMIQueue == NULL) {
     Serial.printf("\t\t\tQueue recvHMIQueue is NULL => Return\n");

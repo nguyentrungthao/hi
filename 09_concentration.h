@@ -14,7 +14,7 @@
 
 #define SETPONIT_CO2 5
 #define CO2_KP 1000
-#define CO2_KI 0.005
+#define CO2_KI 0.01
 #define CO2_KD 0
 #define CO2_KW 0  //0.05
 #define CO2_OUT_MAX 4000

@@ -17,6 +17,7 @@
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
+#include <ringBuffer.h>
 #include  "HardwareSerial.h"
 #include <FS.h>
 #include <list>
@@ -190,8 +191,11 @@ private:
 #if defined(ESP32)
     HardwareSerial* _dwinSerial;
 #else 
-    Stream* _dwinSerial;   // DWIN Serial interface
+    Stream* _dwinSerial;   // DWIN Serial interface 
 #endif
+
+    // RingBuffer _bufferUartEvent = RingBuffer(5, sizeof());
+    
     uint8_t _rxPin, _txPin;
     long _baudrate;
     bool _isSoft;          // Is serial interface software

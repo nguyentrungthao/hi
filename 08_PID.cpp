@@ -59,7 +59,7 @@ float PID::getPIDcompute(float Error)
 
     // ITERM
     float deltaITerm = (this->Ki * Error + this->feedBackWindup * Kw) * (this->Sample_time / 1000.0f);
-    if (!std::isnan(deltaITerm) && !std::isinf(deltaITerm) && fabs(Error) <= 2)
+    if (!std::isnan(deltaITerm) && !std::isinf(deltaITerm) && fabs(Error) < 2)
     {
         this->ITerm += deltaITerm;
     }
