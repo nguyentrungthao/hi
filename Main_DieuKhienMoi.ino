@@ -27,6 +27,7 @@
 #include <SPI.h>
 #include "freertos/FreeRTOSConfig.h"
 #include "driver/temperature_sensor.h"
+#include <AnhLABV01HardWare.h>
 
 #include "09_concentration.h"
 #include "07_Heater.h"
@@ -164,9 +165,9 @@ void TaskMonitor(void*);
 
 
 
-// đây là nhánh MASTER
+// đây là nhánh nhánh newDWIN
 void setup() {
-  esp_task_wdt_deinit();
+  // esp_task_wdt_deinit();
   Serial.begin(115200);
   Wire.begin(10, 11);
 
@@ -234,15 +235,7 @@ void setup() {
 }
 
 void loop() {
-
-  // Nếu RAM còn trống 70000 byte thì mới thực hiện GET POST
-  if (esp_get_free_heap_size() > 20000) {
-    loop_PostGet();
-    // loopMQTT();
-    // if (WiFi.status() == WL_CONNECTED) {
-    //     http.begin();
-  }
-
+  loop_PostGet();
   delay(1);
 }
 

@@ -18,6 +18,7 @@
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #include <ringBuffer.h>
+#include <FifoBuffer.h>
 #include  "HardwareSerial.h"
 #include <FS.h>
 #include <list>
@@ -194,7 +195,21 @@ private:
     Stream* _dwinSerial;   // DWIN Serial interface 
 #endif
 
-    // RingBuffer _bufferUartEvent = RingBuffer(5, sizeof());
+    // enum TypeEvent_t{
+    //     DWIN_SET = 0x00u,
+    //     DWIN_GET = 0x01u,
+    //     DWIN_TOUCH = 0x02u,
+    // };
+    // struct Data_t{
+    //     uint16_t u16Address; // Variable Address
+    //     union {
+    //         uint16_t u16KeyValue;  // Length of data
+    //         uint16_t u16Length;  // Length of data
+    //     };
+    //     uint8_t typeEvent; // set get hoặc tounch
+    //     uint8_t* pu8Data;
+    // }
+    // RingBuffer _bufferUartEvent = RingBuffer(5, sizeof(Data_t));
     
     uint8_t _rxPin, _txPin;
     long _baudrate;

@@ -1125,35 +1125,6 @@ void HMI::_NutEnterTrangCalibCO2_(int32_t lastBytes, void* args)
     // hmiPtr->setPage(_SettingsPage);
 }
 
-// void HMI::_NutSetFlap_(int32_t lastBytes, void* args)
-// {
-//     HMI* hmiPtr = (HMI*)args;
-//     hmiPtr->_set_event.type = HMI_SET_FLAP;
-//     hmiPtr->_set_event.displayType = HMI_INT;
-//     hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = _HomePage;
-//     hmiPtr->_set_event.maxValue = 100;
-//     hmiPtr->_set_event.minValue = 0;
-//     // hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressFlapText;
-//     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
-//     hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
-//     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
-//     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
-//     hmiPtr->_set_event.textLen = 5;
-//     hmiPtr->setPage(_FlapNumericKeypadPage);
-// }
-
-// Khong dung
-// void HMI::_NutEnterTrangFlap_(int32_t lastBytes, void *args)
-// {
-//     HMI *hmiPtr = (HMI*)args;
-//     hmiPtr->_set_event.type = HMI_SET_FLAP;
-//     hmiPtr->_set_event.displayType = HMI_INT;
-//     hmiPtr->_set_event.f_value = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6).toFloat();
-//     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
-
-//     hmiPtr->setPage(_SettingsPage);
-// }
-
 void HMI::_NutCaiDatThoiGianRTC_(int32_t lastBytes, void* args)
 {
     HMI* hmiPtr = (HMI*)args;
@@ -1633,9 +1604,9 @@ void HMI::VeDoThi(BaseProgram_t data) {
     int16_t temp = (uint16_t)(data.temperature * 10);
     int16_t CO2 = (uint16_t)(data.CO2 * 10);
     uint16_t arrayy[] = { 0x0310, 0x5AA5, 0x0200, 0x0001, temp, 0x0101, CO2 };
-    Serial.printf("%u %u\t min % u, max % u, VD % u, Mul % u\tmin % u, max % u, VD % u, Mul % u\t\n", temp, CO2,
-        _DuLieuDoThiNhietDo.minValue, _DuLieuDoThiNhietDo.maxValue, _DuLieuDoThiNhietDo.VDCentral, _DuLieuDoThiNhietDo.MulY,
-        _DuLieuDoThiCO2.minValue, _DuLieuDoThiCO2.maxValue, _DuLieuDoThiCO2.VDCentral, _DuLieuDoThiCO2.MulY);
+    // Serial.printf("%u %u\t min % u, max % u, VD % u, Mul % u\tmin % u, max % u, VD % u, Mul % u\t\n", temp, CO2,
+        // _DuLieuDoThiNhietDo.minValue, _DuLieuDoThiNhietDo.maxValue, _DuLieuDoThiNhietDo.VDCentral, _DuLieuDoThiNhietDo.MulY,
+        // _DuLieuDoThiCO2.minValue, _DuLieuDoThiCO2.maxValue, _DuLieuDoThiCO2.VDCentral, _DuLieuDoThiCO2.MulY);
     sendIntArray(0x82, arrayy, 14);
 }
 

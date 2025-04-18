@@ -111,7 +111,6 @@ double DWIN::getHWVersion() {  //  HEX(5A A5 04 83 00 0F 01)
   }
   dwinWrite(sendBuffer, sizeof(sendBuffer));
   return readCMDLastByte();
-  // return readCMDLastByteEvent();
 }
 
 double DWIN::getGUISoftVersion() {  //  HEX(5A A5 04 83 00 0F 01)
@@ -127,7 +126,6 @@ double DWIN::getGUISoftVersion() {  //  HEX(5A A5 04 83 00 0F 01)
   }
   dwinWrite(sendBuffer, sizeof(sendBuffer));
   return readCMDLastByte(1);
-  // return readCMDLastByteFromEvent(1);
 }
 
 // Restart DWIN HMI
@@ -177,7 +175,6 @@ uint8_t DWIN::getBrightness() {
   }
   dwinWrite(sendBuffer, sizeof(sendBuffer));
   return readCMDLastByte();
-  // return readCMDLastByteFromEvent();
 
 }
 
@@ -235,8 +232,6 @@ uint8_t DWIN::getPage() {
   clearSerial();
   dwinWrite(sendBuffer, sizeof(sendBuffer));
   return readCMDLastByte();
-  // return readCMDLastByteFromEvent();
-
 }
 // set the hardware RTC The first two digits of the year are automatically added
 void DWIN::setRTC(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second) {
@@ -271,7 +266,7 @@ void DWIN::setRTCSOFT(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday,
   readDWIN();
 }
 // Set Text on VP Address
-//5A A5 0F 82 80 00 41 42 20 20 20 41 42 FF FF AF FF 41 42 FF FF 01 20
+//5A A5 0E 82 80 00 41 42 20 20 20 41 42 FF FF 9D 3E
 void DWIN::setText(long address, String textData) {
   uint8_t ffEnding[2] = { 0xFF, 0xFF };
   int dataLen = textData.length();
@@ -339,6 +334,12 @@ void DWIN::setVPWord(long address, int data) {
 }
 
 // read WordData from VP Address you can read sequential multiple words returned in rx event
+/**
+ *@brief hàm gửi lệnh cho DWIN để đọc dữ liệu từ VP Address
+ * 
+ * @param address địa chỉ đọc 
+ * @param numWords số lượng word (2 byte ) cần đọc
+ */
 void DWIN::readVPWord(long address, uint8_t numWords) {
   // 0x5A, 0xA5, 0x04, 0x83, hiVPaddress, loVPaddress, 0x01 (1 vp to read)
   uint8_t dataLen = 0x04;
@@ -369,7 +370,6 @@ uint8_t DWIN::readVPByte(long address, bool hiByte) {
   }
   dwinWrite(sendBuffer, sizeof(sendBuffer));
   return readCMDLastByte(hiByte);
-  // return readCMDLastByteFromEvent(hiByte);
 }
 
 // read or write the NOR from/to VP must be on a even address 2 words are written or read

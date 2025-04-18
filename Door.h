@@ -9,7 +9,7 @@
 
 typedef void (*FuncCallBack)(void*);
 
-#define PIN_DOOR SERVO_PIN
+#define PIN_DOOR DOOR_PIN
 
 class DOOR {
 public:
