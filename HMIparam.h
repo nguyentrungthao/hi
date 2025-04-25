@@ -195,6 +195,7 @@
 #pragma region NumericKeypad
 #define _VPAddressNumericKeypad 0x5300
 
+#define _VPAddressAction 0x5900
 
 #pragma region ICON VP Address
 #define _VPAddressIconRun 0x6000
@@ -395,7 +396,9 @@
 #define _VPAddressPage94SSID3 0xB1FE
 #define _VPAddressPage94SSID4 0xB21C 
 
-#define _VPAddressPage88Brightness 0xB23A
+#define _VPAddressPage70Brightness 0xB23A // 50 ký tự
+
+#define 
 
 
 #pragma region SP Address

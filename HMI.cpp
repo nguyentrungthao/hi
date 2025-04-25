@@ -1441,85 +1441,28 @@ void HMI::_NutThayDoiTrangThaiChucNangHenGioTat_(int32_t lastBytes, void* args)
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 }
 
-void HMI::VeDoThi(float value, time_t time, int offset)
-{
-    // value = value * 10;
-    // char timeText[10];
-    // if (_DuLieuDoThiNhietDo.minValue > value)
-    // {
-    //     _DuLieuDoThiNhietDo.minValue = value - 10;
-    //     _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
+void HMI::ThoiGianDoThi(time_t time) {
+    static uint8_t count = 0;
+    if (count > 120) {
+        count = 0;
+    }
+    if (count++ > 0) {
+        return;
+    }
 
-    //     _DuLieuDoThiNhietDo.MulY = 116 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-    //     setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
-    //     setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
+    _bufferThoiGianDoThi.enqueue(&time);
 
-    //     _DuLieuDoThiNhietDo.MulY = 190 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-    //     setGraphVDCentral(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.VDCentral);
-    //     setGraphMulY(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.MulY);
+    uint8_t u8BufferSize = _bufferThoiGianDoThi.getBufferSize();
+    time_t arrTime[u8BufferSize] = {};
+    _bufferThoiGianDoThi.peekAllBuffer(arrTime, u8BufferSize);
 
-    //     _DuLieuDoThiNhietDo.valueStep = (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue) / 5;
-    //     setText(_VPAddressGraphYValueText1, String(_DuLieuDoThiNhietDo.minValue / 10, 1));
-    //     for (float i = 1; i < 6; i++)
-    //     {
-    //         setText(_VPAddressGraphYValueText1 + i * 5, String((_DuLieuDoThiNhietDo.minValue + i * _DuLieuDoThiNhietDo.valueStep) / 10, 1));
-    //     }
-    // }
-    // else if (_DuLieuDoThiNhietDo.maxValue < value)
-    // {
-    //     _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue + 10) * 1.25 + _DuLieuDoThiNhietDo.minValue + 10;
-    //     // _DuLieuDoThiNhietDo.maxValue = (value - _DuLieuDoThiNhietDo.minValue) * 1.25 + _DuLieuDoThiNhietDo.minValue;
-    //     _DuLieuDoThiNhietDo.VDCentral = (_DuLieuDoThiNhietDo.minValue + _DuLieuDoThiNhietDo.maxValue) / 2;
-
-    //     _DuLieuDoThiNhietDo.MulY = 116 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-    //     setGraphVDCentral(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.VDCentral);
-    //     setGraphMulY(_SPAddressSmallGraph1, _DuLieuDoThiNhietDo.MulY);
-
-    //     _DuLieuDoThiNhietDo.MulY = 190 * 256 / (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue);
-    //     setGraphVDCentral(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.VDCentral);
-    //     setGraphMulY(_SPAddressLargeGraph, _DuLieuDoThiNhietDo.MulY);
-
-    //     _DuLieuDoThiNhietDo.valueStep = (_DuLieuDoThiNhietDo.maxValue - _DuLieuDoThiNhietDo.minValue) / 5;
-    //     setText(_VPAddressGraphYValueText1, String(_DuLieuDoThiNhietDo.minValue / 10, 1));
-    //     for (float i = 1; i < 6; i++)
-    //     {
-    //         setText(_VPAddressGraphYValueText1 + i * 5, String((_DuLieuDoThiNhietDo.minValue + i * _DuLieuDoThiNhietDo.valueStep) / 10, 1));
-    //     }
-    // }
-    // _DuLieuDoThiNhietDo.count++;
-    // if (_DuLieuDoThiNhietDo.count % 30 == 0)
-    // {
-    //     if (_DuLieuDoThiNhietDo.flag == 0)
-    //     {
-    //         _DuLieuDoThiNhietDo.timeArr[(_DuLieuDoThiNhietDo.count / 30 - 1)] = time;
-    //         sprintf(timeText, "%02u:%02u:%02u", hour(time), minute(time), second(time));
-    //         setText(_VPAddressGraphXValueText1 + 10 * (_DuLieuDoThiNhietDo.count / 30 - 1), timeText);
-    //     }
-    // }
-    // else if (_DuLieuDoThiNhietDo.flag == 1)
-    // {
-    //     for (int8_t i = 0; i < 9; i++)
-    //     {
-    //         _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i] + offset;
-    //         sprintf(timeText, "%02u:%02u:%02u", hour(_DuLieuDoThiNhietDo.timeArr[i]), minute(_DuLieuDoThiNhietDo.timeArr[i]), second(_DuLieuDoThiNhietDo.timeArr[i]));
-    //         setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-    //     }
-    //     if (second(time) != second(_DuLieuDoThiNhietDo.timeArr[8]))
-    //     {
-    //         Serial.println("update HMI_DATE RTC for graph");
-    //         _DuLieuDoThiNhietDo.timeArr[8] = time;
-    //         for (int8_t i = 7; i >= 0; i--)
-    //         {
-    //             _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i + 1] - 30 * offset;
-    //         }
-    //     }
-    // }
-    // if (_DuLieuDoThiNhietDo.count / 30 == 9)
-    // {
-    //     _DuLieuDoThiNhietDo.count = 0;
-    //     _DuLieuDoThiNhietDo.flag = 1;
-    // }
-    // sendGraphValue(0, (int)value);
+    for (uint8_t i = 0; i < u8BufferSize; i++) {
+        char timeText[10] = {};
+        if (arrTime[i] > 0) {
+            sprintf(timeText, "%02u:%02u", hour(arrTime[i]), minute(arrTime[i]));
+        }
+        setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
+    }
 }
 
 void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom) {
@@ -1541,41 +1484,6 @@ void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyVa
     setGraphVDCentral(SPCurveZoom, curvePrameter.VDCentral);
     setGraphMulY(SPCurveZoom, curvePrameter.MulY);
 }
-// void ThoiGianDoThi(time_t time) {
-//     _DuLieuDoThiNhietDo.count++;
-//     if (_DuLieuDoThiNhietDo.count % 30 == 0)
-//     {
-//         if (_DuLieuDoThiNhietDo.flag == 0)
-//         {
-//             _DuLieuDoThiNhietDo.timeArr[(_DuLieuDoThiNhietDo.count / 30 - 1)] = time;
-//             sprintf(timeText, "%02u:%02u", hour(time), minute(time));
-//             setText(_VPAddressGraphXValueText1 + 10 * (_DuLieuDoThiNhietDo.count / 30 - 1), timeText);
-//         }
-//     }
-//     else if (_DuLieuDoThiNhietDo.flag == 1)
-//     {
-//         for (int8_t i = 0; i < 9; i++)
-//         {
-//             _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i] + offset;
-//             sprintf(timeText, "%02u:%02u:%02u", hour(_DuLieuDoThiNhietDo.timeArr[i]), minute(_DuLieuDoThiNhietDo.timeArr[i]), second(_DuLieuDoThiNhietDo.timeArr[i]));
-//             setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
-//         }
-//         if (second(time) != second(_DuLieuDoThiNhietDo.timeArr[8]))
-//         {
-//             Serial.println("update HMI_DATE RTC for graph");
-//             _DuLieuDoThiNhietDo.timeArr[8] = time;
-//             for (int8_t i = 7; i >= 0; i--)
-//             {
-//                 _DuLieuDoThiNhietDo.timeArr[i] = _DuLieuDoThiNhietDo.timeArr[i + 1] - 30 * offset;
-//             }
-//         }
-//     }
-//     if (_DuLieuDoThiNhietDo.count / 30 == 9)
-//     {
-//         _DuLieuDoThiNhietDo.count = 0;
-//         _DuLieuDoThiNhietDo.flag = 1;
-//     }
-// }
 void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom) {
     if (curvePrameter.maxValue == curvePrameter.minValue) {
         KhoiTaoDoThi(value, curvePrameter, VPyValueBase, SPCurveMain, SPCurveZoom);
@@ -1625,17 +1533,18 @@ void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValu
     }
 }
 
-void HMI::VeDoThi(BaseProgram_t data) {
+void HMI::VeDoThi(BaseProgram_t data, time_t time) {
 
     ScaleDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph);
     ScaleDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2);
+    ThoiGianDoThi(time);
 
     int16_t temp = (uint16_t)(data.temperature * 10);
     int16_t CO2 = (uint16_t)(data.CO2 * 10);
     uint16_t arrayy[] = { 0x0310, 0x5AA5, 0x0200, 0x0001, temp, 0x0101, CO2 };
-    Serial.printf("%u %u\t min % u, max % u, VD % u, Mul % u\tmin % u, max % u, VD % u, Mul % u\t\n", temp, CO2,
-        _DuLieuDoThiNhietDo.minValue, _DuLieuDoThiNhietDo.maxValue, _DuLieuDoThiNhietDo.VDCentral, _DuLieuDoThiNhietDo.MulY,
-        _DuLieuDoThiCO2.minValue, _DuLieuDoThiCO2.maxValue, _DuLieuDoThiCO2.VDCentral, _DuLieuDoThiCO2.MulY);
+    // Serial.printf("%u %u\t min % u, max % u, VD % u, Mul % u\tmin % u, max % u, VD % u, Mul % u\t\n", temp, CO2,
+    //     _DuLieuDoThiNhietDo.minValue, _DuLieuDoThiNhietDo.maxValue, _DuLieuDoThiNhietDo.VDCentral, _DuLieuDoThiNhietDo.MulY,
+    //     _DuLieuDoThiCO2.minValue, _DuLieuDoThiCO2.maxValue, _DuLieuDoThiCO2.VDCentral, _DuLieuDoThiCO2.MulY);
     sendIntArray(0x82, arrayy, 14);
 }
 

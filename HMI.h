@@ -193,8 +193,7 @@ public:
     void HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char* func = "");
     void XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row);
 
-    void VeDoThi(float value, time_t time, int offset);
-    void VeDoThi(BaseProgram_t data);
+    void VeDoThi(BaseProgram_t data, time_t time);
     void KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom);
     void ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom);
     void ThoiGianDoThi(time_t time);

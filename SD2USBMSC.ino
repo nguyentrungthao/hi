@@ -1,5 +1,6 @@
 #if !SOC_USB_OTG_SUPPORTED || ARDUINO_USB_MODE
-#error Device does not support USB_OTG or native USB CDC/JTAG is selected
+#error Device does not support USB_OTG or native USB CDC/JTAG is selected \
+ Arduino -> tool -> USB mode -> USB OTG
 #endif
 
 #include <USB.h>

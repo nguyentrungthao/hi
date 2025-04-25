@@ -33,6 +33,7 @@
 #include "Door.h"
 
 #include "RTC_Timer.h"
+#include "FifoBuffer.h"
 
 
 RTC_Timer _time;
@@ -158,7 +159,7 @@ void TaskExportData(void*);
 void TaskUpdateFirmware(void*);
 void TaskKetNoiWiFi(void*);
 void TaskMain(void*);
-void TaskMonitor(void*);
+void TaskMonitorDebug(void*);
 
 
 
@@ -227,7 +228,7 @@ void setup() {
   delay(5);
   xTaskCreateUniversal(TaskHMI, "tskHMI", 8192, NULL, 5, &TaskHMIHdl, -1);
   delay(5);
-  // xTaskCreateUniversal(TaskMonitor, "tskMonitor", 4096, NULL, 1, NULL, -1);
+  // xTaskCreateUniversal(TaskMonitorDebug, "Debug", 4096, NULL, 5, NULL, -1);
   delay(5);
 
   KhoiTaoSoftTimerDinhThoi();
@@ -267,6 +268,9 @@ void khoiTaoDWIN() {
   _dwin.CRCEnabled();
   _dwin.DangKyHamSetCallback(hmiSetEvent);
   _dwin.DangKyHamGetCallback(hmiGetEvent);
+  FrameDataQueue_t data;
+  data.event = eHMI_EVENT_VE_DO_THI;
+  xQueueSend(recvHMIQueue, &data, 0);
 }
 void khoiTaoSDCARD() {
   // SDMMCFile.begin();
@@ -1647,32 +1651,32 @@ void TaskHMI(void*) {
       _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
       break;
     case eHMI_EVENT_VE_DO_THI:  // cập nhật theo chu kỳ riêng (hiện tại 1s)
-      _dwin.VeDoThi(BaseProgram);
+      RTCnow = _time.getCurrentTime();
+      _dwin.VeDoThi(BaseProgram, RTCnow.unixtime());
       break;
     case eHMI_EVENT_WARNING:   // cập nhật chu kỳ hoặc có lỗi xuất hiện
     {
       std::vector<String> warningVector;
       String warningText = "";
       if (FlagNhietDoXacLap == true) {
-        String text = "Alarm: ";
+        String text;
         if (BaseProgram.temperature >= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMax) {
-          text += "Overheat ";
+          text = "Alarm: Overheat ";
+          warningVector.push_back(text);
         }
         else if (BaseProgram.temperature <= BaseProgram.programData.setPointTemp + BaseProgram.programData.tempMin) {
-          text += "Underheat ";
+          text = "Alarm: Underheat ";
+          warningVector.push_back(text);
         }
-        warningVector.push_back(text);
 
-        text.clear();
-        text = "Alarm: ";
         if (BaseProgram.CO2 >= BaseProgram.programData.setPointCO2 + BaseProgram.programData.CO2Max) {
-          text += "OverCO2 ";
+          text += "Alarm: OverCO2 ";
+          warningVector.push_back(text);
         }
         else if (BaseProgram.CO2 <= BaseProgram.programData.setPointCO2 + BaseProgram.programData.CO2Min) {
-          text += "UnderCO2 ";
+          text += "Alarm: UnderCO2 ";
+          warningVector.push_back(text);
         }
-        warningVector.push_back(text);
-
       }
 
       if (BaseProgram.temperature < -10 || BaseProgram.temperature >= 350) {
@@ -1947,7 +1951,7 @@ void TaskHMI(void*) {
   }
 }
 
-void TaskMonitor(void*) {
+void TaskMonitorDebug(void*) {
   TickType_t pxPreviousWakeTime;
   pxPreviousWakeTime = xTaskGetTickCount();
   char buffer[1024];  // Bộ nhớ lưu danh sách task
