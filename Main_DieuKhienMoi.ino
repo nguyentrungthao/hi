@@ -117,20 +117,21 @@ const uint32_t pu32ArgTimerDWIN[][2] = { {eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN, 
                                     {eHMI_EVENT_HIEN_THI_THOI_GIAN, 1000},
                                     {eHMI_EVENT_ICON_USB, 1000},
                                     {eHMI_EVENT_ICON_FAN, 1000},
-                                    {eHMI_EVENT_VE_DO_THI, 10000},
+                                    {eHMI_EVENT_VE_DO_THI, 1000},
                                     {eHMI_EVENT_ICON_WIFI, 30000},
-                                    {eHMI_EVENT_WARNING, 120000},
+                                    // {eHMI_EVENT_WARNING, 120000},
                                     {eHMI_EVENT_REFRESH, 120000} };
 constexpr uint8_t u8NUMBER_OF_TIMER_DWIN = sizeof(pu32ArgTimerDWIN) / sizeof(pu32ArgTimerDWIN[0]);
 TimerHandle_t* const pxTimerDWINhdl = (TimerHandle_t*)malloc(u8NUMBER_OF_TIMER_DWIN * sizeof(TimerHandle_t));
 TimerHandle_t xTimerSleep;
+TimerHandle_t xTimerPIDLog;
 
 // các hàm khởi tạo và hỗ trợ khởi tạo
 void khoiTaoDWIN();
-void khoiTaoSDCARD();
+void khoiTaoSDCARD(PIDParam_t* pxStorePIDParam, uint32_t size);
 void khoiTaoRTC();
-void khoiTaoHeater();
-void khoiTaoCO2();
+void khoiTaoHeater(PIDParam_t);
+void khoiTaoCO2(PIDParam_t);
 void khoiTaoCua();
 void listFilesInProgramDirectory(void);
 void TaoCacThuMucHeThongTrenSD(void);
@@ -184,16 +185,17 @@ void setup() {
   khoiTaoDWIN();
   delay(10);
 
-  khoiTaoSDCARD();
-  delay(10);
-
   khoiTaoCua();
   delay(10);
 
-  khoiTaoHeater();
+  PIDParam_t pxStorePIDParam[2];
+  khoiTaoSDCARD(pxStorePIDParam, sizeof(pxStorePIDParam));
   delay(10);
 
-  khoiTaoCO2();
+  khoiTaoHeater(pxStorePIDParam[0]);
+  delay(10);
+
+  khoiTaoCO2(pxStorePIDParam[1]);
   delay(10);
 
   delay(2000);
@@ -235,19 +237,9 @@ void setup() {
 }
 
 void loop() {
-
-  // Nếu RAM còn trống 70000 byte thì mới thực hiện GET POST
-  if (esp_get_free_heap_size() > 20000) {
-    loop_PostGet();
-    // loopMQTT();
-    // if (WiFi.status() == WL_CONNECTED) {
-    //     http.begin();
-  }
-
+  loop_PostGet();
   delay(1);
 }
-
-
 
 
 
@@ -272,7 +264,7 @@ void khoiTaoDWIN() {
   data.event = eHMI_EVENT_VE_DO_THI;
   xQueueSend(recvHMIQueue, &data, 0);
 }
-void khoiTaoSDCARD() {
+void khoiTaoSDCARD(PIDParam_t* pxStorePIDParam, uint32_t size) {
   // SDMMCFile.begin();
   SD_MMC.setPins(clk, cmd, d0);
   if (!SD_MMC.begin("/sdcard", onebit, true, 4000000)) {
@@ -301,6 +293,32 @@ void khoiTaoSDCARD() {
         Serial.printf("Setpoint: %.1f, value: %.2f\n", HeSoCalib.Setpoint, HeSoCalib.value);
       }
     }
+  }
+
+  if (SDMMCFile.exists(PATH_CONTROL_ALGORITHRM)) {
+    SDMMCFile.readFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxStorePIDParam, size);
+  }
+  else {
+    Serial.println("thông số điều khiển mặc định");
+    pxStorePIDParam[0].Kp = 5.0f;
+    pxStorePIDParam[0].Ki = 0.001f;
+    pxStorePIDParam[0].Kd = 0.0f;
+    pxStorePIDParam[0].Kw = 0.0f;
+    pxStorePIDParam[0].OutMax = 17.0f;
+    pxStorePIDParam[0].OutMin = 0.0f;
+    pxStorePIDParam[0].WindupMax = 10.0f;
+    pxStorePIDParam[0].WindupMin = 0.0f;
+
+    pxStorePIDParam[1].Kp = 1000.0f;
+    pxStorePIDParam[1].Ki = 0.01f;
+    pxStorePIDParam[1].Kd = 0.0f;
+    pxStorePIDParam[1].Kw = 0.0f;
+    pxStorePIDParam[1].OutMax = 4000.0f;
+    pxStorePIDParam[1].OutMin = 0.0f;
+    pxStorePIDParam[1].WindupMax = 1000.0f;
+    pxStorePIDParam[1].WindupMin = 0.0f;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxStorePIDParam, size);
+
   }
 
   // Khôi phục thông số chương trình cơ sở.
@@ -376,9 +394,10 @@ void khoiTaoSDCARD() {
     }
   }
 }
-void khoiTaoHeater() {
+void khoiTaoHeater(PIDParam_t xParam) {
   _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
   _Heater.KhoiTao();
+  _Heater.vSetParam(xParam);
   BaseProgram.temperature = _Heater.LayNhietDoLoc();
   // bật quạt
   _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
@@ -395,8 +414,9 @@ void khoiTaoHeater() {
   data.event = eHMI_EVENT_WARNING;
   xQueueSend(recvHMIQueue, &data, 10);
 }
-void khoiTaoCO2() {
+void khoiTaoCO2(PIDParam_t xParam) {
   _CO2.KhoiTaoCO2();
+  _CO2.vSetParam(xParam);
   BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
   _CO2.addCallBackWritePin(triggeONICONCO2, NULL);  //trigger on ICON nhiệt
   _CO2.addCallBackTimeout(triggeOFFICONCO2, NULL);  //trigger off ICON nhiệt
@@ -442,12 +462,18 @@ void KhoiTaoSoftTimerDinhThoi() {
     xTimerStart(pxTimerDWINhdl[i], 1000);
   }
 
-  xTimerSleep = xTimerCreate("SleepTimer", pdMS_TO_TICKS(900000), pdTRUE, (void*)eHMI_EVENT_TIMEROUT_OFF, callBackSoftTimerSleep);
+  xTimerSleep = xTimerCreate("SleepTimer", pdMS_TO_TICKS(900000), pdTRUE, (void*)eHMI_EVENT_TIMEROUT_OFF, callBackSoftTimer);
   if (xTimerSleep == NULL) {
     Serial.printf("hết bộ nhớ để tạo timer => reset\n");
     abort();
   }
   xTimerStart(xTimerSleep, 1000);
+
+  xTimerPIDLog = xTimerCreate("PIDTimer", pdMS_TO_TICKS(1000), pdTRUE, (void*)eHMI_EVENT_HIEN_THI_PID, callBackSoftTimer);
+  if (xTimerPIDLog == NULL) {
+    Serial.printf("hết bộ nhớ để tạo timer => reset\n");
+    abort();
+  }
 }
 void callBackSoftTimerChoDWIN(TimerHandle_t xTimer) {
   configASSERT(xTimer);
@@ -456,6 +482,14 @@ void callBackSoftTimerChoDWIN(TimerHandle_t xTimer) {
   if (recvHMIQueue == NULL) return;
   xQueueSend(recvHMIQueue, &dataFrameForDWIN, 10);
 }
+void callBackSoftTimer(TimerHandle_t xTimer) {
+  FrameDataQueue_t data;
+  data.event = (int32_t)pvTimerGetTimerID(xTimer);
+  if (recvHMIQueue) {
+    xQueueSend(recvHMIQueue, &data, 0);
+  }
+}
+
 void callBackOpenDoor(void* ptr) {
   //!check ptr trước khi dùng nhá
   Serial.printf("Open door\n");
@@ -1118,6 +1152,13 @@ void hmiSetEvent(const hmi_set_event_t& event) {
       xTimerStart(pxTimerDWINhdl[i], 1000);
     }
     break;
+  case eHMI_SET_PID:
+    Serial.printf("Start log PID\n");
+    xTimerStart(xTimerPIDLog, 1000);
+    break;
+  case eHMI_EXIT_PID:
+    Serial.printf("end log PID\n");
+    xTimerStop(xTimerPIDLog, 1000);
   default:
     Serial.println("UNDEFINE");
     break;
@@ -1246,14 +1287,6 @@ void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
   default:
     Serial.printf("Err case [WiFi-event] event: %d\n", event);
     break;
-  }
-}
-
-void callBackSoftTimerSleep(TimerHandle_t xTimer) {
-  static FrameDataQueue_t data;
-  data.event = eHMI_EVENT_TIMEROUT_OFF;
-  if (recvHMIQueue) {
-    xQueueSend(recvHMIQueue, &data, 0);
   }
 }
 
@@ -1645,7 +1678,19 @@ void TaskHMI(void*) {
         _dwin.HienThiNhietDo("err");
       }
       break;
-      RTCnow = _time.getCurrentTime();
+    case eHMI_EVENT_HIEN_THI_PID:
+    {
+      PIDCalcu_t xPIDCaluTemp = _Heater.xGetCalcu();
+      PIDParam_t xPIDParamTemp = _Heater.xGetParam();
+      PIDCalcu_t xPIDCaluCO2 = _CO2.xGetCalcu();
+      PIDParam_t xPIDParamCO2 = _CO2.xGetParam();
+      float errTemp = BaseProgram.programData.setPointTemp - BaseProgram.temperature;
+      float errCO2 = BaseProgram.programData.setPointCO2 - BaseProgram.CO2;
+      float thoiGianBatCua = _Heater.LayGiaTriDieuKhienCua();
+      float thoiGianBatVanh = _Heater.LayGiaTriDieuKhienVanh();
+      _dwin.HienThiThongSoTrangPID(xPIDCaluTemp, xPIDParamTemp, errTemp, thoiGianBatCua, thoiGianBatVanh, xPIDCaluCO2, xPIDParamCO2, errCO2);
+    }
+    break;
     case eHMI_EVENT_HIEN_THI_THOI_GIAN:  // cập nhật 1s
       RTCnow = _time.getCurrentTime();
       _dwin.HienThiThoiGianRTC(RTCnow.day(), RTCnow.month(), RTCnow.year() % 1000, RTCnow.hour(), RTCnow.minute(), RTCnow.second());
@@ -1712,7 +1757,7 @@ void TaskHMI(void*) {
       }
     }
 
-      break;
+    break;
     case HMI_CHECK_LIST:
       if (data.pvData == NULL) continue;
       if (*((uint8_t*)data.pvData) + listPageStartPosition >= ProgramList.size()) {
@@ -1720,7 +1765,7 @@ void TaskHMI(void*) {
       }
       break;
     case eHMI_EVENT_TIMEROUT_OFF:
-    if (_dwin.getPage() == _HomePage) {
+      if (_dwin.getPage() == _HomePage) {
         Serial.printf("\t\tDWIN OFF\n");
         //! chuyển hàm này vào demon task
         for (uint8_t i = 0; i < u8NUMBER_OF_TIMER_DWIN; i++) {

@@ -32,7 +32,8 @@
 #define _InfoPage 0x64  // 100
 #define _CalibChoosePage 0x65  // 101
 #define _CalibCO2Page 0x66  // 102
-
+#define _PIDPage 0x67 //103
+#define _DiagnosticsPage 0x68 //104
 
 /* Sử dụng 0xFFFF để làm mã KeyValue cho việc cấu hình hàm addButtonEvent có nghĩa là với bất kỳ
 /* giá trị KeyValue nào thì hàm đăng ký cũng được gọi
@@ -87,7 +88,8 @@
 #define _KeyValueChooseCalibTemp 0x1E
 #define _KeyValueEnterCalibCO2 0x23
 #define _KeyValuePage103Wakeup 0x25
-
+#define _KeyValuePage73_SetPID 0x26
+#define _KeyValuePage103_ExitPID 0x27
 
 #pragma region VP các nút  Segment
 
@@ -433,8 +435,7 @@
 #define _VPAddressPage103WTemp     0xB2A8  // 0xB2A3 + 5
 #define _VPAddressPage103StartTemp 0xB2AD  // 0xB2A8 + 5
 #define _VPAddressPage103endTemp   0xB2B2  // 0xB2AD + 5
-#define _VPAddressPage103upTemp    0xB2B7  // 0xB2B2 + 5
-#define _VPAddressPage103downTemp   0xB2BC  // 0xB2B7 + 5
+#define _VPAddressPage103ErrTemp    0xB2B7  // 0xB2B2 + 5
 
 #define _VPAddressPage103KpCO2     0xB2C1  // 0xB2BC + 5
 #define _VPAddressPage103KiCO2     0xB2C6  // 0xB2C1 + 5
@@ -451,14 +452,12 @@
 #define _VPAddressPage103WCO2      0xB2FD  // 0xB2F8 + 5
 #define _VPAddressPage103StartCO2  0xB302  // 0xB2FD + 5
 #define _VPAddressPage103endCO2    0xB307  // 0xB302 + 5
-#define _VPAddressPage103upCO2     0xB30C  // 0xB307 + 5
-#define _VPAddressPage103downCO2    0xB311  // 0xB30C + 5
+#define _VPAddressPage103ErrC02     0xB30C  // 0xB307 + 5
 
-
-
+#define _VPAddressPage103PremeterHeater 0xB311 // 5
+#define _VPAddressPage103DoorHeater 0xB316 // 5
 
 #pragma region SP Address
-
 #define _SPAddressProgramNameText1 0xC000
 #define _SPAddressProgramNameText2 0xC010
 #define _SPAddressProgramNameText3 0xC020

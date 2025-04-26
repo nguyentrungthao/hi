@@ -66,6 +66,12 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetSetpointCO2, _NutCaiCO2Setpoint_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetFanSpeed, _NutCaiTocDoQuat_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValuePage103Wakeup, _NutThucDay_, this);
+
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValuePage73_SetPID, _NutSetPID_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValuePage103_ExitPID, _NutExitPID_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _AllKeyValue, _NutSetParamterPID_, this);
+
+
     DWIN::addButtonEvent(_VPAddressSegmentSetpointButton, _AllKeyValue, _NutEditSetpointTrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentSetpointCO2Button, _AllKeyValue, _NutEditSetpointCO2TrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentFanSpeedButton, _AllKeyValue, _NutEditTocDoQuatTrangSegment_, this);
@@ -96,9 +102,6 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibCO2, _NutEnterTrangCalibCO2_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibCO2, _NutResetHeSoCalibCO2_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibTemp, _NutResetHeSoCalibNhiet_, this);
-
-    // DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetFlap, _NutSetFlap_, this);
-    // DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterFlap, _NutEnterTrangFlap_, this);
 
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetTimeRTC, _NutCaiDatThoiGianRTC_, this);
     DWIN::addButtonEvent(_VPAddressSetTimeButton, _KeyValueEnterSetRTC, _NutEnterTrangCaiRTC_, this);
@@ -485,6 +488,33 @@ void HMI::_NutThucDay_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.type = eHMI_SET_EVENT_WAKEUP;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_hmiGetDataCallback(eHMI_EVENT_REFRESH, NULL);
+}
+
+void HMI::_NutSetPID_(int32_t lastBytes, void* args) {
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = eHMI_SET_PID;
+    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+}
+void HMI::_NutExitPID_(int32_t lastBytes, void* args) {
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = eHMI_EXIT_PID;
+    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+}
+void HMI::_NutSetParamterPID_(int32_t lastBytes, void* args) {
+    // HMI* hmiPtr = (HMI*)args;
+    // hmiPtr->_set_event.type = ;
+    // hmiPtr->_set_event.displayType = HMI_FLOAT;
+    // hmiPtr->_set_event.pageAfterReturn = _PIDPage;
+    // hmiPtr->_set_event.pageAfterEnter = _PIDPage;
+    // hmiPtr->_set_event.maxValue = 10000;
+    // hmiPtr->_set_event.minValue = -10000;
+    // hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressFanSpeedText;
+    // hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    // hmiPtr->_set_event.textLen = 5;
+    // hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    // hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    // hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    // hmiPtr->DWIN::setPage(_FanNumericKeypadPage);
 }
 
 void HMI::_NutCaiThoiGianTatMay_(int32_t lastBytes, void* args)
@@ -1465,7 +1495,7 @@ void HMI::ThoiGianDoThi(time_t time) {
     }
 }
 
-void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom) {
+void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve) {
 
     curvePrameter.minValue = (uint16_t)(value) * 10;
     if (curvePrameter.minValue < 0) curvePrameter.minValue = 0;
@@ -1483,10 +1513,12 @@ void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyVa
     setGraphMulY(SPCurveMain, curvePrameter.MulY);
     setGraphVDCentral(SPCurveZoom, curvePrameter.VDCentral);
     setGraphMulY(SPCurveZoom, curvePrameter.MulY);
+    setGraphVDCentral(PIDCurve, curvePrameter.VDCentral);
+    setGraphMulY(PIDCurve, curvePrameter.MulY);
 }
-void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom) {
+void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve) {
     if (curvePrameter.maxValue == curvePrameter.minValue) {
-        KhoiTaoDoThi(value, curvePrameter, VPyValueBase, SPCurveMain, SPCurveZoom);
+        KhoiTaoDoThi(value, curvePrameter, VPyValueBase, SPCurveMain, SPCurveZoom, PIDCurve);
     }
 
     int16_t u16Value = (uint16_t)(value * 10);
@@ -1510,6 +1542,8 @@ void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValu
         setGraphMulY(SPCurveMain, curvePrameter.MulY);
         setGraphVDCentral(SPCurveZoom, curvePrameter.VDCentral);
         setGraphMulY(SPCurveZoom, curvePrameter.MulY);
+        setGraphVDCentral(PIDCurve, curvePrameter.VDCentral);
+        setGraphMulY(PIDCurve, curvePrameter.MulY);
     }
     else if (curvePrameter.maxValue <= u16Value) {
         curvePrameter.maxValue = (uint16_t)(value) * 10 + 10;
@@ -1530,13 +1564,15 @@ void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValu
         setGraphMulY(SPCurveMain, curvePrameter.MulY);
         setGraphVDCentral(SPCurveZoom, curvePrameter.VDCentral);
         setGraphMulY(SPCurveZoom, curvePrameter.MulY);
+        setGraphVDCentral(PIDCurve, curvePrameter.VDCentral);
+        setGraphMulY(PIDCurve, curvePrameter.MulY);
     }
 }
 
 void HMI::VeDoThi(BaseProgram_t data, time_t time) {
 
-    ScaleDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph);
-    ScaleDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2);
+    ScaleDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph, _SPAddressPage103PIDGraph);
+    ScaleDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2, _SPAddressPage103PIDGraphCO2);
     ThoiGianDoThi(time);
 
     int16_t temp = (uint16_t)(data.temperature * 10);
@@ -1553,8 +1589,33 @@ void HMI::XoaDoThi(BaseProgram_t data)
     resetGraph(0);
     resetGraph(1);
 
-    KhoiTaoDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2);
-    KhoiTaoDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph);
+    KhoiTaoDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2, _SPAddressPage103PIDGraphCO2);
+    KhoiTaoDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph, _SPAddressPage103PIDGraph);
+}
+
+void HMI::HienThiThongSoPID(uint16_t startVPText, PIDCalcu_t xPIDCalcu, PIDParam_t xPIDParam, float err) {
+    setText(startVPText, String(xPIDParam.Kp, 3));
+    setText(startVPText + 5, String(xPIDParam.Ki, 3));
+    setText(startVPText + 10, String(xPIDParam.Kd, 3));
+    setText(startVPText + 15, String(xPIDParam.Kw, 3));
+    setText(startVPText + 20, String(xPIDCalcu.Output, 2));
+    setText(startVPText + 25, String(xPIDParam.WindupMax, 1));
+    setText(startVPText + 30, String(xPIDParam.WindupMin, 1));
+    setText(startVPText + 35, String(xPIDParam.OutMax, 1));
+    setText(startVPText + 40, String(xPIDParam.OutMin, 1));
+
+    setText(startVPText + 45, String(xPIDCalcu.PTerm, 3));
+    setText(startVPText + 50, String(xPIDCalcu.ITerm, 3));
+    setText(startVPText + 55, String(xPIDCalcu.DTerm, 3));
+    setText(startVPText + 60, String(xPIDCalcu.feedBackWindup, 3));
+    setText(startVPText + 75, String(err, 3));
+
+}
+void HMI::HienThiThongSoTrangPID(PIDCalcu_t xPIDCalcuTemp, PIDParam_t xPIDParamTemp, float errTemp, float thoiGianBatCua, float thoiGianBatVanh, PIDCalcu_t xPIDCalcuCO2, PIDParam_t xPIDParamCO2, float errCO2) {
+    HienThiThongSoPID(_VPAddressPage103KpTemp, xPIDCalcuTemp, xPIDParamTemp, errTemp);
+    HienThiThongSoPID(_VPAddressPage103KpCO2, xPIDCalcuCO2, xPIDParamCO2, errCO2);
+    setText(_VPAddressPage103PremeterHeater, String(thoiGianBatVanh));
+    setText(_VPAddressPage103DoorHeater, String(thoiGianBatCua));
 }
 
 void HMI::HienThiNhietDo(float GiaTri)
@@ -1589,11 +1650,6 @@ void HMI::HienThiTocDoQuat(int GiaTri)
 {
     setText(_VPAddressFanSpeedText, String(GiaTri));
 }
-
-// void HMI::HienThiGocFlap(int GiaTri)
-// {
-//     setText(_VPAddressFlapText, String(GiaTri));
-// }
 
 void HMI::HienThiThoiGianChay(int ngay, int gio, int phut, int giay)
 {
@@ -2038,7 +2094,7 @@ void HMI::_NutXoaDoThi_(int32_t lastBytes, void* args)
     case _KeyValueResetGraphTemp:
         hmiPtr->resetGraph(0);
         break;
-        case _KeyValueResetGraphCO2:
+    case _KeyValueResetGraphCO2:
         hmiPtr->resetGraph(1);
         break;
     default:

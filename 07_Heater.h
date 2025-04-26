@@ -18,18 +18,19 @@
 #define MAX31865_DIEN_TRO_CAM_BIEN 100.0
 #define MAX31865_NHIET_DO_TOI_DA 500.0
 
-#define KP 5.0f     //8; //8.5
-#define KI 0.001     // 0.01
+#define KP 0     //8; //8.5
+#define KI 0     // 0.01
 #define KD 0        //30.0f
 #define KW 0
-#define OUT_MAX 17  // số chu kỳ kích
+#define OUT_MAX 0  // số chu kỳ kích
 #define OUT_MIN 0
 #define WIN_MAX 10
 #define WIN_MIN 0
-#define SAMPLE_TIME 1000
+
 #define OUT_MAX_POWER 1000
 #define THOI_GIAN_BAT_TRIAC_CUA 170 // 170
 #define THOI_GIAN_BAT_TRIAC_VANH 220 // 310
+#define SAMPLE_TIME 1000
 
 #define HEATER_ON   true
 #define HEATER_OFF  false
@@ -77,6 +78,12 @@ public:
 
   float LayNhietDoLoc(void);          // Đọc nhiệt độ sau khi lọc dùng để hiển thị
   float LayGiaTriPT100Ofset(void);    // Hàm trả về giá trị ofset nhiệt độ sau khi calib, giá trị này dùng để lưu vào epprom
+  float LayGiaTriDieuKhienCua() const {
+    return u16ThoiGianBatCua;
+  }
+  float LayGiaTriDieuKhienVanh() const {
+    return u16ThoiGianBatVanh;
+  }
 
   void BatDieuKhienNhietDo(void);     // Bật gia nhiệt
   void TatDieuKhienNhietDo(void);     // Tắt gia nhiệt

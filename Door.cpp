@@ -1,7 +1,7 @@
 #include "Door.h"
 
 void DOOR::KhoiTao(void) {
-  pinMode(PIN_DOOR, INPUT);
+  pinMode(PIN_DOOR, INPUT_PULLUP);
   xTaskCreate(taskDoor, "DoorTask", 4096, this, (configMAX_PRIORITIES - 3), &taskHandleDoor);
   attachInterruptArg(PIN_DOOR, interupt, this, CHANGE);
 }

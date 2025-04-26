@@ -3,16 +3,32 @@
 
 #include "Config.h"
 
+typedef struct PIDCalcu_t {
+  float PTerm;
+  float ITerm;
+  float DTerm;
+  float feedBackWindup;
+  float Output;
+};
+typedef struct PIDParam_t {
+  float Kp;
+  float Ki;
+  float Kd;
+  float Kw;
+  float WindupMax;
+  float WindupMin;
+  float OutMax;
+  float OutMin;
+};
 
 class PID {
-public:
-  float Kp, Ki, Kd, Output, Kw;
-  float Sample_time = 1000.0;
-  float WindupMax, WindupMin;
-  float OutMax, OutMin;
-  float PTerm, ITerm, DTerm;
+private:
+  PIDParam_t xPIDParam;
+
+  PIDCalcu_t xPIDCalcu;
+  
   float LastError = 0;
-  float feedBackWindup = 0;
+  float Sample_time = 1000.0;
   float DTermFiltered = 0;
   float alpha = 0.7f; // 1/(1+tD), tD hằng số thời gian lọc
 public:
@@ -22,6 +38,10 @@ public:
   void setWindup(float, float, float);
   void setOutput(float, float);
   void setSampleTime(float);  //ms
+
+  PIDParam_t xGetParam() const;
+  PIDCalcu_t xGetCalcu() const;
+  void vSetParam(PIDParam_t xPIDParam);
 
   float getPIDcompute(float);
   float getWindupMax();

@@ -13,13 +13,13 @@
 #include "08_PID.h"
 
 #define SETPONIT_CO2 5
-#define CO2_KP 1000
-#define CO2_KI 0.01
+#define CO2_KP 0
+#define CO2_KI 0
 #define CO2_KD 0
 #define CO2_KW 0  //0.05
-#define CO2_OUT_MAX 4000
+#define CO2_OUT_MAX 0
 #define CO2_OUT_MIN 0
-#define CO2_WIN_MAX 1000
+#define CO2_WIN_MAX 0
 #define CO2_WIN_MIN 0
 #define CO2_SAMPLE_TIME 10000
 

@@ -173,7 +173,7 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
       // Serial.printf(" - step 2 %ld %ld - ", millis(), pHeater->preOpenDoor);
       break;
 
-    case 3:                                        // chạy đóng cửa
+    case 3: // chạy đóng cửa
       if (millis() - pHeater->preCloseDoor >= 60 * 1000) {  // theo dõi nhiệt 30s trước khi quay lại tính toán
         pHeater->u16ThoiGianBatCua = THOI_GIAN_BAT_TRIAC_CUA;
         pHeater->u16ThoiGianBatVanh = THOI_GIAN_BAT_TRIAC_VANH;

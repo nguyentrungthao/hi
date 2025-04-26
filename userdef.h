@@ -7,6 +7,7 @@
 #define PATH_BASEPROGRAM_DATA "/BaseProgram.data"
 #define PATH_RECORD "/record.dat"
 #define PATH_LOG "/log"
+#define PATH_CONTROL_ALGORITHRM "/controlAlgorithrm.data"
 
 typedef enum
 {
@@ -93,21 +94,6 @@ struct PIDData {
     int TGondinh;
     int TGgianhiet;
 };
-
-// enum EventTaskHMI_t {
-//     eHMI_EVENT_ICON_NHIET = 0,
-//     eHMI_EVENT_ICON_CO2,
-//     eHMI_EVENT_ICON_CUA,
-
-//     eHMI_EVENT_ICON_FAN,
-//     eHMI_EVENT_ICON_USB,
-//     eHMI_EVENT_ICON_WIFI,
-//     eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
-//     eHMI_EVENT_HIEN_THI_THOI_GIAN,
-//     eHMI_EVENT_VE_DO_THI,
-//     eHMI_EVENT_WARNING,
-//     eHMI_EVENT_REFRESH,
-// };
 
 struct FrameDataQueue_t {
     int32_t event;

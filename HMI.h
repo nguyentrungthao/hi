@@ -20,6 +20,8 @@
 #include "HMIparam.h"
 #include <Arduino.h>
 #include <ringBuffer.h>
+#include <07_Heater.h>
+#include <09_concentration.h>
 
 
 #define MANUFACTURER_PASSWORD "LABone2025"
@@ -36,7 +38,6 @@ typedef enum
     HMI_SET_CALIB_ZERO_CO2,
     HMI_RESET_CALIB_NHIET,
     HMI_RESET_CALIB_CO2,
-    // HMI_SET_FLAP,
     HMI_SET_DELAYOFF,
     HMI_SET_DELAYOFF_ONOFF,
     HMI_SET_TEMPMAX,
@@ -85,6 +86,8 @@ typedef enum
     HMI_CONNECT_OR_DISCONNECT_WIFI, // truc them
     HMI_CHANGE_ADMIN_PASSWORD,
     eHMI_SET_EVENT_WAKEUP,
+    eHMI_SET_PID,
+    eHMI_EXIT_PID,
 
     HMI_SET_MAX_ENUM
 } hmi_set_type_t;
@@ -112,6 +115,7 @@ typedef enum
     eHMI_EVENT_ICON_FAN,
 
     eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN,
+    eHMI_EVENT_HIEN_THI_PID,
     eHMI_EVENT_HIEN_THI_THOI_GIAN,
     eHMI_EVENT_ICON_USB,
     eHMI_EVENT_ICON_WIFI,
@@ -194,11 +198,13 @@ public:
     void XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row);
 
     void VeDoThi(BaseProgram_t data, time_t time);
-    void KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom);
-    void ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom);
+    void KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve);
+    void ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve);
     void ThoiGianDoThi(time_t time);
     void XoaDoThi(BaseProgram_t data);
 
+    void HienThiThongSoPID(uint16_t startVPText, PIDCalcu_t xPIDCalcu, PIDParam_t xPIDParam, float err);
+    void HienThiThongSoTrangPID(PIDCalcu_t xPIDCalcuTemp, PIDParam_t xPIDParamTemp, float errTemp, float thoiGianBatCua, float thoiGianBatVanh, PIDCalcu_t xPIDCalcuCO2, PIDParam_t xPIDParamCO2, float errCO2);
     void HienThiNhietDo(float GiaTri);
     void HienThiNhietDo(String text);
     void HienThiCO2(float GiaTri);
@@ -206,7 +212,6 @@ public:
     void HienThiSetpointTemp(float GiaTri);
     void HienThiSetpointCO2(float GiaTri);
     void HienThiTocDoQuat(int GiaTri);
-    // void HienThiGocFlap(int GiaTri);
     void HienThiThoiGianChay(int ngay, int gio, int phut, int giay);
     void HienThiThoiGianChay(String text);
     void HienThiThoiGianRTC(int ngay, int thang, int nam, int gio, int phut, int giay);
@@ -289,6 +294,9 @@ protected:
     static void _NutResetHeSoCalibCO2_(int32_t lastBytes, void* args);
 
     static void _NutThucDay_(int32_t lastBytes, void* args);
+    static void _NutSetPID_(int32_t lastBytes, void* args);
+    static void _NutExitPID_(int32_t lastBytes, void* args);
+    static void _NutSetParamterPID_(int32_t lastBytes, void* args);
 
     static void _NutCaiDatThoiGianRTC_(int32_t lastBytes, void* args);
     static void _NutEnterTrangCaiRTC_(int32_t lastBytes, void* args);
