@@ -58,9 +58,9 @@
 //* key trong trang _CalibTempPage
 #define _KeyValueEditCalibTemp 0x0D
 #define _KeyValueEnterCalibTemp 0x0E
+#define _KeyValuePage78_setPremeter 0x0F
+#define _KeyValuePage78_setDoor 0x10
 
-// #define _KeyValueSetFlap 0x0F
-// #define _KeyValueEnterFlap 0x10
 #define _KeyValueEnterSetRTC 0x11
 #define _KeyValueEnterSetAlarm 0x12
 #define _KeyValueSetAlarmBelow 0x13
@@ -195,6 +195,25 @@
 #pragma region NumericKeypad
 #define _VPAddressNumericKeypad 0x5300
 
+#define _VPAddressPage103PID 0x5400
+#define _KeyValueSetTempKP 1
+#define _KeyValueSetTempKI 2
+#define _KeyValueSetTempKD 3
+#define _KeyValueSetTempKW 4
+#define _KeyValueSetTempImax 5
+#define _KeyValueSetTempImin 6
+#define _KeyValueSetTempOutmax 7
+#define _KeyValueSetTempOutmin 8
+
+#define _KeyValueSetCO2KP 9
+#define _KeyValueSetCO2KI 10
+#define _KeyValueSetCO2KD 11
+#define _KeyValueSetCO2KW 12
+#define _KeyValueSetCO2Imax 13
+#define _KeyValueSetCO2Imin 14
+#define _KeyValueSetCO2Outmax 15
+#define _KeyValueSetCO2Outmin 16
+
 #define _VPAddressAction 0x5900
 
 #pragma region ICON VP Address
@@ -232,7 +251,8 @@
 #define _VPAddressMinuteText 0x802A // length text 2
 
 #define _VPAddressStdTempText 0x8100
-// #define _VPAddressFlapText 0x8105
+#define _VPAddresPgae78_PremeterText 0x8105
+#define _VPAddresPgae78_DoorText 0x8145
 #define _VPAddressAlarmBelowTempText 0x810A
 #define _VPAddressAlarmAboveTempText 0x810F
 #define _VPAddressProgramNumText 0x8120
@@ -396,9 +416,45 @@
 #define _VPAddressPage94SSID3 0xB1FE
 #define _VPAddressPage94SSID4 0xB21C 
 
-#define _VPAddressPage70Brightness 0xB23A // 50 ký tự
+#define _VPAddressPage70historyEvent 0xB23A // 50 ký tự
 
-#define 
+#define _VPAddressPage103KpTemp    0xB26C
+#define _VPAddressPage103KiTemp    0xB271  // 0xB26C + 5
+#define _VPAddressPage103KdTemp    0xB276  // 0xB271 + 5
+#define _VPAddressPage103KwTemp    0xB27B  // 0xB276 + 5
+#define _VPAddressPage103OUTTemp   0xB280  // 0xB27B + 5
+#define _VPAddressPage103ImaxTemp  0xB285  // 0xB280 + 5
+#define _VPAddressPage103IminTemp  0xB28A  // 0xB285 + 5
+#define _VPAddressPage103OmaxTemp  0xB28F  // 0xB28A + 5
+#define _VPAddressPage103OminTemp  0xB294  // 0xB28F + 5
+#define _VPAddressPage103PTemp     0xB299  // 0xB294 + 5 
+#define _VPAddressPage10ITemp      0xB29E  // 0xB299 + 5
+#define _VPAddressPage103DTemp     0xB2A3  // 0xB29E + 5
+#define _VPAddressPage103WTemp     0xB2A8  // 0xB2A3 + 5
+#define _VPAddressPage103StartTemp 0xB2AD  // 0xB2A8 + 5
+#define _VPAddressPage103endTemp   0xB2B2  // 0xB2AD + 5
+#define _VPAddressPage103upTemp    0xB2B7  // 0xB2B2 + 5
+#define _VPAddressPage103downTemp   0xB2BC  // 0xB2B7 + 5
+
+#define _VPAddressPage103KpCO2     0xB2C1  // 0xB2BC + 5
+#define _VPAddressPage103KiCO2     0xB2C6  // 0xB2C1 + 5
+#define _VPAddressPage103KdCO2     0xB2CB  // 0xB2C6 + 5
+#define _VPAddressPage103KwCO2     0xB2D0  // 0xB2CB + 5
+#define _VPAddressPage103OUTCO2    0xB2D5  // 0xB2D0 + 5
+#define _VPAddressPage103ImaxCO2   0xB2DA  // 0xB2D5 + 5
+#define _VPAddressPage103IminCO2   0xB2DF  // 0xB2DA + 5
+#define _VPAddressPage103OmaxCO2   0xB2E4  // 0xB2DF + 5
+#define _VPAddressPage103OminCO2   0xB2E9  // 0xB2E4 + 5
+#define _VPAddressPage103PCO2      0xB2EE  // 0xB2E9 + 5
+#define _VPAddressPage10ICO2       0xB2F3  // 0xB2EE + 5
+#define _VPAddressPage103DCO2      0xB2F8  // 0xB2F3 + 5
+#define _VPAddressPage103WCO2      0xB2FD  // 0xB2F8 + 5
+#define _VPAddressPage103StartCO2  0xB302  // 0xB2FD + 5
+#define _VPAddressPage103endCO2    0xB307  // 0xB302 + 5
+#define _VPAddressPage103upCO2     0xB30C  // 0xB307 + 5
+#define _VPAddressPage103downCO2    0xB311  // 0xB30C + 5
+
+
 
 
 #pragma region SP Address
@@ -412,9 +468,11 @@
 
 #define _SPAddressSmallGraph1 0xC150
 #define _SPAddressLargeGraph 0xC160
+#define _SPAddressPage103PIDGraph 0xC170
 
 #define _SPAddressSmallGraphCO2 0xC180
 #define _SPAddressLargeGraphCO2 0xC190
+#define _SPAddressPage103PIDGraphCO2 0xC200
 
 #pragma region VP control brightness 
 #define  _VPAddressBrightness 0xC500
