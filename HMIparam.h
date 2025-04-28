@@ -198,23 +198,23 @@
 #define _VPAddressNumericKeypad 0x5300
 
 #define _VPAddressPage103PID 0x5400
-#define _KeyValueSetTempKP 1
-#define _KeyValueSetTempKI 2
-#define _KeyValueSetTempKD 3
-#define _KeyValueSetTempKW 4
-#define _KeyValueSetTempImax 5
-#define _KeyValueSetTempImin 6
-#define _KeyValueSetTempOutmax 7
-#define _KeyValueSetTempOutmin 8
+#define _KeyValueSetTempKP 0x0
+#define _KeyValueSetTempKI 0x1
+#define _KeyValueSetTempKD 0x2
+#define _KeyValueSetTempKW 0x3
+#define _KeyValueSetTempImax 0x5
+#define _KeyValueSetTempImin 0x6
+#define _KeyValueSetTempOutmax 0x7
+#define _KeyValueSetTempOutmin 0x8
 
-#define _KeyValueSetCO2KP 9
-#define _KeyValueSetCO2KI 10
-#define _KeyValueSetCO2KD 11
-#define _KeyValueSetCO2KW 12
-#define _KeyValueSetCO2Imax 13
-#define _KeyValueSetCO2Imin 14
-#define _KeyValueSetCO2Outmax 15
-#define _KeyValueSetCO2Outmin 16
+#define _KeyValueSetCO2KP 0x11
+#define _KeyValueSetCO2KI 0x12
+#define _KeyValueSetCO2KD 0x13
+#define _KeyValueSetCO2KW 0x14
+#define _KeyValueSetCO2Imax 0x16
+#define _KeyValueSetCO2Imin 0x17
+#define _KeyValueSetCO2Outmax 0x18
+#define _KeyValueSetCO2Outmax 0x19
 
 #define _VPAddressAction 0x5900
 
@@ -314,12 +314,6 @@
 #define _VPAddressSegmentFanSpeedText3 _VPAddressSegmentFanSpeedText2 + 5
 #define _VPAddressSegmentFanSpeedText4 _VPAddressSegmentFanSpeedText3 + 5
 #define _VPAddressSegmentFanSpeedText5 _VPAddressSegmentFanSpeedText4 + 5
-
-// #define _VPAddressSegmentAirFlapText1 0x90A0
-// #define _VPAddressSegmentAirFlapText2 _VPAddressSegmentAirFlapText1 + 5
-// #define _VPAddressSegmentAirFlapText3 _VPAddressSegmentAirFlapText2 + 5
-// #define _VPAddressSegmentAirFlapText4 _VPAddressSegmentAirFlapText3 + 5
-// #define _VPAddressSegmentAirFlapText5 _VPAddressSegmentAirFlapText4 + 5
 
 #define _VPAddressSegmentTempMinText1 0x90B9 // Có 5 ô, mỗi ô tối đa 5 ký tự
 #define _VPAddressSegmentTempMinText2 _VPAddressSegmentTempMinText1 + 5

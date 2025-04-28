@@ -88,6 +88,22 @@ typedef enum
     eHMI_SET_EVENT_WAKEUP,
     eHMI_SET_PID,
     eHMI_EXIT_PID,
+    eHMI_SET_PARAMTER_KP_TEMP_PID,
+    eHMI_SET_PARAMTER_KI_TEMP_PID,
+    eHMI_SET_PARAMTER_KD_TEMP_PID,
+    eHMI_SET_PARAMTER_KW_TEMP_PID,
+    eHMI_SET_PARAMTER_IMAX_TEMP_PID,
+    eHMI_SET_PARAMTER_IMIN_TEMP_PID,
+    eHMI_SET_PARAMTER_OUTMAX_TEMP_PID,
+    eHMI_SET_PARAMTER_OUTMIN_TEMP_PID,
+    eHMI_SET_PARAMTER_KP_CO2_PID,
+    eHMI_SET_PARAMTER_KI_CO2_PID,
+    eHMI_SET_PARAMTER_KD_CO2_PID,
+    eHMI_SET_PARAMTER_KW_CO2_PID,
+    eHMI_SET_PARAMTER_IMAX_CO2_PID,
+    eHMI_SET_PARAMTER_IMIN_CO2_PID,
+    eHMI_SET_PARAMTER_OUTMAX_CO2_PID,
+    eHMI_SET_PARAMTER_OUTMIN_CO2_PID,
 
     HMI_SET_MAX_ENUM
 } hmi_set_type_t;
@@ -296,7 +312,22 @@ protected:
     static void _NutThucDay_(int32_t lastBytes, void* args);
     static void _NutSetPID_(int32_t lastBytes, void* args);
     static void _NutExitPID_(int32_t lastBytes, void* args);
-    static void _NutSetParamterPID_(int32_t lastBytes, void* args);
+    static void _NutSetKpTempPID_(int32_t lastBytes, void* args);
+    static void _NutSetKiTempPID_(int32_t lastBytes, void* args);
+    static void _NutSetKdTempPID_(int32_t lastBytes, void* args);
+    static void _NutSetKwTempPID_(int32_t lastBytes, void* args);
+    static void _NutSetImaxTempPID_(int32_t lastBytes, void* args);
+    static void _NutSetIminTempPID_(int32_t lastBytes, void* args);
+    static void _NutSetOutmaxTempPID_(int32_t lastBytes, void* args);
+    static void _NutSetOutminTempPID_(int32_t lastBytes, void* args);
+    static void _NutSetKpCO2PID_(int32_t lastBytes, void* args);
+    static void _NutSetKiCO2PID_(int32_t lastBytes, void* args);
+    static void _NutSetKdCO2PID_(int32_t lastBytes, void* args);
+    static void _NutSetKwCO2PID_(int32_t lastBytes, void* args);
+    static void _NutSetImaxCO2PID_(int32_t lastBytes, void* args);
+    static void _NutSetIminCO2PID_(int32_t lastBytes, void* args);
+    static void _NutSetOutmaxCO2PID_(int32_t lastBytes, void* args);
+    static void _NutSetOutminCO2PID_(int32_t lastBytes, void* args);
 
     static void _NutCaiDatThoiGianRTC_(int32_t lastBytes, void* args);
     static void _NutEnterTrangCaiRTC_(int32_t lastBytes, void* args);

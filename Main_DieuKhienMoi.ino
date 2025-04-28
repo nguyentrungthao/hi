@@ -117,7 +117,7 @@ const uint32_t pu32ArgTimerDWIN[][2] = { {eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN, 
                                     {eHMI_EVENT_HIEN_THI_THOI_GIAN, 1000},
                                     {eHMI_EVENT_ICON_USB, 1000},
                                     {eHMI_EVENT_ICON_FAN, 1000},
-                                    {eHMI_EVENT_VE_DO_THI, 1000},
+                                    {eHMI_EVENT_VE_DO_THI, 10000},
                                     {eHMI_EVENT_ICON_WIFI, 30000},
                                     // {eHMI_EVENT_WARNING, 120000},
                                     {eHMI_EVENT_REFRESH, 120000} };
@@ -168,7 +168,7 @@ void TaskMonitorDebug(void*);
 
 // đây là nhánh MASTER
 void setup() {
-  esp_task_wdt_deinit();
+  // esp_task_wdt_deinit();
   Serial.begin(115200);
   Wire.begin(10, 11);
 
@@ -1159,6 +1159,198 @@ void hmiSetEvent(const hmi_set_event_t& event) {
   case eHMI_EXIT_PID:
     Serial.printf("end log PID\n");
     xTimerStop(xTimerPIDLog, 1000);
+    break;
+  case eHMI_SET_PARAMTER_KP_TEMP_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[0].Kp = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_KI_TEMP_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[0].Ki = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_KD_TEMP_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[0].Kd = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_KW_TEMP_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[0].Kw = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_IMAX_TEMP_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[0].WindupMax = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_IMIN_TEMP_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[0].WindupMin = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_OUTMAX_TEMP_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[0].OutMax = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_OUTMIN_TEMP_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[0].OutMin = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_KP_CO2_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[1].Kp = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_KI_CO2_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[1].Ki = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_KD_CO2_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[1].Kd = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_KW_CO2_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[1].Kw = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_IMAX_CO2_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[1].WindupMax = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_IMIN_CO2_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[1].WindupMin = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_OUTMAX_CO2_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[1].OutMax = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
+
+  case eHMI_SET_PARAMTER_OUTMIN_CO2_PID:
+  {
+    PIDParam_t pxParamter[2];
+    pxParamter[0] = _Heater.xGetParam();
+    pxParamter[1] = _CO2.xGetParam();
+    pxParamter[1].OutMin = (float)event.f_value;
+    SDMMCFile.writeFile(PATH_CONTROL_ALGORITHRM, (uint8_t*)pxParamter, sizeof(pxParamter));
+    _Heater.vSetParam(pxParamter[0]);
+    _CO2.vSetParam(pxParamter[1]);
+  }
+  break;
   default:
     Serial.println("UNDEFINE");
     break;

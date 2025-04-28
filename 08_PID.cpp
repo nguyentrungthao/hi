@@ -59,7 +59,7 @@ float PID::getPIDcompute(float Error)
 
     // xPIDCalcu.ITerm
     float deltaITerm = (this->xPIDParam.Ki * Error + this->xPIDCalcu.feedBackWindup * this->xPIDParam.Kw) * (this->Sample_time / 1000.0f);
-    if (!std::isnan(deltaITerm) && !std::isinf(deltaITerm) && fabs(Error) < 2)
+    if (!std::isnan(deltaITerm) && !std::isinf(deltaITerm))
     {
         this->xPIDCalcu.ITerm += deltaITerm;
     }
