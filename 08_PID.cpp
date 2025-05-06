@@ -106,27 +106,11 @@ float PID::getPIDcompute(float Error)
 
     this->LastError = Error;
 
+
     // OUTPUT
-    this->xPIDCalcu.Output = this->xPIDCalcu.PTerm + this->xPIDCalcu.ITerm;
+    float unSaturationOutput = this->xPIDCalcu.PTerm + this->xPIDCalcu.ITerm + this->xPIDCalcu.DTerm;
 
-    if (this->xPIDCalcu.Output > this->xPIDParam.OutMax)
-    {
-        this->xPIDCalcu.feedBackWindup = this->xPIDParam.OutMax - this->xPIDCalcu.Output;
-        this->xPIDCalcu.Output = this->xPIDParam.OutMax;
-    }
-    else if (this->xPIDCalcu.Output < this->xPIDParam.OutMin)
-    {
-        this->xPIDCalcu.feedBackWindup = this->xPIDParam.OutMin - this->xPIDCalcu.Output;
-        this->xPIDCalcu.Output = this->xPIDParam.OutMin;
-    }
-    else
-    {
-        this->xPIDCalcu.feedBackWindup = 0;
-    }
-
-    this->xPIDCalcu.Output += this->xPIDCalcu.DTerm;
-
-    // Clamp output lần cuối
+    this->xPIDCalcu.Output = unSaturationOutput;
     if (this->xPIDCalcu.Output > this->xPIDParam.OutMax)
     {
         this->xPIDCalcu.Output = this->xPIDParam.OutMax;
@@ -135,6 +119,7 @@ float PID::getPIDcompute(float Error)
     {
         this->xPIDCalcu.Output = this->xPIDParam.OutMin;
     }
+    this->xPIDCalcu.feedBackWindup = this->xPIDCalcu.Output - unSaturationOutput;
 
     return this->xPIDCalcu.Output;
 }

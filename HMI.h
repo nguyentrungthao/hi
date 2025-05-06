@@ -16,7 +16,7 @@
 #include "freertos/queue.h"
 #include <vector>
 #include <TimeLib.h>
-#include <userdef.h>
+#include "userdef.h"
 #include "HMIparam.h"
 #include <Arduino.h>
 #include <ringBuffer.h>
@@ -96,6 +96,8 @@ typedef enum
     eHMI_SET_PARAMTER_IMIN_TEMP_PID,
     eHMI_SET_PARAMTER_OUTMAX_TEMP_PID,
     eHMI_SET_PARAMTER_OUTMIN_TEMP_PID,
+    eHMI_SET_PARAMTER_PERIMETER_TEMP,
+    eHMI_SET_PARAMTER_DOOR_TEMP_PID,
     eHMI_SET_PARAMTER_KP_CO2_PID,
     eHMI_SET_PARAMTER_KI_CO2_PID,
     eHMI_SET_PARAMTER_KD_CO2_PID,
@@ -328,6 +330,9 @@ protected:
     static void _NutSetIminCO2PID_(int32_t lastBytes, void* args);
     static void _NutSetOutmaxCO2PID_(int32_t lastBytes, void* args);
     static void _NutSetOutminCO2PID_(int32_t lastBytes, void* args);
+    static void _NutSetPerimeterPID_(int32_t lastBytes, void* args);
+    static void _NutSetDoorPID_(int32_t lastBytes, void* args);
+
 
     static void _NutCaiDatThoiGianRTC_(int32_t lastBytes, void* args);
     static void _NutEnterTrangCaiRTC_(int32_t lastBytes, void* args);

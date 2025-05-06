@@ -13,6 +13,8 @@
 #include "12_triac.h"
 #include "AnhLABV01HardWare.h"
 #include "OnOffHighResolutionTimer.h"
+#include "userdef.h"
+
 
 #define MAX31865_DIEN_TRO_THAM_CHIEU 390.0
 #define MAX31865_DIEN_TRO_CAM_BIEN 100.0
@@ -28,8 +30,6 @@
 #define WIN_MIN 0
 
 #define OUT_MAX_POWER 1000
-#define THOI_GIAN_BAT_TRIAC_CUA 170 // 170
-#define THOI_GIAN_BAT_TRIAC_VANH 220 // 310
 #define SAMPLE_TIME 1000
 
 #define HEATER_ON   true
@@ -52,17 +52,12 @@ enum triacName {
   eTriacMax,
 };
 
-typedef struct
-{
-  float Setpoint;
-  float Kp;
-  float Ki;
-  float Kd;
-  float OutMax;
-  float WindupMax;
-  uint8_t ThoiGianOnDinhSauMoCua;
-  uint8_t ThoiGianGiaNhietSauMoCua;
-} PID_param_t;
+typedef struct {
+  PIDParam_t xPID;
+  uint16_t Perimter;
+  uint16_t Door;
+  char pcConfim[8];
+}ControlParamaterTEMP;
 
 typedef void (*CallBackACDET_t)(void*);
 
@@ -104,13 +99,20 @@ public:
   void addCallBackWritePinTriacBuong(CallBack_t pCallBack, void* pArg = NULL) {
     triacBuong.addCallBackWritePin(pCallBack, pArg);
   }
+  ControlParamaterTEMP xGetControlParamater();
+  void vSetControlParamater(ControlParamaterTEMP);
+
 private:
+  ControlParamaterTEMP xControlParamaterTEMP;
+
   uint8_t step = 0;
   uint32_t preOpenDoor = 0;
   uint32_t preCloseDoor = 0;
   int16_t u16ThoiGianBatBuong = 0;
-  int16_t u16ThoiGianBatVanh = THOI_GIAN_BAT_TRIAC_VANH;
-  int16_t u16ThoiGianBatCua = THOI_GIAN_BAT_TRIAC_CUA;
+  int16_t u16ThoiGianBatVanh = 0;
+  int16_t u16ThoiGianBatCua = 0;
+  int16_t u16MaxThoiGianBatVanh = xControlParamaterTEMP.Perimter;
+  int16_t u16MaxThoiGianBatCua = xControlParamaterTEMP.Door;
 
   HRTOnOffPin triacBuong = HRTOnOffPin(TRIAC1_PIN);
   HRTOnOffPin triacCua = HRTOnOffPin(TRIAC2_PIN);
@@ -135,7 +137,7 @@ private:
   float SaiSoNhietChoPhep;
 
   CallBackACDET_t m_pCallBackACDET;
-  void *m_pArgACDET;
+  void* m_pArgACDET;
 
   TaskHandle_t taskHandleDieuKhienNhiet;
   TaskHandle_t taskHandleNgatACDET;

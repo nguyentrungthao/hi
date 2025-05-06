@@ -5,6 +5,8 @@
 */
 Concentration::Concentration(void)
   : IRCO2(), HRTOnOffPin(), PID() {
+  xControlParamaterCO2 = userCO2_DEFAUT_CONTROL_PARAMETER;
+  vSetParam(xControlParamaterCO2.xPID);
 };
 
 
@@ -183,4 +185,16 @@ IRCO2_StatusTydef Concentration::CalibDiem0(float giaTri0Chuan) {
 void Concentration::CalibApSuat(uint32_t thoiGianMoVan) {
   if (thoiGianMoVan < 10) return;
   this->turnOnPinAndDelayOff(thoiGianMoVan);
+}
+
+ControlParamaterCO2 Concentration::xGetControlParamater() {
+  xControlParamaterCO2.xPID = xGetParam();
+  return xControlParamaterCO2;
+}
+void Concentration::vSetControlParamater(ControlParamaterCO2 xCtrParamter) {
+  if (strncmp(userEEPROM_CONFIRM_DATA_STRING, xCtrParamter.pcConfim, strlen(userEEPROM_CONFIRM_DATA_STRING) != 0)) {
+    return;
+  }
+  this->xControlParamaterCO2 = xCtrParamter;
+  vSetParam(xControlParamaterCO2.xPID);
 }

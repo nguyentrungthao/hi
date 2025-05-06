@@ -2,12 +2,23 @@
 #define _UserDef_H_
 
 #include <Arduino.h>
+#include "08_PID.h"
 
 #define PATH_CALIB_DATA "/CalibData.data"
 #define PATH_BASEPROGRAM_DATA "/BaseProgram.data"
 #define PATH_RECORD "/record.dat"
 #define PATH_LOG "/log"
 #define PATH_CONTROL_ALGORITHRM "/controlAlgorithrm.data"
+
+#define userEEPROM_PARAMETER_CO2_ADDRESS 50u // byte 
+#define userEEPROM_PARAMETER_TEMP_ADDRESS 0u // byte
+#define userEEPROM_CONFIRM_DATA_STRING "LABone"
+
+#define userSETPOINT_TEMP_MAX 60.0f
+#define userSETPOINT_TEMP_MIN 20.0f
+
+#define userSETPOINT_CO2_MAX 20.0f
+#define userSETPOINT_CO2_MIN 0.0f
 
 typedef enum
 {
@@ -119,5 +130,34 @@ typedef enum {
     } \
 } while (0)
 
+
+#define userTEMP_DEFAUT_CONTROL_PARAMETER { \
+                                            .xPID = { \ 
+                                                .Kp = 5.0f,\
+                                                .Ki = 0.01f,\
+                                                .Kd = 0.0f,\
+                                                .Kw = 0.1f,\
+                                                .WindupMax = 5.0f,\
+                                                .WindupMin = 0.0f,\
+                                                .OutMax = 17.0f,\
+                                                .OutMin = 0.0f,\
+                                            }, \
+                                            .Perimter = 220u, \
+                                            .Door = 170u, \
+                                            .pcConfim = userEEPROM_CONFIRM_DATA_STRING\
+                                            }
+#define userCO2_DEFAUT_CONTROL_PARAMETER {\
+                                            .xPID = {\
+                                                .Kp = 1000.0f,\
+                                                .Ki = 0.01f,\
+                                                .Kd = 0.0f,\
+                                                .Kw = 0.0f,\
+                                                .WindupMax = 1000.0f,\
+                                                .WindupMin = 0.0f,\
+                                                .OutMax = 4000.0f,\
+                                                .OutMin = 0.0f,\
+                                            },\
+                                            .pcConfim = userEEPROM_CONFIRM_DATA_STRING\
+                                        }
 
 #endif

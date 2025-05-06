@@ -7,7 +7,7 @@
 #ifndef _CONTROLCO2_H_
 #define _CONTROLCO2_H_
 
-#include "Config.h"
+#include "userdef.h"
 #include "06_SenSorCO2.h"
 #include "OnOffHighResolutionTimer.h"
 #include "08_PID.h"
@@ -40,38 +40,10 @@
 
 #define THOI_GIAN_MO_VAN_TOI_THIEU 10.0f
 
-
-#if defined(ON_OFF_DEBUG) && defined(debug) && defined(DEBUG_CO2)
-#define CO2_SerialPrintf(flag, string, ...) \
-  do { \
-    if (flag) \
-      Serial.printf(string, ##__VA_ARGS__); \
-  } while (0)
-
-#define CO2_SerialPrintln(flag, string, ...) \
-  do { \
-    if (flag) \
-      Serial.println(string, ##__VA_ARGS__); \
-  } while (0)
-#define CO2_SerialPrint(flag, string, ...) \
-  do { \
-    if (flag) \
-      Serial.print(string, ##__VA_ARGS__); \
-  } while (0)
-
-#elif !defined(ON_OFF_DEBUG) && defined(debug) && defined(DEBUG_CO2)
-
-#define CO2_SerialPrintf(flag, string, ...) Serial.printf(string, ##__VA_ARGS__)
-#define CO2_SerialPrintln(flag, string, ...) Serial.println(string, ##__VA_ARGS__)
-#define CO2_SerialPrint(flag, string, ...) Serial.print(string, ##__VA_ARGS__)
-
-#else 
-
-#define CO2_SerialPrintf(flag, string, ...) (void*)0
-#define CO2_SerialPrintln(flag, string, ...) (void*)0
-#define CO2_SerialPrint(flag, string, ...) (void*)0
-
-#endif
+typedef struct {
+  PIDParam_t xPID;
+  char pcConfim[8];
+}ControlParamaterCO2;
 
 class Concentration : public IRCO2, public HRTOnOffPin, public PID {
 public:
@@ -99,8 +71,14 @@ public:
     IRCO2_StatusTydef CalibGiaTriThuc(float giaTriChuan);
     IRCO2_StatusTydef CalibDiem0(float giaTri0Chuan);
     void CalibApSuat(uint32_t thoiGianMoVan);
+
+    ControlParamaterCO2 xGetControlParamater();
+    void vSetControlParamater(ControlParamaterCO2);
+
 private:
-    float LayGiaTriTuCamBien();
+  ControlParamaterCO2 xControlParamaterCO2;
+  
+  float LayGiaTriTuCamBien();
     float nongDoDat;
     uint32_t thoiGianLayMau;
     float nongDoThucCO2;

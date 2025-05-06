@@ -2,6 +2,8 @@
 
 HEATER::HEATER()
   : PID(), triac((gpio_num_t)TRIAC4_PIN) {
+  xControlParamaterTEMP = userTEMP_DEFAUT_CONTROL_PARAMETER;
+  vSetParam(xControlParamaterTEMP.xPID);
 }
 
 void HEATER::KhoiTao(void) {
@@ -28,11 +30,20 @@ float HEATER::LayGiaTriPT100Ofset(void) {
 
 void HEATER::BatDieuKhienNhietDo(void) {
   TrangThaiDieuKhienNhiet = HEATER_ON;
-  step = 1;
+  if (NhietDoCaiDat > userSETPOINT_TEMP_MAX) {
+    u16MaxThoiGianBatVanh = OUT_MAX_POWER;
+    u16MaxThoiGianBatCua = OUT_MAX_POWER;
+    setOutput(0, OUT_MAX_POWER);
+  }
+  else {
+    u16MaxThoiGianBatVanh = xControlParamaterTEMP.Perimter;
+    u16MaxThoiGianBatCua = xControlParamaterTEMP.Door;
+    setOutput(0, xControlParamaterTEMP.xPID.OutMax);
+  }
+  u16ThoiGianBatBuong = 0;  
   TurnOnTriac();
-  u16ThoiGianBatBuong = 0;
-  u16ThoiGianBatVanh = THOI_GIAN_BAT_TRIAC_VANH;
-  u16ThoiGianBatCua = THOI_GIAN_BAT_TRIAC_CUA;
+
+  step = 1;
 }
 void HEATER::TatDieuKhienNhietDo(void) {
   TrangThaiDieuKhienNhiet = HEATER_OFF;
@@ -60,6 +71,7 @@ void HEATER::ResetEventDOOR() {
 
 void HEATER::CalibNhietDoPT100(float, float) {
 }
+
 void HEATER::ResetCamBienNhiet(void) {
   PT100_buong.begin(MAX31865_4WIRE);
   PT100_buong.enable50Hz(true);
@@ -102,6 +114,20 @@ void HEATER::addCallBackACDET(CallBackACDET_t pCallBack, void* pArg) {
     Serial.println("Warning: m_pArgACDET is NULL");
   }
 }
+
+ControlParamaterTEMP HEATER::xGetControlParamater() {
+  xControlParamaterTEMP.xPID = xGetParam();
+  return xControlParamaterTEMP;
+}
+void HEATER::vSetControlParamater(ControlParamaterTEMP xCtrParamter) {
+  if (strncmp(userEEPROM_CONFIRM_DATA_STRING, xCtrParamter.pcConfim, strlen(userEEPROM_CONFIRM_DATA_STRING) != 0)) {
+    return;
+  }
+  this->xControlParamaterTEMP = xCtrParamter;
+  vSetParam(xControlParamaterTEMP.xPID);
+}
+
+// private
 void HEATER::TaskDieuKhienNhiet(void* ptr) {
   if (ptr == NULL) return;
   HEATER* pHeater = (HEATER*)ptr;
@@ -147,14 +173,14 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
         if (pHeater->u16ThoiGianBatVanh < 0) {
           pHeater->u16ThoiGianBatVanh = 0;
         }
-        else if (pHeater->u16ThoiGianBatVanh > THOI_GIAN_BAT_TRIAC_VANH) {
-          pHeater->u16ThoiGianBatVanh = THOI_GIAN_BAT_TRIAC_VANH;
+        else if (pHeater->u16ThoiGianBatVanh > pHeater->u16MaxThoiGianBatVanh) {
+          pHeater->u16ThoiGianBatVanh = pHeater->u16MaxThoiGianBatVanh;
         }
         if (pHeater->u16ThoiGianBatCua < 0) {
           pHeater->u16ThoiGianBatCua = 0;
         }
-        else if (pHeater->u16ThoiGianBatCua > THOI_GIAN_BAT_TRIAC_CUA) {
-          pHeater->u16ThoiGianBatCua = THOI_GIAN_BAT_TRIAC_CUA;
+        else if (pHeater->u16ThoiGianBatCua > pHeater->u16MaxThoiGianBatCua) {
+          pHeater->u16ThoiGianBatCua = pHeater->u16MaxThoiGianBatCua;
         }
       }
       // Serial.print(" - step 1 - ");
@@ -175,8 +201,8 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
 
     case 3: // chạy đóng cửa
       if (millis() - pHeater->preCloseDoor >= 60 * 1000) {  // theo dõi nhiệt 30s trước khi quay lại tính toán
-        pHeater->u16ThoiGianBatCua = THOI_GIAN_BAT_TRIAC_CUA;
-        pHeater->u16ThoiGianBatVanh = THOI_GIAN_BAT_TRIAC_VANH;
+        pHeater->u16ThoiGianBatCua = pHeater->u16MaxThoiGianBatCua;
+        pHeater->u16ThoiGianBatVanh = pHeater->u16MaxThoiGianBatCua;
         pHeater->step = 1;
       }
       else {

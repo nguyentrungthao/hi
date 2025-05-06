@@ -214,7 +214,10 @@
 #define _KeyValueSetCO2Imax 0x16
 #define _KeyValueSetCO2Imin 0x17
 #define _KeyValueSetCO2Outmax 0x18
-#define _KeyValueSetCO2Outmax 0x19
+#define _KeyValueSetCO2Outmin 0x19
+
+#define _KeyValueSetPerimeterOutmax 0x1A
+#define _KeyValueSetDoorOutmax 0x1B
 
 #define _VPAddressAction 0x5900
 

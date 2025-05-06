@@ -85,7 +85,10 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValueSetCO2Imax, _NutSetImaxCO2PID_, this);
     DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValueSetCO2Imin, _NutSetIminCO2PID_, this);
     DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValueSetCO2Outmax, _NutSetOutmaxCO2PID_, this);
-    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValueSetCO2Outmax, _NutSetOutminCO2PID_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValueSetCO2Outmin, _NutSetOutminCO2PID_, this);
+
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValueSetPerimeterOutmax, _NutSetPerimeterPID_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValueSetDoorOutmax, _NutSetDoorPID_, this);
 
     DWIN::addButtonEvent(_VPAddressSegmentSetpointButton, _AllKeyValue, _NutEditSetpointTrangSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentSetpointCO2Button, _AllKeyValue, _NutEditSetpointCO2TrangSegment_, this);
@@ -450,8 +453,8 @@ void HMI::_NutCaiNhietDoSetpoint_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _HomePage;
     hmiPtr->_set_event.pageAfterEnter = _HomePage;
-    hmiPtr->_set_event.maxValue = 60;
-    hmiPtr->_set_event.minValue = 20;
+    hmiPtr->_set_event.maxValue = userSETPOINT_TEMP_MAX;
+    hmiPtr->_set_event.minValue = userSETPOINT_TEMP_MIN;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSetpointTempText;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
     hmiPtr->_set_event.textLen = 5;
@@ -468,8 +471,8 @@ void HMI::_NutCaiCO2Setpoint_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _HomePage;
     hmiPtr->_set_event.pageAfterEnter = _HomePage;
-    hmiPtr->_set_event.maxValue = 20;
-    hmiPtr->_set_event.minValue = 0;
+    hmiPtr->_set_event.maxValue = userSETPOINT_CO2_MAX;
+    hmiPtr->_set_event.minValue = userSETPOINT_CO2_MIN;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSetpointCO2Text;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
     hmiPtr->_set_event.textLen = 5;
@@ -770,6 +773,39 @@ void HMI::_NutSetOutminCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->_set_event.maxValue = 10000;
     hmiPtr->_set_event.minValue = -10000;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressPage103OminCO2;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->DWIN::setPage(_NumericKeypadPage);
+}
+
+void HMI::_NutSetPerimeterPID_(int32_t lastBytes, void* args){
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = eHMI_SET_PARAMTER_PERIMETER_TEMP;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.pageAfterReturn = _PIDPage;
+    hmiPtr->_set_event.pageAfterEnter = _PIDPage;
+    hmiPtr->_set_event.maxValue = 10000;
+    hmiPtr->_set_event.minValue = -10000;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressPage103PremeterHeater;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->DWIN::setPage(_NumericKeypadPage);
+}
+void HMI::_NutSetDoorPID_(int32_t lastBytes, void* args){
+    HMI* hmiPtr = (HMI*)args;
+    hmiPtr->_set_event.type = eHMI_SET_PARAMTER_DOOR_TEMP_PID;
+    hmiPtr->_set_event.displayType = HMI_FLOAT;
+    hmiPtr->_set_event.pageAfterReturn = _PIDPage;
+    hmiPtr->_set_event.pageAfterEnter = _PIDPage;
+    hmiPtr->_set_event.maxValue = 10000;
+    hmiPtr->_set_event.minValue = -10000;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressPage103DoorHeater;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
