@@ -131,30 +131,30 @@ typedef enum {
 } while (0)
 
 
-#define userTEMP_DEFAUT_CONTROL_PARAMETER { \
+#define userTEMP_DEFAUT_CONTROL_PARAMETER() { \
                                             .xPID = { \ 
-                                                .Kp = 5.0f,\
+                                                .Kp = 15.0f,\
                                                 .Ki = 0.01f,\
                                                 .Kd = 0.0f,\
                                                 .Kw = 0.1f,\
-                                                .WindupMax = 5.0f,\
-                                                .WindupMin = 0.0f,\
-                                                .OutMax = 17.0f,\
+                                                .WindupMax = 15.0f,\
+                                                .WindupMin = -0.001f,\
+                                                .OutMax = 30.0f,\
                                                 .OutMin = 0.0f,\
-                                            }, \
-                                            .Perimter = 220u, \
-                                            .Door = 170u, \
-                                            .pcConfim = userEEPROM_CONFIRM_DATA_STRING\
+                                                }, \
+                                                .Perimter = 220u, \
+                                                .Door = 170u, \
+                                                .pcConfim = userEEPROM_CONFIRM_DATA_STRING\
                                             }
-#define userCO2_DEFAUT_CONTROL_PARAMETER {\
+#define userCO2_DEFAUT_CONTROL_PARAMETER() {\
                                             .xPID = {\
-                                                .Kp = 1000.0f,\
+                                                .Kp = 2500.0f,\
                                                 .Ki = 0.01f,\
                                                 .Kd = 0.0f,\
-                                                .Kw = 0.0f,\
+                                                .Kw = 0.05f,\
                                                 .WindupMax = 1000.0f,\
-                                                .WindupMin = 0.0f,\
-                                                .OutMax = 4000.0f,\
+                                                .WindupMin = -0.001f,\
+                                                .OutMax = 5000.0f,\
                                                 .OutMin = 0.0f,\
                                             },\
                                             .pcConfim = userEEPROM_CONFIRM_DATA_STRING\

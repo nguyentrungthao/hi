@@ -5,7 +5,7 @@
 */
 Concentration::Concentration(void)
   : IRCO2(), HRTOnOffPin(), PID() {
-  xControlParamaterCO2 = userCO2_DEFAUT_CONTROL_PARAMETER;
+  xControlParamaterCO2 = userCO2_DEFAUT_CONTROL_PARAMETER();
   vSetParam(xControlParamaterCO2.xPID);
 };
 

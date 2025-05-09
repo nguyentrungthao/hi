@@ -2,7 +2,7 @@
 
 HEATER::HEATER()
   : PID(), triac((gpio_num_t)TRIAC4_PIN) {
-  xControlParamaterTEMP = userTEMP_DEFAUT_CONTROL_PARAMETER;
+  xControlParamaterTEMP = userTEMP_DEFAUT_CONTROL_PARAMETER();
   vSetParam(xControlParamaterTEMP.xPID);
 }
 
@@ -40,7 +40,9 @@ void HEATER::BatDieuKhienNhietDo(void) {
     u16MaxThoiGianBatCua = xControlParamaterTEMP.Door;
     setOutput(0, xControlParamaterTEMP.xPID.OutMax);
   }
-  u16ThoiGianBatBuong = 0;  
+  u16ThoiGianBatVanh = u16MaxThoiGianBatVanh;
+  u16ThoiGianBatCua = u16MaxThoiGianBatCua;
+  u16ThoiGianBatBuong = 0;
   TurnOnTriac();
 
   step = 1;
@@ -226,9 +228,9 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
     pHeater->pArru16ThoiGianKichTriac[eTriac4] = pHeater->u16ThoiGianBatVanh;
     taskEXIT_CRITICAL(&my_spinlock);
 
-    // Serial.printf("cb1: %0.2f T1:%d T3:%d T4:%d\n",
-    //   pHeater->NhietDoLocBuong, pHeater->u16ThoiGianBatBuong, pHeater->u16ThoiGianBatCua, pHeater->u16ThoiGianBatVanh);
-    
+    Serial.printf("cb1: %0.2f T1:%d T3:%d T4:%d\n",
+      pHeater->NhietDoLocBuong, pHeater->u16ThoiGianBatBuong, pHeater->u16ThoiGianBatCua, pHeater->u16ThoiGianBatVanh);
+
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
 }
@@ -287,7 +289,7 @@ void HEATER::KhoiTaoCamBien() {
   PT100_3.enable50Hz(true);
   delay(10);
   for (uint8_t i = 0; i < 20; i++) {
-    NhietDoLocBuong = LocCamBienBuong.updateEstimate(PT100_buong.temperature(MAX31865_DIEN_TRO_CAM_BIEN, MAX31865_DIEN_TRO_THAM_CHIEU)) + HeSoCalib ;  //* lọc giá trị đọc
+    NhietDoLocBuong = LocCamBienBuong.updateEstimate(PT100_buong.temperature(MAX31865_DIEN_TRO_CAM_BIEN, MAX31865_DIEN_TRO_THAM_CHIEU)) + HeSoCalib;  //* lọc giá trị đọc
   }
 }
 float HEATER::DocGiaTriCamBien(Adafruit_MAX31865& xPt100) {

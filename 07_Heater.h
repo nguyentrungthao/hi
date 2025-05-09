@@ -74,10 +74,10 @@ public:
   float LayNhietDoLoc(void);          // Đọc nhiệt độ sau khi lọc dùng để hiển thị
   float LayGiaTriPT100Ofset(void);    // Hàm trả về giá trị ofset nhiệt độ sau khi calib, giá trị này dùng để lưu vào epprom
   float LayGiaTriDieuKhienCua() const {
-    return u16ThoiGianBatCua;
+    return u16MaxThoiGianBatCua;
   }
   float LayGiaTriDieuKhienVanh() const {
-    return u16ThoiGianBatVanh;
+    return u16MaxThoiGianBatVanh;
   }
 
   void BatDieuKhienNhietDo(void);     // Bật gia nhiệt

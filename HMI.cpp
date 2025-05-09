@@ -451,8 +451,9 @@ void HMI::_NutCaiNhietDoSetpoint_(int32_t lastBytes, void* args)
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = HMI_SET_SETPOINT_TEMP;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
-    hmiPtr->_set_event.pageAfterReturn = _HomePage;
-    hmiPtr->_set_event.pageAfterEnter = _HomePage;
+    uint16_t u16CurrentPage = hmiPtr->getPage();
+    hmiPtr->_set_event.pageAfterReturn = u16CurrentPage;
+    hmiPtr->_set_event.pageAfterEnter = u16CurrentPage;
     hmiPtr->_set_event.maxValue = userSETPOINT_TEMP_MAX;
     hmiPtr->_set_event.minValue = userSETPOINT_TEMP_MIN;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSetpointTempText;
@@ -469,8 +470,9 @@ void HMI::_NutCaiCO2Setpoint_(int32_t lastBytes, void* args)
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = HMI_SET_SETPOINT_CO2;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
-    hmiPtr->_set_event.pageAfterReturn = _HomePage;
-    hmiPtr->_set_event.pageAfterEnter = _HomePage;
+    uint16_t u16CurrentPage = hmiPtr->getPage();
+    hmiPtr->_set_event.pageAfterReturn = u16CurrentPage;
+    hmiPtr->_set_event.pageAfterEnter = u16CurrentPage;
     hmiPtr->_set_event.maxValue = userSETPOINT_CO2_MAX;
     hmiPtr->_set_event.minValue = userSETPOINT_CO2_MIN;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressSetpointCO2Text;
@@ -487,8 +489,9 @@ void HMI::_NutCaiTocDoQuat_(int32_t lastBytes, void* args)
     HMI* hmiPtr = (HMI*)args;
     hmiPtr->_set_event.type = HMI_SET_FAN;
     hmiPtr->_set_event.displayType = HMI_INT;
-    hmiPtr->_set_event.pageAfterReturn = _HomePage;
-    hmiPtr->_set_event.pageAfterEnter = _HomePage;
+    uint16_t u16CurrentPage = hmiPtr->getPage();
+    hmiPtr->_set_event.pageAfterReturn = u16CurrentPage;
+    hmiPtr->_set_event.pageAfterEnter = u16CurrentPage;
     hmiPtr->_set_event.maxValue = 100;
     hmiPtr->_set_event.minValue = 5;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressFanSpeedText;
@@ -606,7 +609,7 @@ void HMI::_NutSetIminTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
     hmiPtr->_set_event.pageAfterEnter = _PIDPage;
-    hmiPtr->_set_event.maxValue = 10000;
+    hmiPtr->_set_event.maxValue = -0.1;
     hmiPtr->_set_event.minValue = -10000;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressPage103IminTemp;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -738,7 +741,7 @@ void HMI::_NutSetIminCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
     hmiPtr->_set_event.pageAfterEnter = _PIDPage;
-    hmiPtr->_set_event.maxValue = 10000;
+    hmiPtr->_set_event.maxValue = -0.1;
     hmiPtr->_set_event.minValue = -10000;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressPage103IminCO2;
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -1337,7 +1340,7 @@ void HMI::_NutVaoChucNangChonCalib_(int32_t lastBytes, void* args) {
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_PASSWORD;
     hmiPtr->_set_event.pageAfterEnter = _CalibChoosePage;
-    hmiPtr->_set_event.pageAfterReturn = _SettingsPage;
+    hmiPtr->_set_event.pageAfterReturn = _CalibChoosePage;
     hmiPtr->_set_event.textLen = 10;
     hmiPtr->_ChuoiBanPhimDangNhap = "";
     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
@@ -1451,35 +1454,6 @@ void HMI::_NutEnterTrangCalibCO2_(int32_t lastBytes, void* args)
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     // hmiPtr->setPage(_SettingsPage);
 }
-
-// void HMI::_NutSetFlap_(int32_t lastBytes, void* args)
-// {
-//     HMI* hmiPtr = (HMI*)args;
-//     hmiPtr->_set_event.type = HMI_SET_FLAP;
-//     hmiPtr->_set_event.displayType = HMI_INT;
-//     hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = _HomePage;
-//     hmiPtr->_set_event.maxValue = 100;
-//     hmiPtr->_set_event.minValue = 0;
-//     // hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressFlapText;
-//     hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
-//     hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
-//     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
-//     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
-//     hmiPtr->_set_event.textLen = 5;
-//     hmiPtr->setPage(_FlapNumericKeypadPage);
-// }
-
-// Khong dung
-// void HMI::_NutEnterTrangFlap_(int32_t lastBytes, void *args)
-// {
-//     HMI *hmiPtr = (HMI*)args;
-//     hmiPtr->_set_event.type = HMI_SET_FLAP;
-//     hmiPtr->_set_event.displayType = HMI_INT;
-//     hmiPtr->_set_event.f_value = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6).toFloat();
-//     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
-
-//     hmiPtr->setPage(_SettingsPage);
-// }
 
 void HMI::_NutCaiDatThoiGianRTC_(int32_t lastBytes, void* args)
 {

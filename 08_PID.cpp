@@ -87,17 +87,17 @@ float PID::getPIDcompute(float Error)
         this->xPIDCalcu.DTerm = this->DTermFiltered * (1.0f - this->alpha) + derivative * this->alpha;
         this->DTermFiltered = this->xPIDCalcu.DTerm;
 
-        // Giới hạn xPIDCalcu.DTerm
-        const float DTermMin = -100.0f;
-        const float DTermMax = 10.0f;
-        if (this->xPIDCalcu.DTerm < DTermMin)
-        {
-            this->xPIDCalcu.DTerm = DTermMin;
-        }
-        else if (this->xPIDCalcu.DTerm > DTermMax)
-        {
-            this->xPIDCalcu.DTerm = DTermMax;
-        }
+        // // Giới hạn xPIDCalcu.DTerm
+        // const float DTermMin = -1000.0f;
+        // const float DTermMax = 1000.0f;
+        // if (this->xPIDCalcu.DTerm < DTermMin)
+        // {
+        //     this->xPIDCalcu.DTerm = DTermMin;
+        // }
+        // else if (this->xPIDCalcu.DTerm > DTermMax)
+        // {
+        //     this->xPIDCalcu.DTerm = DTermMax;
+        // }
     }
     else
     {
