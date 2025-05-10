@@ -130,6 +130,10 @@ typedef enum {
     } \
 } while (0)
 
+#define userCHECK_FLAG(flagGroup, flag) (((flagGroup) & (flag)))
+#define userSET_FLAG(flagGroup, flag) (flagGroup) |= (flag)
+#define userRESET_FLAG(flagGroup, flag) (flagGroup) &= ~(flag)
+
 
 #define userTEMP_DEFAUT_CONTROL_PARAMETER() { \
                                             .xPID = { \ 
@@ -155,7 +159,7 @@ typedef enum {
                                                 .WindupMax = 1000.0f,\
                                                 .WindupMin = -0.001f,\
                                                 .OutMax = 5000.0f,\
-                                                .OutMin = 0.0f,\
+                                                .OutMin = -0.0f,\
                                             },\
                                             .pcConfim = userEEPROM_CONFIRM_DATA_STRING\
                                         }

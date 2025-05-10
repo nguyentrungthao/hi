@@ -3,8 +3,8 @@
 /*
     @brief:     khởi tạo các  constructor
 */
-Concentration::Concentration(void)
-  : IRCO2(), HRTOnOffPin(), PID() {
+Concentration::Concentration(const char* name)
+  : IRCO2(), HRTOnOffPin(), PID(), EEPROMClass(name) {
   xControlParamaterCO2 = userCO2_DEFAUT_CONTROL_PARAMETER();
   vSetParam(xControlParamaterCO2.xPID);
 };
@@ -13,20 +13,16 @@ Concentration::Concentration(void)
 /*
     @brief:     khởi tạo cảm biến CO2 và khởi tạo cả 2 van khí
 */
-void Concentration::KhoiTaoCO2() {
+void Concentration::KhoiTaoCO2(const uint16_t u16SizeEEprom) {
 
   // khởi tạo cảm biến CO2
   if (IRCO2::init() != IRCO2_OK) {
     Serial.printf("init IRCO2 failed\n");
   }
-
   nongDoThucCO2 = this->LayGiaTriTuCamBien();
 
   HRTOnOffPin::init();
-  PID::setPIDparamters(CO2_KP, CO2_KI, CO2_KD);
-  PID::setWindup(CO2_WIN_MIN, CO2_WIN_MAX, CO2_KW);
-  PID::setOutput(CO2_OUT_MIN, CO2_OUT_MAX);
-  PID::setSampleTime(CO2_SAMPLE_TIME);
+  khoiTaoEEpprom(u16SizeEEprom);
 
   this->TatDieuKhienCO2();
   //khởi tạo task tính toán thời gian điều khiển van khí
@@ -34,11 +30,23 @@ void Concentration::KhoiTaoCO2() {
   delay(1000);
 }
 
+void Concentration::vSuspend() {
+  if (taskTinhToan) {
+    vTaskSuspend(taskTinhToan);
+  }
+}
+void Concentration::vResume() {
+  if (taskTinhToan) {
+    vTaskResume(taskTinhToan);
+  }
+}
+
 //* cài giá trị setpoint cho CO2
 void Concentration::CaiNongDoCO2(float giaTriDat) {
   // giới hạn điều khiển từ 0 đến 20%
   if (0.0f <= giaTriDat && giaTriDat <= 20.0f) {
     this->nongDoDat = giaTriDat;
+    vResetPID();
   }
 }
 
@@ -52,12 +60,14 @@ bool Concentration::LayTrangThaiVan() {
 }
 void Concentration::BatDieuKhienCO2() {
   this->coChayBoDieuKhienCO2 = BAT_CO2;
+  vResetPID();
+
   step = 1;
 }
 void Concentration::TatDieuKhienCO2() {
   this->coChayBoDieuKhienCO2 = TAT_CO2;
-  step = 0;
   this->turnOffPin();
+  step = 0;
 }
 void Concentration::SetEventDOOR() {
   if (coChayBoDieuKhienCO2 == BAT_CO2) {
@@ -73,8 +83,8 @@ void Concentration::ResetEventDOOR() {
 
 void Concentration::taskTinhToanCO2(void* ptr) {
   Concentration* pClass = static_cast<Concentration*>(ptr);
+  constexpr uint16_t u16CYCLE = CO2_SAMPLE_TIME / 1000;
   TickType_t xLastWakeTime;
-  const TickType_t xFrequency = 10;
   xLastWakeTime = xTaskGetTickCount();
   float SaiSo = 0;
   int i = 0;
@@ -87,10 +97,12 @@ void Concentration::taskTinhToanCO2(void* ptr) {
       i = 0;
       break;
     case 1:
-      if (i >= (CO2_SAMPLE_TIME / 1000) && (pClass->nongDoThucCO2 >= -0.5f && pClass->nongDoThucCO2 <= 30.0f)) {
+      if (i >= u16CYCLE && (pClass->nongDoThucCO2 >= -0.5f && pClass->nongDoThucCO2 <= 30.0f)) {
         SaiSo = pClass->nongDoDat - pClass->nongDoThucCO2;
         thoiGianMoVan = (uint64_t)pClass->getPIDcompute(SaiSo);
-        pClass->turnOnPinAndDelayOff(thoiGianMoVan);
+        if (concenTHOI_GIAN_MO_VAN_TOI_THIEU < thoiGianMoVan) {
+          pClass->turnOnPinAndDelayOff(thoiGianMoVan);
+        }
         i = 0;
       }
       break;
@@ -192,9 +204,50 @@ ControlParamaterCO2 Concentration::xGetControlParamater() {
   return xControlParamaterCO2;
 }
 void Concentration::vSetControlParamater(ControlParamaterCO2 xCtrParamter) {
-  if (strncmp(userEEPROM_CONFIRM_DATA_STRING, xCtrParamter.pcConfim, strlen(userEEPROM_CONFIRM_DATA_STRING) != 0)) {
-    return;
-  }
   this->xControlParamaterCO2 = xCtrParamter;
+  strncpy(xControlParamaterCO2.pcConfim, userEEPROM_CONFIRM_DATA_STRING, co2EEPROM_LENGTH_CONFRIM);
   vSetParam(xControlParamaterCO2.xPID);
+  LuuDuwLieuvaoEEprom();
+}
+
+void Concentration::khoiTaoEEpprom(const uint16_t u16SizeEEprom) {
+  if (!EEPROMClass::begin(u16SizeEEprom)) {
+    Serial.printf("%s Failed khoiTaoEEPROM\n", __FILE__);
+    Serial.println("Restarting...");
+    delay(1000);
+    ESP.restart();
+  }
+  EEPROMClass::readBytes(0, (uint8_t*)&xControlParamaterCO2, sizeof(xControlParamaterCO2));
+  delay(10);
+  if (strncmp(userEEPROM_CONFIRM_DATA_STRING, xControlParamaterCO2.pcConfim, strlen(userEEPROM_CONFIRM_DATA_STRING)) != 0) {
+    Serial.printf("init control CO2\n");
+    ControlParamaterCO2 xControlParamaterCO2 = userCO2_DEFAUT_CONTROL_PARAMETER();
+    this->xControlParamaterCO2 = xControlParamaterCO2;
+    EEPROMClass::writeBytes(0, (uint8_t*)(&xControlParamaterCO2), sizeof(xControlParamaterCO2));
+    EEPROMClass::commit();
+    delay(10);
+  }
+  vSetParam(xControlParamaterCO2.xPID);
+  Serial.printf("P%f, I%f, D%f, Ia%f, Ii%f, Oa%f, Oi%d",
+    xControlParamaterCO2.xPID.Kp,         // P%f
+    xControlParamaterCO2.xPID.Ki,         // I%f
+    xControlParamaterCO2.xPID.Kd,         // D%f  (như bạn đã bắt đầu)
+    xControlParamaterCO2.xPID.WindupMax,  // Ia%f (Giả định "Ia" là Integral Anti-windup Max)
+    xControlParamaterCO2.xPID.WindupMin,  // Ii%f (Giả định "Ii" là Integral Anti-windup Min)
+    xControlParamaterCO2.xPID.OutMax,     // Oa%f (Giả định "Oa" là Output Max)
+    xControlParamaterCO2.xPID.OutMin     // Oi%f (Giả định "Oi" là Output Min)
+  );
+}
+void Concentration::LayDuLieuTuEEprom() {
+  EEPROMClass::readBytes(0, (uint8_t*)(&xControlParamaterCO2), sizeof(xControlParamaterCO2));
+}
+void Concentration::LuuDuwLieuvaoEEprom() {
+  EEPROMClass::writeBytes(0, (uint8_t*)(&xControlParamaterCO2), sizeof(xControlParamaterCO2));
+  EEPROMClass::commit();
+}
+
+void Concentration::LayDuLieuLuuTru(ControlParamaterCO2* pxControlParamaterCO2) {
+  if (pxControlParamaterCO2) {
+    EEPROMClass::readBytes(0, (uint8_t*)(&pxControlParamaterCO2), sizeof(pxControlParamaterCO2));
+  }
 }

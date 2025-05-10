@@ -11,20 +11,9 @@
 #include "06_SenSorCO2.h"
 #include "OnOffHighResolutionTimer.h"
 #include "08_PID.h"
+#include <EEPROM.h>
 
-#define SETPONIT_CO2 5
-#define CO2_KP 0
-#define CO2_KI 0
-#define CO2_KD 0
-#define CO2_KW 0  //0.05
-#define CO2_OUT_MAX 0
-#define CO2_OUT_MIN 0
-#define CO2_WIN_MAX 0
-#define CO2_WIN_MIN 0
 #define CO2_SAMPLE_TIME 10000
-
-// #define debug
-#define TU_CO2_CO_QUAT
 
 #define TAT_CO2 false                           // trạng thái TẮT điều khiển CO2
 #define BAT_CO2 true                            //trạng thái cho phép điều khiển CO2
@@ -35,66 +24,79 @@
 #define VUOT_NGUONG_GIA_TRI_DO_CAM_BIEN -3.0f
 //* giá trị báo lỗi giao tiếp. Tự quy định
 #define LOI_GIAO_TIEP 999.0f
-//* giá trị sai số mong muốn của bộ điều khiển 
-#define SAI_SO_MONG_MUON 0.1f
 
-#define THOI_GIAN_MO_VAN_TOI_THIEU 10.0f
+#define co2EEPROM_SIZE 100
+#define co2EEPROM_LENGTH_CONFRIM 8
+
+#define concenTHOI_GIAN_MO_VAN_TOI_THIEU 10.0f
 
 typedef struct {
   PIDParam_t xPID;
-  char pcConfim[8];
+  char pcConfim[co2EEPROM_LENGTH_CONFRIM];
 }ControlParamaterCO2;
 
-class Concentration : public IRCO2, public HRTOnOffPin, public PID {
+class Concentration : public IRCO2, public HRTOnOffPin, public PID, public EEPROMClass {
 public:
 
-  Concentration(void);
+  Concentration(const char* name = "CO2Parameter");
+  ~Concentration() { LuuDuwLieuvaoEEprom(); }
 
-    void KhoiTaoCO2();
+  // điều khiển 
+  void KhoiTaoCO2(const uint16_t u16SizeEEprom = co2EEPROM_SIZE);
+  void BatDieuKhienCO2();
+  void TatDieuKhienCO2();
+  void vSuspend();
+  void vResume();
+  void SetEventDOOR();
+  void ResetEventDOOR();
 
-    void CaiNongDoCO2(float giaTriDat = -0.5);//
-    
-    float LayNongDoDatCO2();
-    float LayNongDoCO2Thuc();//
-    uint32_t LayThoiGianKichVan();//
-    bool LayTrangThaiVan();
+  // lưu trữ 
+  void LayDuLieuLuuTru(ControlParamaterCO2* pxControlParamaterCO2);
 
-    void BatDieuKhienCO2();//
-    void TatDieuKhienCO2();//
-    void SetEventDOOR();
-    void ResetEventDOOR();
-    
-    // void logDEBUG();
-    
-    void KhoiDongLaiCamBien();
-    IRCO2_StatusTydef XoaToanBoGiaTriCalib();
-    IRCO2_StatusTydef CalibGiaTriThuc(float giaTriChuan);
-    IRCO2_StatusTydef CalibDiem0(float giaTri0Chuan);
-    void CalibApSuat(uint32_t thoiGianMoVan);
+  // giải thuật
+  void CaiNongDoCO2(float giaTriDat = -0.5);
+  void vSetControlParamater(ControlParamaterCO2 );
 
-    ControlParamaterCO2 xGetControlParamater();
-    void vSetControlParamater(ControlParamaterCO2);
+  // cảm biến
+  float LayNongDoDatCO2();
+  float LayNongDoCO2Thuc();//
+  uint32_t LayThoiGianKichVan();//
+  bool LayTrangThaiVan();
+  void KhoiDongLaiCamBien();
+  IRCO2_StatusTydef XoaToanBoGiaTriCalib();
+  IRCO2_StatusTydef CalibGiaTriThuc(float giaTriChuan);
+  IRCO2_StatusTydef CalibDiem0(float giaTri0Chuan);
+
+  // cơ cấu chấp hành 
+  void CalibApSuat(uint32_t thoiGianMoVan);
+
+  // lấy thông số 
+  ControlParamaterCO2 xGetControlParamater();
 
 private:
+  // điều khiển 
+  bool coChayBoDieuKhienCO2;
+  uint8_t step = 0;
+  uint32_t preCloseDoor = 0;
+  TaskHandle_t taskTinhToan;
+  static void taskTinhToanCO2(void*);
+  void khoiTaoEEpprom(const uint16_t u16SizeEEprom = co2EEPROM_SIZE);
+
+  // lưu trữ 
+  void LayDuLieuTuEEprom();
+  void LuuDuwLieuvaoEEprom();
+
+  // giải thuật
+  float nongDoDat;
+  float nongDoThucCO2;
+  float nongDoLocCO2;
   ControlParamaterCO2 xControlParamaterCO2;
-  
+
+  // cảm biến
+  float thoiGianMoVan;
   float LayGiaTriTuCamBien();
-    float nongDoDat;
-    uint32_t thoiGianLayMau;
-    float nongDoThucCO2;
-    float nongDoLocCO2;
-    float thoiGianMoVan;
-    float ketQuaDocCamBien;
-    uint16_t thoiGianCho = 0; // đếm thời gian lấy mẫu, đơn vị 1s 
-    uint8_t step = 0;
-    uint32_t preCloseDoor = 0;
 
-    // float saiSo, saiSoTruocDo;
-    bool coChayBoDieuKhienCO2;
-    TaskHandle_t taskTinhToan;
-    TimerHandle_t TimerLayMauCO2;
-    static void taskTinhToanCO2(void*);
-
+  // cơ cấu chấp hành 
 };
 
 

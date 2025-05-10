@@ -1,20 +1,45 @@
 #include "07_Heater.h"
 
-HEATER::HEATER()
-  : PID(), triac((gpio_num_t)TRIAC4_PIN) {
-  xControlParamaterTEMP = userTEMP_DEFAUT_CONTROL_PARAMETER();
-  vSetParam(xControlParamaterTEMP.xPID);
+HEATER::HEATER(const char * name)
+  : PID(), triac((gpio_num_t)TRIAC4_PIN), EEPROMClass(name) {
 }
 
-void HEATER::KhoiTao(void) {
+void HEATER::KhoiTao(const uint16_t u16SizeEEprom) {
+  if (userCHECK_FLAG(u8SysFlagGroup, heaterFLAG_INITED)) {
+    Serial.printf("%s đã khởi tạo rồi\n", __FILE__);
+    return;
+  }
+  userSET_FLAG(u8SysFlagGroup, heaterFLAG_INITED);
+
   KhoiTaoCamBien();
-  KhoiTaoThongSoPID();
+  userSET_FLAG(u8SysFlagGroup, heaterFLAG_INIT_SENSOR);
+
   KhoiTaoTriac();
-  xTaskCreate(TaskDieuKhienNhiet, "tính Nhiệt", 4096, (void*)this, (configMAX_PRIORITIES - 3), &taskHandleDieuKhienNhiet);
+  userSET_FLAG(u8SysFlagGroup, heaterFLAG_INTI_ACTUATOR);
+
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW);
+
+  khoiTaoEEpprom();
+  userSET_FLAG(u8SysFlagGroup, heaterFLAG_INIT_EEPROM);
+
+  xTaskCreate(TaskDieuKhienNhiet, "TempCalcu", 4096, (void*)this, (configMAX_PRIORITIES - 3), &taskHandleDieuKhienNhiet);
+}
+
+void HEATER::vSuspend() {
+  if (taskHandleDieuKhienNhiet) {
+    vTaskSuspend(taskHandleDieuKhienNhiet);
+  }
+}
+void HEATER::vResume(){
+  if (taskHandleDieuKhienNhiet) {
+    vTaskResume(taskHandleDieuKhienNhiet);
+  }
 }
 
 void HEATER::CaiDatNhietDo(float setpoint) {
   NhietDoCaiDat = setpoint;
+  vResetPID();
 }
 void HEATER::CaiGiaTriOfset(float calibOffset) {
   HeSoCalib = calibOffset;
@@ -24,12 +49,12 @@ void HEATER::CaiGiaTriOfset(float calibOffset) {
 float HEATER::LayNhietDoLoc(void) {
   return NhietDoLocBuong;
 }
-float HEATER::LayGiaTriPT100Ofset(void) {
-  return HeSoCalib;
-}
 
 void HEATER::BatDieuKhienNhietDo(void) {
-  TrangThaiDieuKhienNhiet = HEATER_ON;
+  userSET_FLAG(u8SysFlagGroup, heaterFLAG_ON_OFF);
+  digitalWrite(RELAY_PIN, HIGH);
+  delay(100); // chờ cho tiếp điểm relay đóng và có tín hiệu ACDET 
+
   if (NhietDoCaiDat > userSETPOINT_TEMP_MAX) {
     u16MaxThoiGianBatVanh = OUT_MAX_POWER;
     u16MaxThoiGianBatCua = OUT_MAX_POWER;
@@ -43,13 +68,16 @@ void HEATER::BatDieuKhienNhietDo(void) {
   u16ThoiGianBatVanh = u16MaxThoiGianBatVanh;
   u16ThoiGianBatCua = u16MaxThoiGianBatCua;
   u16ThoiGianBatBuong = 0;
+  vResetPID();
   TurnOnTriac();
 
-  step = 1;
+  preOpenDoor = millis();
+  step = eWAIT_BEFORE_RUN;
 }
 void HEATER::TatDieuKhienNhietDo(void) {
-  TrangThaiDieuKhienNhiet = HEATER_OFF;
-  step = 0;
+  userRESET_FLAG(u8SysFlagGroup, heaterFLAG_ON_OFF);
+
+  digitalWrite(RELAY_PIN, LOW);
   TurnOffTriac();
   triacBuong.turnOffPin();
   triacCua.turnOffPin();
@@ -57,21 +85,20 @@ void HEATER::TatDieuKhienNhietDo(void) {
   u16ThoiGianBatBuong = 0;
   u16ThoiGianBatVanh = 0;
   u16ThoiGianBatCua = 0;
+
+  step = eOFF;
 }
 void HEATER::SetEventDOOR() {
-  if (TrangThaiDieuKhienNhiet == HEATER_ON) {
-    step = 2;
+  if (userCHECK_FLAG(u8SysFlagGroup, heaterFLAG_ON_OFF)) {
+    step = eOPEN_DOOR;
     preOpenDoor = millis();
   }
 }
 void HEATER::ResetEventDOOR() {
-  if (TrangThaiDieuKhienNhiet == HEATER_ON) {
-    step = 3;
-    preCloseDoor = millis();
+  if (userCHECK_FLAG(u8SysFlagGroup, heaterFLAG_ON_OFF)) {
+    step = eCLOSE_DOOR;
+    preOpenDoor = millis();
   }
-}
-
-void HEATER::CalibNhietDoPT100(float, float) {
 }
 
 void HEATER::ResetCamBienNhiet(void) {
@@ -122,11 +149,10 @@ ControlParamaterTEMP HEATER::xGetControlParamater() {
   return xControlParamaterTEMP;
 }
 void HEATER::vSetControlParamater(ControlParamaterTEMP xCtrParamter) {
-  if (strncmp(userEEPROM_CONFIRM_DATA_STRING, xCtrParamter.pcConfim, strlen(userEEPROM_CONFIRM_DATA_STRING) != 0)) {
-    return;
-  }
   this->xControlParamaterTEMP = xCtrParamter;
+  strncpy(xControlParamaterTEMP.pcConfim, userEEPROM_CONFIRM_DATA_STRING, heaterEEPROM_LENGTH_CONFRIM);
   vSetParam(xControlParamaterTEMP.xPID);
+  LuuDuwLieuvaoEEprom();
 }
 
 // private
@@ -139,28 +165,30 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
   TickType_t xLastWakeTime;
   xLastWakeTime = xTaskGetTickCount();
   float saiSo = 0;
-  uint8_t chuKyTheoDoi = 0;  // đếm số lần số để trừ dần cửa và vành
+  uint8_t chuKyTheoDoi = 0;
 
   while (1) {
 
     pHeater->NhietDoLocBuong = pHeater->LocCamBienBuong.updateEstimate(pHeater->DocGiaTriCamBien(pHeater->PT100_buong)) + pHeater->HeSoCalib;
 
     switch (pHeater->step) {
-    case 0:  //tắt máy
+    case eOFF:
       pHeater->u16ThoiGianBatBuong = 0;
       pHeater->u16ThoiGianBatVanh = 0;
       pHeater->u16ThoiGianBatCua = 0;
-      // Serial.print(" - step 0 - ");
       break;
-
-    case 1:  // chạy máy bình thường
-      // tính toán
+    case eWAIT_BEFORE_RUN:
+      if (millis() - pHeater->preOpenDoor > 60000) {
+        pHeater->step = eRUN;
+      }
+      break;
+    case eRUN:
       saiSo = pHeater->NhietDoCaiDat - pHeater->NhietDoLocBuong;
       pHeater->u16ThoiGianBatBuong = (uint16_t)round(pHeater->getPIDcompute(saiSo));
       pHeater->u16ThoiGianBatBuong *= 10;  // chuyển số chu kì sang mS
 
       chuKyTheoDoi++;
-      if (chuKyTheoDoi >= 120) {  // 60 chu kỳ với delay 1s => theo dõi 60s
+      if (chuKyTheoDoi >= 120) {  // 120 chu kỳ với delay 1s => theo dõi 120s
         chuKyTheoDoi = 0;
         if (saiSo < -0.1) {
           pHeater->u16ThoiGianBatVanh -= 10;
@@ -185,37 +213,28 @@ void HEATER::TaskDieuKhienNhiet(void* ptr) {
           pHeater->u16ThoiGianBatCua = pHeater->u16MaxThoiGianBatCua;
         }
       }
-      // Serial.print(" - step 1 - ");
       break;
 
-    case 2:                                       // chạy mở cửa
+    case eOPEN_DOOR:                                       
       if (millis() - pHeater->preOpenDoor >= 30 * 1000) {  // mở cửa lâu hơn 30s
         pHeater->triacBuong.turnOffPin();
         pHeater->u16ThoiGianBatBuong = 0;
-        //tắt quạt
         pHeater->TurnOffTriac();
       }
-      // kích bật công suất cao cho cửa và vành
       pHeater->u16ThoiGianBatCua = OUT_MAX_POWER;
       pHeater->u16ThoiGianBatVanh = OUT_MAX_POWER;
-      // Serial.printf(" - step 2 %ld %ld - ", millis(), pHeater->preOpenDoor);
       break;
 
-    case 3: // chạy đóng cửa
-      if (millis() - pHeater->preCloseDoor >= 60 * 1000) {  // theo dõi nhiệt 30s trước khi quay lại tính toán
-        pHeater->u16ThoiGianBatCua = pHeater->u16MaxThoiGianBatCua;
-        pHeater->u16ThoiGianBatVanh = pHeater->u16MaxThoiGianBatCua;
-        pHeater->step = 1;
+    case eCLOSE_DOOR: 
+      if (millis() - pHeater->preOpenDoor >= 60 * 1000) {  // theo dõi nhiệt 60s trước khi quay lại tính toán
+        pHeater->step = eRUN;
       }
       else {
         pHeater->TurnOnTriac();
         pHeater->KhoiDongQuat(5);
-        // kích bật công xuất cao cho cửa và vành
         pHeater->u16ThoiGianBatCua = OUT_MAX_POWER;
         pHeater->u16ThoiGianBatVanh = OUT_MAX_POWER;
-        // Serial.print(" - đợi - ");
       }
-      // Serial.printf(" - step 3 %ld %ld - ", millis(), pHeater->preCloseDoor);
       break;
     default:
       Serial.printf("case error. Line %d, value %d", __LINE__, pHeater->step);
@@ -266,12 +285,6 @@ void HEATER::TaskNgatACDET(void* ptr) {
   }
 }
 
-void HEATER::KhoiTaoThongSoPID(void) {
-  setPIDparamters(KP, KI, KD);
-  setWindup(WIN_MIN, WIN_MAX, KW);
-  setOutput(OUT_MIN, OUT_MAX);
-  setSampleTime(SAMPLE_TIME);
-}
 void HEATER::KhoiTaoCamBien() {
   pinMode(PT100_CS1_PIN, OUTPUT);
   pinMode(PT100_CS2_PIN, OUTPUT);
@@ -318,3 +331,49 @@ void HEATER::KhoiTaoTriac(void) {
   xTaskCreate(TaskNgatACDET, "ngatACDET", 2048, this, (configMAX_PRIORITIES - 2), &taskHandleNgatACDET);
   attachInterruptArg(ACDET_PIN, interupt, this, FALLING);
 }
+
+void HEATER::khoiTaoEEpprom(const uint16_t u16SizeEEprom) {
+  if (!EEPROMClass::begin(u16SizeEEprom)) {
+    Serial.printf("%s Failed khoiTaoEEPROM\n", __FILE__);
+    Serial.println("Restarting...");
+    delay(1000);
+    ESP.restart();
+  }
+  EEPROMClass::readBytes(0, (uint8_t*)&xControlParamaterTEMP, sizeof(xControlParamaterTEMP));
+  delay(10);
+  if (strncmp(userEEPROM_CONFIRM_DATA_STRING, xControlParamaterTEMP.pcConfim, strlen(userEEPROM_CONFIRM_DATA_STRING)) != 0) {
+    Serial.printf("init control temprature\n");
+    ControlParamaterTEMP xControlParamaterTEMP = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    this->xControlParamaterTEMP = xControlParamaterTEMP;
+    EEPROMClass::writeBytes(0, (uint8_t*)(&xControlParamaterTEMP), sizeof(xControlParamaterTEMP));
+    EEPROMClass::commit();
+    delay(10);
+  }
+  vSetParam(xControlParamaterTEMP.xPID);
+  Serial.printf("P%f, I%f, D%f, Ia%f, Ii%f, Oa%f, Oi%f, Pe%u, Do%u",
+    xControlParamaterTEMP.xPID.Kp,         // P%f
+    xControlParamaterTEMP.xPID.Ki,         // I%f
+    xControlParamaterTEMP.xPID.Kd,         // D%f  (như bạn đã bắt đầu)
+    xControlParamaterTEMP.xPID.WindupMax,  // Ia%f (Giả định "Ia" là Integral Anti-windup Max)
+    xControlParamaterTEMP.xPID.WindupMin,  // Ii%f (Giả định "Ii" là Integral Anti-windup Min)
+    xControlParamaterTEMP.xPID.OutMax,     // Oa%f (Giả định "Oa" là Output Max)
+    xControlParamaterTEMP.xPID.OutMin,     // Oi%f (Giả định "Oi" là Output Min)
+    xControlParamaterTEMP.Perimter,        // Pe%u
+    xControlParamaterTEMP.Door             // Do%u
+  );
+}
+void HEATER::LayDuLieuTuEEprom(){
+  EEPROMClass::readBytes(0, (uint8_t*)(&xControlParamaterTEMP), sizeof(xControlParamaterTEMP));
+}
+void HEATER::LuuDuwLieuvaoEEprom(){
+  EEPROMClass::writeBytes(0, (uint8_t*)(&xControlParamaterTEMP), sizeof(xControlParamaterTEMP));
+  EEPROMClass::commit();
+  delay(10);
+}
+
+void HEATER::LayDuLieuLuuTru(ControlParamaterTEMP* pxControlParamaterTEMP) {
+  if (pxControlParamaterTEMP) {
+    EEPROMClass::readBytes(0, (uint8_t*)(&pxControlParamaterTEMP), sizeof(pxControlParamaterTEMP));
+  }
+}
+

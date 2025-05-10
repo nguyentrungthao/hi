@@ -163,6 +163,14 @@ void PID::vSetParam(PIDParam_t xPIDParam) {
     this->xPIDParam = xPIDParam;
 }
 
+void PID::vResetPID() {
+    xPIDCalcu.PTerm = 0;
+    xPIDCalcu.ITerm = 0;
+    xPIDCalcu.DTerm = 0;
+    xPIDCalcu.feedBackWindup = 0;
+    xPIDCalcu.Output = 0;
+}
+
 float PID::getWindupMax()
 {
     return this->xPIDParam.WindupMax;

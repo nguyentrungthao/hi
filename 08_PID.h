@@ -43,6 +43,8 @@ public:
   PIDCalcu_t xGetCalcu() const;
   void vSetParam(PIDParam_t xPIDParam);
 
+  void vResetPID();
+
   float getPIDcompute(float);
   float getWindupMax();
   float getWindupMin();

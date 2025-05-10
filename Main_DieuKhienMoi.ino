@@ -1,19 +1,26 @@
 // Đường dẫn SDKconfig thay đổi độ ưu tiên task Timer lên 20
 // C:\Users\minht\AppData\Local\Arduino15\packages\esp32\tools\esp32-arduino-libs\idf-release_v5.1-33fbade6\esp32s3\qio_qspi\include
-#include <iostream>
+
+//standard
+#include <stdio.h>
 #include <vector>
 #include <iomanip>
 #include <ctime>
 #include <chrono>
 #include <type_traits>
-#include <TimeLib.h>
-#include <Wire.h>
+
+//Arduino 
 #include <Arduino.h>
+#include <Wire.h>
+
+//ESP IDF 
 #include "esp_heap_caps.h"
 #include <esp_task_wdt.h>
 #include "freertos/FreeRTOSConfig.h"
 #include "driver/temperature_sensor.h"
+#include <TimeLib.h>
 
+//user
 #include "FileHandle.h"
 #include "userdef.h"
 #include "RTClib.h"
@@ -28,7 +35,6 @@
 #include <ArduinoJson.h>
 #include <SD_MMC.h>
 #include <SPI.h>
-#include "EEPROM.h"
 
 #include "09_concentration.h"
 #include "07_Heater.h"
@@ -71,7 +77,6 @@ DOOR _Door;
 
 FileHandle UsbFile(USB_MSC_HOST);
 FileHandle SDMMCFile(SD_MMC);
-EEPROMClass xControlParamater("CtrParam");
 
 
 BaseProgram_t BaseProgram;
@@ -133,10 +138,9 @@ TimerHandle_t xTimerPIDLog;
 // các hàm khởi tạo và hỗ trợ khởi tạo
 void khoiTaoDWIN();
 void khoiTaoSDCARD();
-void khoiTaoEEPROM(ControlParamaterTEMP& xControlParamaterTEMP, ControlParamaterCO2& xControlParamaterCO2);
 void khoiTaoRTC();
-void khoiTaoHeater(PIDParam_t);
-void khoiTaoCO2(PIDParam_t);
+void khoiTaoHeater();
+void khoiTaoCO2();
 void khoiTaoCua();
 void listFilesInProgramDirectory(void);
 void TaoCacThuMucHeThongTrenSD(void);
@@ -168,17 +172,11 @@ void TaskMain(void*);
 void TaskMonitorDebug(void*);
 void TaskHardWareTesting(void*);
 
-
-
-
 // đây là nhánh MASTER
 void setup() {
   // esp_task_wdt_deinit();
   Serial.begin(115200);
   Wire.begin(10, 11);
-
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW);
 
   KetNoiWiFiQueue = xQueueCreate(2, sizeof(FrameDataQueue_t));
   QueueUpdateFirmware = xQueueCreate(2, sizeof(MethodUpdates_t));
@@ -196,15 +194,10 @@ void setup() {
   khoiTaoSDCARD();
   delay(10);
 
-  ControlParamaterTEMP xControlParamaterTEMP;
-  ControlParamaterCO2 xControlParamaterCO2;
-  khoiTaoEEPROM(xControlParamaterTEMP, xControlParamaterCO2);
+  khoiTaoHeater();
   delay(10);
 
-  khoiTaoHeater(xControlParamaterTEMP);
-  delay(10);
-
-  khoiTaoCO2(xControlParamaterCO2);
+  khoiTaoCO2();
   delay(10);
 
   delay(2000);
@@ -376,42 +369,10 @@ void khoiTaoSDCARD() {
     }
   }
 }
-void khoiTaoEEPROM(ControlParamaterTEMP& xControlParamaterTEMP, ControlParamaterCO2& xControlParamaterCO2) {
-  if (!xControlParamater.begin(100)) {
-    Serial.println("Failed khoiTaoEEPROM");
-    Serial.println("Restarting...");
-    delay(1000);
-    ESP.restart();
-  }
-  ControlParamaterTEMP xTempParam = {};
-  xControlParamater.readBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&xTempParam), sizeof(xTempParam));
-  if (strncmp(userEEPROM_CONFIRM_DATA_STRING, xTempParam.pcConfim, strlen(userEEPROM_CONFIRM_DATA_STRING)) != 0) {
-    Serial.printf("init control temprature\n");
-    ControlParamaterTEMP xTempParam = userTEMP_DEFAUT_CONTROL_PARAMETER();
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&xTempParam), sizeof(xTempParam));
-    xControlParamater.commit();
-    delay(10);
-  }
-  xControlParamaterTEMP = xTempParam;
-
-  ControlParamaterCO2 xCO2Param = {};
-  xControlParamater.readBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&xCO2Param), sizeof(xCO2Param));
-  if (strncmp(userEEPROM_CONFIRM_DATA_STRING, xCO2Param.pcConfim, strlen(userEEPROM_CONFIRM_DATA_STRING)) != 0) {
-    Serial.printf("init control temprature\n");
-    ControlParamaterCO2 xCO2Param = userCO2_DEFAUT_CONTROL_PARAMETER();
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&xCO2Param), sizeof(xCO2Param));
-    xControlParamater.commit();
-    delay(10);
-  }
-  xControlParamaterCO2 = xCO2Param;
-}
-void khoiTaoHeater(ControlParamaterTEMP xParam) {
+void khoiTaoHeater() {
   _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
   _Heater.KhoiTao();
-  _Heater.vSetControlParamater(xParam);
   BaseProgram.temperature = _Heater.LayNhietDoLoc();
-  // bật quạt
-  _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
   _Heater.addCallBackWritePinTriacBuong(triggeONICONNhiet, NULL);  //trigger on ICON nhiệt
   _Heater.addCallBackTimeOutTriacBuong(triggeOFFICONNhiet, NULL);  //trigger off ICON nhiệt
   if (recvHMIQueue == NULL) {
@@ -425,9 +386,8 @@ void khoiTaoHeater(ControlParamaterTEMP xParam) {
   data.event = eHMI_EVENT_WARNING;
   xQueueSend(recvHMIQueue, &data, 10);
 }
-void khoiTaoCO2(ControlParamaterCO2 xParam) {
+void khoiTaoCO2() {
   _CO2.KhoiTaoCO2();
-  _CO2.vSetControlParamater(xParam);
   BaseProgram.CO2 = _CO2.LayNongDoCO2Thuc();
   _CO2.addCallBackWritePin(triggeONICONCO2, NULL);  //trigger on ICON nhiệt
   _CO2.addCallBackTimeout(triggeOFFICONCO2, NULL);  //trigger off ICON nhiệt
@@ -538,8 +498,6 @@ void callBackCloseDoor(void* ptr) {
 void BatMay(const char* funcCall) {
   static FrameDataQueue_t data;
   Serial.printf("\t\t\tBat may: call from %s\n", funcCall ? funcCall : "NULL");
-  digitalWrite(RELAY_PIN, HIGH);
-  delay(100);
   data.event = eHMI_EVENT_WARNING;
   if (recvHMIQueue == NULL) {
     Serial.printf("\t\t\tQueue recvHMIQueue is NULL => Return\n");
@@ -558,7 +516,6 @@ void BatMay(const char* funcCall) {
 void TatMay(const char* funcCall) {
   Serial.printf("\t\t\tTat may: call from %s\n", funcCall ? funcCall : "NULL");
   _Heater.TatDieuKhienNhietDo();
-  digitalWrite(RELAY_PIN, LOW);
   _CO2.TatDieuKhienCO2();
   // SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
 
@@ -1175,211 +1132,158 @@ void hmiSetEvent(const hmi_set_event_t& event) {
     break;
   case eHMI_SET_PARAMTER_KP_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.xPID.Kp = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
   case eHMI_SET_PARAMTER_KI_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.xPID.Ki = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_KD_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.xPID.Kd = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_KW_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.xPID.Kw = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_IMAX_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.xPID.WindupMax = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_IMIN_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.xPID.WindupMin = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_OUTMAX_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.xPID.OutMax = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_OUTMIN_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.xPID.OutMin = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
   case eHMI_SET_PARAMTER_PERIMETER_TEMP:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.Perimter = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
   case  eHMI_SET_PARAMTER_DOOR_TEMP_PID:
   {
-    ControlParamaterTEMP pxParamter = userTEMP_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterTEMP pxParamter;
     pxParamter = _Heater.xGetControlParamater();
     pxParamter.Door = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_TEMP_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _Heater.vSetControlParamater(pxParamter);
   }
   break;
   case eHMI_SET_PARAMTER_KP_CO2_PID:
   {
-    ControlParamaterCO2 pxParamter = userCO2_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterCO2 pxParamter;
     pxParamter.xPID.Kp = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _CO2.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_KI_CO2_PID:
   {
-    ControlParamaterCO2 pxParamter = userCO2_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterCO2 pxParamter;
     pxParamter = _CO2.xGetControlParamater();
     pxParamter.xPID.Ki = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _CO2.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_KD_CO2_PID:
   {
-    ControlParamaterCO2 pxParamter = userCO2_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterCO2 pxParamter;
     pxParamter = _CO2.xGetControlParamater();
     pxParamter.xPID.Kd = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _CO2.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_KW_CO2_PID:
   {
-    ControlParamaterCO2 pxParamter = userCO2_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterCO2 pxParamter;
     pxParamter = _CO2.xGetControlParamater();
     pxParamter.xPID.Kw = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _CO2.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_IMAX_CO2_PID:
   {
-    ControlParamaterCO2 pxParamter = userCO2_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterCO2 pxParamter;
     pxParamter = _CO2.xGetControlParamater();
     pxParamter.xPID.WindupMax = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _CO2.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_IMIN_CO2_PID:
   {
-    ControlParamaterCO2 pxParamter = userCO2_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterCO2 pxParamter;
     pxParamter = _CO2.xGetControlParamater();
     pxParamter.xPID.WindupMin = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _CO2.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_OUTMAX_CO2_PID:
   {
-    ControlParamaterCO2 pxParamter = userCO2_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterCO2 pxParamter;
     pxParamter = _CO2.xGetControlParamater();
     pxParamter.xPID.OutMax = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _CO2.vSetControlParamater(pxParamter);
   }
   break;
 
   case eHMI_SET_PARAMTER_OUTMIN_CO2_PID:
   {
-    ControlParamaterCO2 pxParamter = userCO2_DEFAUT_CONTROL_PARAMETER();
+    ControlParamaterCO2 pxParamter;
     pxParamter = _CO2.xGetControlParamater();
     pxParamter.xPID.OutMin = (float)event.f_value;
-    xControlParamater.writeBytes(userEEPROM_PARAMETER_CO2_ADDRESS, (uint8_t*)(&pxParamter), sizeof(pxParamter));
-    xControlParamater.commit();
-    delay(10);
     _CO2.vSetControlParamater(pxParamter);
   }
   break;
