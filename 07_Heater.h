@@ -1,9 +1,16 @@
+/**
+ * @file 07_Heater.h
+ * @author your name (you@domain.com)
+ * @brief 
+ * @version 0.1
+ * @date 2025-05-12
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #ifndef _HEATER_H_
 #define _HEATER_H_
-
-#ifndef _CHE_DO_MO_CUA_
-#define _CHE_DO_MO_CUA_
-#endif
 
 #include <Arduino.h>
 #include <Adafruit_MAX31865.h>

@@ -39,7 +39,6 @@ void HEATER::vResume(){
 
 void HEATER::CaiDatNhietDo(float setpoint) {
   NhietDoCaiDat = setpoint;
-  vResetPID();
 }
 void HEATER::CaiGiaTriOfset(float calibOffset) {
   HeSoCalib = calibOffset;
@@ -53,7 +52,13 @@ float HEATER::LayNhietDoLoc(void) {
 void HEATER::BatDieuKhienNhietDo(void) {
   userSET_FLAG(u8SysFlagGroup, heaterFLAG_ON_OFF);
   digitalWrite(RELAY_PIN, HIGH);
-  delay(100); // chờ cho tiếp điểm relay đóng và có tín hiệu ACDET 
+  int8_t i8Try = 15;
+  do {
+    delay(10); // chờ cho tiếp điểm relay đóng và có tín hiệu ACDET 
+    if (CheckNguonCongSuat()) {
+      break;
+    }
+  } while (i8Try--);
 
   if (NhietDoCaiDat > userSETPOINT_TEMP_MAX) {
     u16MaxThoiGianBatVanh = OUT_MAX_POWER;
@@ -266,7 +271,7 @@ void HEATER::TaskNgatACDET(void* ptr) {
   HEATER* pHeater = (HEATER*)ptr;
   uint32_t notifyNum;
   while (1) {
-    if (xTaskNotifyWait(pdFALSE, pdTRUE, &notifyNum, pdMS_TO_TICKS(100)) == pdFALSE) {
+    if (xTaskNotifyWait(pdFALSE, pdTRUE, &notifyNum, pdMS_TO_TICKS(50)) == pdFALSE) {
       pHeater->isACDET = false;
       continue;
     }

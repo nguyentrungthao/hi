@@ -6,8 +6,8 @@
 #ifdef CODE_POST_GET_CU
 
 // #include "Config.h"      // Có define debug để bật/tắt các debug ra Serial.
-#include <Arduino.h>     // Để khai báo kiểu String
-#include <HTTPClient.h>  // Cho phép khai báo kiểu HTTPClient
+#include <Arduino.h>    // Để khai báo kiểu String
+#include <HTTPClient.h> // Cho phép khai báo kiểu HTTPClient
 
 #define HTTP_TIMEOUT 2000
 
@@ -15,10 +15,12 @@
 // #define POST_GET 1
 // #define DEBUG_POST_GET 1
 
-class POSTGET {
+class POSTGET
+{
 private:
   HTTPClient _http;
   String _ID;
+
 public:
   void CaiIDPostGet(String ID);
   bool POSTDuLieuBoard(String DuLieu);
@@ -29,7 +31,7 @@ public:
   uint32_t LayRTCTuServerIoTVision();
 };
 
-#else  // CODE_POST_GET_CU
+#else // CODE_POST_GET_CU
 
 // #include "Config.h"  // Có define debug để bật/tắt các debug ra Serial.
 #include "WiFiClient.h"
@@ -37,14 +39,14 @@ public:
 
 // #define DEBUG_POST_RESP 1
 
-
-typedef enum {
+typedef enum
+{
   HTTP_OVER_WIFI = 0,
   HTTP_OVER_ETH = 1,
 } http_stream_t;
 
-
-class POSTGET {
+class POSTGET
+{
 public:
   POSTGET(void);
 
@@ -63,6 +65,6 @@ private:
 
   http_stream_t stream;
 };
-#endif  //CODE_POST_GET_CU
+#endif // CODE_POST_GET_CU
 
-#endif  // _POSTGET_h
+#endif // _POSTGET_h

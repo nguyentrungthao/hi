@@ -7,9 +7,12 @@
             "compilerArgs": [],
             "intelliSenseMode": "",
             "includePath": [
-                "C:/Users/nguye/AppData/Local/Arduino15/packages/esp32/hardware/esp32/2.0.14/**",
-                "C:/Users/nguye/OneDrive/Documents/Arduino/libraries/**",
-                "C:\\Users\\nguye\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\**"
+                ".\\**",
+                "C:\\Users\\nguye\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\3.1.1\\cores\\esp32\\**",
+                "C:\\Users\\nguye\\OneDrive\\Documents\\Arduino\\libraries\\**",
+                "C:\\Users\\nguye\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\3.1.1\\libraries\\**",
+                "C:\\Users\\nguye\\AppData\\Local\\Arduino15\\packages\\esp32\\tools\\**",
+                "C:\\Users\\nguye\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\3.1.1\\variants\\**"
             ],
             "forcedInclude": [],
             "cStandard": "",

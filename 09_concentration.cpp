@@ -46,7 +46,6 @@ void Concentration::CaiNongDoCO2(float giaTriDat) {
   // giới hạn điều khiển từ 0 đến 20%
   if (0.0f <= giaTriDat && giaTriDat <= 20.0f) {
     this->nongDoDat = giaTriDat;
-    vResetPID();
   }
 }
 

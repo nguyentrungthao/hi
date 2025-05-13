@@ -91,6 +91,16 @@
 #define _KeyValuePage73_SetPID 0x26
 #define _KeyValuePage103_ExitPID 0x27
 
+#define _KeyValuePage78_calib1 0x28
+#define _KeyValuePage78_calib2 0x29
+#define _KeyValuePage78_calib3 0x2A
+#define _KeyValuePage78_CalibPerimeter 0x2B
+#define _KeyValuePage78_CalibDoor 0x2C
+
+#define _KeyValuePage102_calib1 0x2D
+#define _KeyValuePage102_calib2 0x2E
+#define _KeyValuePage102_calib3 0x2F
+
 #pragma region VP các nút  Segment
 
 #define _VPAddressSegmentSelectButton 0x5001
@@ -453,6 +463,22 @@
 
 #define _VPAddressPage103PremeterHeater 0xB311 // 5
 #define _VPAddressPage103DoorHeater 0xB316 // 5
+
+#define _VPAddressPage78_setpointCalib1 0xB31B
+#define _VPAddressPage78_setpointCalib2 0xB320
+#define _VPAddressPage78_setpointCalib3 0xB325
+#define _VPAddressPage78_OffsetCalib1 0xB32A
+#define _VPAddressPage78_OffsetCalib2 0xB32F
+#define _VPAddressPage78_OffsetCalib3 0xB334
+#define _VPAddressPage78_Peremeter 0xB339
+#define _VPAddressPage78_Door 0xB33E
+
+#define _VPAddressPage102_setpointCalib1 0xB343
+#define _VPAddressPage102_setpointCalib2 0xB348
+#define _VPAddressPage102_setpointCalib3 0xB34D
+#define _VPAddressPage102_OffsetCalib1 0xB352
+#define _VPAddressPage102_OffsetCalib2 0xB357
+#define _VPAddressPage102_OffsetCalib3 0xB35C
 
 #pragma region SP Address
 #define _SPAddressProgramNameText1 0xC000

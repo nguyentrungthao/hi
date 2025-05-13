@@ -2,7 +2,8 @@
 #include <math.h> // Để dùng fabsf
 
 // Cấu trúc lưu trữ các thông số và trạng thái của bộ điều khiển PID
-typedef struct {
+typedef struct
+{
     // Tham số PID do người dùng cung cấp
     float Kp; // Độ lợi tỉ lệ
     float Ki; // Độ lợi tích phân (Ki = Kp_sach / Ti_sach)
@@ -20,19 +21,20 @@ typedef struct {
     float out_max; // Giới hạn trên của đầu ra
 
     // Trạng thái nội bộ
-    float integral_term_state;     // Trạng thái của thành phần Tích phân (I-term output)
-    float prev_pv;                 // Giá trị biến quá trình ở bước trước
-    float prev_derivative_term;    // Giá trị thành phần Vi phân (D-term output) ở bước trước
+    float integral_term_state;  // Trạng thái của thành phần Tích phân (I-term output)
+    float prev_pv;              // Giá trị biến quá trình ở bước trước
+    float prev_derivative_term; // Giá trị thành phần Vi phân (D-term output) ở bước trước
 
-    float prev_unclamped_output;   // Tín hiệu điều khiển chưa bão hòa ở bước trước (cho anti-windup)
-    float prev_clamped_output;     // Tín hiệu điều khiển đã bão hòa ở bước trước (cho anti-windup)
+    float prev_unclamped_output; // Tín hiệu điều khiển chưa bão hòa ở bước trước (cho anti-windup)
+    float prev_clamped_output;   // Tín hiệu điều khiển đã bão hòa ở bước trước (cho anti-windup)
 
 } PID_Thermal_Controller;
 
 // Hàm khởi tạo bộ điều khiển PID
-void pid_thermal_init(PID_Thermal_Controller* pid,
-    float Kp, float Ki, float Kd, float Kw, float N_filter,
-    float dt, float out_min, float out_max) {
+void pid_thermal_init(PID_Thermal_Controller *pid,
+                      float Kp, float Ki, float Kd, float Kw, float N_filter,
+                      float dt, float out_min, float out_max)
+{
     pid->Kp = Kp;
     pid->Ki = Ki;
     pid->Kd = Kd;
@@ -52,7 +54,8 @@ void pid_thermal_init(PID_Thermal_Controller* pid,
 }
 
 // Hàm tính toán đầu ra PID
-float pid_thermal_compute(PID_Thermal_Controller* pid, float setpoint, float pv) {
+float pid_thermal_compute(PID_Thermal_Controller *pid, float setpoint, float pv)
+{
     float error;
     float p_term, i_term_current_contribution, d_term;
     float unclamped_output;
@@ -68,33 +71,38 @@ float pid_thermal_compute(PID_Thermal_Controller* pid, float setpoint, float pv)
     // Td_sach = Kd / Kp (nếu Kp != 0)
     // Tf_derivative = Td_sach / N_filter = (Kd / Kp) / N_filter
     float Td_book = 0.0f;
-    if (fabsf(pid->Kp) > 1e-6f) {
+    if (fabsf(pid->Kp) > 1e-6f)
+    {
         Td_book = pid->Kd / pid->Kp;
     }
 
     float Tf_derivative;
-    if (pid->N_filter > 0.0f && Td_book > 0.0f) {
+    if (pid->N_filter > 0.0f && Td_book > 0.0f)
+    {
         Tf_derivative = Td_book / pid->N_filter;
     }
-    else {
+    else
+    {
         // Nếu N hoặc Td_book không hợp lệ, dùng giá trị nhỏ để lọc nhanh hoặc không lọc
         // Hoặc có thể coi D-term = 0 nếu Td_book = 0
         Tf_derivative = pid->dt / 2.0f; // Giá trị nhỏ để ít lọc nhất nếu Td_book > 0
-        if (Td_book <= 1e-6f) { // Nếu Kd hoặc Kp là 0, Td_book sẽ là 0
+        if (Td_book <= 1e-6f)
+        {                         // Nếu Kd hoặc Kp là 0, Td_book sẽ là 0
             Tf_derivative = 1.0f; // giá trị bất kỳ > dt để không gây lỗi chia cho 0 bên dưới
         }
     }
 
-    if (Td_book > 1e-6f && pid->dt > 0.0f) { // Chỉ tính D-term nếu Kd (và Kp) có nghĩa
+    if (Td_book > 1e-6f && pid->dt > 0.0f)
+    { // Chỉ tính D-term nếu Kd (và Kp) có nghĩa
         // d_term = (Tf_d / (Tf_d + dt)) * prev_d_term + (Kd_user / (Tf_d + dt)) * (prev_pv - pv)
         d_term = (Tf_derivative / (Tf_derivative + pid->dt)) * pid->prev_derivative_term +
-            (pid->Kd / (Tf_derivative + pid->dt)) * (pid->prev_pv - pv);
+                 (pid->Kd / (Tf_derivative + pid->dt)) * (pid->prev_pv - pv);
     }
-    else {
+    else
+    {
         d_term = 0.0f;
     }
     pid->prev_derivative_term = d_term; // Lưu lại D-term cho lần tính sau của bộ lọc
-
 
     // 4. Tính thành phần Tích phân (Integral) với Anti-Windup (Back-Calculation theo Hình 3.3)
     // integral_term_state là đầu ra của khối 1/s (sau khi đã cộng dồn)
@@ -115,16 +123,17 @@ float pid_thermal_compute(PID_Thermal_Controller* pid, float setpoint, float pv)
     // if (pid->integral_term_state > i_term_max) pid->integral_term_state = i_term_max;
     // if (pid->integral_term_state < i_term_min) pid->integral_term_state = i_term_min;
 
-
     // 5. Tổng hợp tín hiệu điều khiển (chưa bão hòa)
     unclamped_output = p_term + pid->integral_term_state + d_term;
 
     // 6. Giới hạn đầu ra (Clamping)
     clamped_output = unclamped_output;
-    if (clamped_output > pid->out_max) {
+    if (clamped_output > pid->out_max)
+    {
         clamped_output = pid->out_max;
     }
-    if (clamped_output < pid->out_min) {
+    if (clamped_output < pid->out_min)
+    {
         clamped_output = pid->out_min;
     }
 
@@ -136,14 +145,15 @@ float pid_thermal_compute(PID_Thermal_Controller* pid, float setpoint, float pv)
     return clamped_output;
 }
 
-
 // --- Ví dụ sử dụng ---
-int main() {
+int main()
+{
     PID_Thermal_Controller oven_pid;
     float Kp_val = 2.5f;
     float Ki_val = 0.02f; // Ki = Kp_sach/Ti_sach. Nếu Ti_sach=125, Kp_sach=2.5 => Ki=0.02
-    float Kd_val = 15.0f;  // Kd = Kp_sach*Td_sach. Nếu Td_sach=6, Kp_sach=2.5 => Kd=15
-    float Kw_val = 0.1f;   // Kw = 1/Tt_sach. Nếu Tt_sach=Ti_sach=125 => Kw = 1/125 = 0.008. Hoặc Kw là độ lợi riêng.
+    float Kd_val = 15.0f; // Kd = Kp_sach*Td_sach. Nếu Td_sach=6, Kp_sach=2.5 => Kd=15
+    float Kw_val = 0.1f;  // Kw = 1/Tt_sach. Nếu Tt_sach=Ti_sach=125 => Kw = 1/125 = 0.008. Hoặc Kw là độ lợi riêng.
     // Trong Hình 3.3, 1/Tt là độ lợi của nhánh phản hồi.
     // Nếu Tt = Ti_sach, thì Kw = Ki_val / Kp_val = 0.02/2.5 = 0.008
     // Nếu Tt = Kp_sach (theo conditioning technique), thì Kw = 1/Kp_val = 1/2.5
+}

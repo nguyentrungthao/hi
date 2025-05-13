@@ -174,8 +174,15 @@ void setup_PostGet()
     //     delay(1000);
     //     Serial.println("Connecting to WiFi...");
     // }
+    int8_t i8Try = 5;
+    do {
+        if (WiFi.status() == WL_CONNECTED){
+            break;
+        }
+        delay(100);
+    } while (i8Try--);
     if (WiFi.status() != WL_CONNECTED) return;
-    
+
     MAC = WiFi.macAddress();
     MAC.replace(":", "");
     Serial.print("WiFi connected, MAC: ");

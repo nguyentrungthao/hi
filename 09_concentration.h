@@ -1,8 +1,13 @@
-/*
-    TODO: Điều khiển nồng độ CO2
-
-    Người viết Nguyễn Trung Thảo
-*/
+/**
+ * @file 09_concentration.h
+ * @author your name (you@domain.com)
+ * @brief 
+ * @version 0.1
+ * @date 2025-05-12
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 
 #ifndef _CONTROLCO2_H_
 #define _CONTROLCO2_H_
@@ -58,10 +63,6 @@ public:
   void vSetControlParamater(ControlParamaterCO2 );
 
   // cảm biến
-  float LayNongDoDatCO2();
-  float LayNongDoCO2Thuc();//
-  uint32_t LayThoiGianKichVan();//
-  bool LayTrangThaiVan();
   void KhoiDongLaiCamBien();
   IRCO2_StatusTydef XoaToanBoGiaTriCalib();
   IRCO2_StatusTydef CalibGiaTriThuc(float giaTriChuan);
@@ -70,8 +71,12 @@ public:
   // cơ cấu chấp hành 
   void CalibApSuat(uint32_t thoiGianMoVan);
 
-  // lấy thông số 
+  // truy xuất dữ liệu
   ControlParamaterCO2 xGetControlParamater();
+  float LayNongDoDatCO2();
+  float LayNongDoCO2Thuc();      //
+  uint32_t LayThoiGianKichVan(); //
+  bool LayTrangThaiVan();
 
 private:
   // điều khiển 
