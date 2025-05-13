@@ -57,6 +57,19 @@ typedef struct
     float value;
 } CalibData_t;
 
+union CalibStruct_t
+{
+    struct {
+        CalibData_t point1;
+        CalibData_t point2;
+        CalibData_t point3;
+    };
+    CalibData_t arr[3];
+}
+
+typedef CO2CalibStruct_t CalibStruct_t;
+typedef TempCalibStruct_t CalibStruct_t;
+
 typedef struct
 {
     float setpointTemp;
