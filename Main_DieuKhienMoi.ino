@@ -19,13 +19,13 @@
 #include <ArduinoJson.h>
 #include <SD_MMC.h>
 #include <SPI.h>
+#include <TimeLib.h>
 
 // ESP IDF
 #include "esp_heap_caps.h"
 #include <esp_task_wdt.h>
 #include "freertos/FreeRTOSConfig.h"
 #include "driver/temperature_sensor.h"
-#include <TimeLib.h>
 
 // user
 #include "FileHandle.h"
@@ -125,7 +125,7 @@ const uint32_t pu32ArgTimerDWIN[][2] = {{eHMI_EVENT_HIEN_THI_GIA_TRI_CAM_BIEN, 1
                                         {eHMI_EVENT_ICON_FAN, 1000},
                                         {eHMI_EVENT_VE_DO_THI, 10000},
                                         {eHMI_EVENT_ICON_WIFI, 30000},
-                                        // {eHMI_EVENT_WARNING, 120000},
+                                        {eHMI_EVENT_WARNING, 120000},
                                         {eHMI_EVENT_REFRESH, 120000}};
 constexpr uint8_t u8NUMBER_OF_TIMER_DWIN = sizeof(pu32ArgTimerDWIN) / sizeof(pu32ArgTimerDWIN[0]);
 TimerHandle_t *const pxTimerDWINhdl = (TimerHandle_t *)malloc(u8NUMBER_OF_TIMER_DWIN * sizeof(TimerHandle_t));
@@ -146,7 +146,7 @@ void KhoiTaoSoftTimerDinhThoi(void);
 // các hàm chạy run time hoặc call back
 void BatMay(const char *funcCall);
 void TatMay(const char *funcCall);
-float GetCalib(float value);
+// float GetCalib(float value);
 bool DemThoiGianChay(bool reset, bool DemXuong);
 void setTimeFromRTC(int year, int month, int day, int hour, int minute, int second);
 void hmiSetEvent(const hmi_set_event_t &event);
@@ -169,7 +169,7 @@ void TaskMain(void *);
 void TaskMonitorDebug(void *);
 void TaskHardWareTesting(void *);
 
-// đây là nhánh MASTER
+// đây là nhánh newCALIB
 void setup()
 {
   // esp_task_wdt_deinit();
@@ -303,6 +303,10 @@ void khoiTaoSDCARD()
     }
   }
 
+  if (SDMMCFile.exists(PATH_CALIB_DATA))
+  {
+  }
+
   // Khôi phục thông số chương trình cơ sở.
   if (SDMMCFile.exists(PATH_BASEPROGRAM_DATA))
   {
@@ -389,7 +393,7 @@ void khoiTaoSDCARD()
 }
 void khoiTaoHeater()
 {
-  _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
+  // _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
   _Heater.KhoiTao();
   BaseProgram.temperature = _Heater.LayNhietDoLoc();
   _Heater.addCallBackWritePinTriacBuong(triggeONICONNhiet, NULL); // trigger on ICON nhiệt
@@ -564,18 +568,18 @@ void TatMay(const char *funcCall)
   // SDMMCFile.writeFile(PATH_BASEPROGRAM_DATA, (uint8_t*)&BaseProgram, sizeof(BaseProgram));
 }
 
-float GetCalib(float value)
-{
-  for (CalibData_t HeSoCalib : DanhSachHeSoCalib)
-  {
-    if (fabs(HeSoCalib.Setpoint - value) < 0.02)
-    {
-      // Serial.printf("Setpoint: %.1f, value: %.2f\n", HeSoCalib.Setpoint, HeSoCalib.value);
-      return HeSoCalib.value;
-    }
-  }
-  return 0;
-}
+// float GetCalib(float value)
+// {
+//   for (CalibData_t HeSoCalib : DanhSachHeSoCalib)
+//   {
+//     if (fabs(HeSoCalib.Setpoint - value) < 0.02)
+//     {
+//       // Serial.printf("Setpoint: %.1f, value: %.2f\n", HeSoCalib.Setpoint, HeSoCalib.value);
+//       return HeSoCalib.value;
+//     }
+//   }
+//   return 0;
+// }
 
 bool DemThoiGianChay(bool reset, bool DemXuong)
 {
@@ -655,6 +659,39 @@ void listFilesInProgramDirectory()
     file.close();
     file = root.openNextFile();
   }
+}
+
+void vXuLyCalibCamBienVaCuaVanh(const hmi_set_event_t &event)
+{
+  ParameterSaveInSDCard_t xParameterSaveInSDCard;
+  xParameterSaveInSDCard.xCalibTemp = _Heater.xGetCalibParamater();
+  xParameterSaveInSDCard.xCalibCO2 = _CO2.xGetCalibParamater();
+  xParameterSaveInSDCard.i16Perimeter = _Heater.LayGiaTriDieuKhienVanh();
+  xParameterSaveInSDCard.i16Door = _Heater.LayGiaTriDieuKhienCua();
+  switch (event.type)
+  {
+  case HMI_SET_CALIB_NHIET:
+
+    break;
+  case eHMI_SET_PERIMETER:
+    xParameterSaveInSDCard.i16Perimeter = event.f_value;
+    break;
+  case eHMI_SET_DOOR:
+    xParameterSaveInSDCard.i16Door = event.f_value;
+    break;
+  case HMI_RESET_CALIB_NHIET:
+    memset((uint8_t *)&xParameterSaveInSDCard.xCalibTemp, 0, sizeof(xParameterSaveInSDCard.xCalibTemp));
+    break;
+  case HMI_SET_CALIB_CO2:
+    
+  break;
+  case HMI_RESET_CALIB_CO2:
+    memset((uint8_t *)&xParameterSaveInSDCard.xCalibCO2, 0, sizeof(xParameterSaveInSDCard.xCalibCO2));
+    break;
+  }
+
+
+  SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t *)xParameterSaveInSDCard, sizeof(ParameterSaveInSDCard_t));
 }
 
 void hmiSetEvent(const hmi_set_event_t &event)
@@ -744,66 +781,13 @@ void hmiSetEvent(const hmi_set_event_t &event)
 
     break;
   case HMI_SET_CALIB_NHIET:
-  {
-    Serial.printf("Set calib: %.1f\n", event.f_value);
-    // Kiểm tra đã có hệ số calib cũ chưa nếu có thì cập nhật lại hệ số calib
-    CalibData_t HeSoCalib;
-    for (int i = 0; i < DanhSachHeSoCalib.size(); i++)
-    {
-      if (fabs(DanhSachHeSoCalib.at(i).Setpoint - BaseProgram.programData.setPointTemp) < 0.01)
-      {
-        DanhSachHeSoCalib[i].value = event.f_value - (BaseProgram.temperature - DanhSachHeSoCalib[i].value);
-        SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t *)DanhSachHeSoCalib.data(), DanhSachHeSoCalib.size() * sizeof(CalibData_t));
-        Serial.println("Thay Doi he so calib da co");
-        return;
-      }
-    }
-    HeSoCalib.Setpoint = BaseProgram.programData.setPointTemp;
-    HeSoCalib.value = event.f_value - BaseProgram.temperature;
-    DanhSachHeSoCalib.push_back(HeSoCalib);
-    SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t *)DanhSachHeSoCalib.data(), DanhSachHeSoCalib.size() * sizeof(CalibData_t));
-    break;
-  }
+  case eHMI_SET_PERIMETER:
+  case eHMI_SET_DOOR:
   case HMI_RESET_CALIB_NHIET:
-  {
-    Serial.println("Reset calib");
-    CalibData_t HeSoCalib;
-    for (int i = 0; i < DanhSachHeSoCalib.size(); i++)
-    {
-      if (fabs(DanhSachHeSoCalib.at(i).Setpoint - BaseProgram.programData.setPointTemp) < 0.01)
-      {
-        DanhSachHeSoCalib[i].value = 0;
-        SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t *)DanhSachHeSoCalib.data(), DanhSachHeSoCalib.size() * sizeof(CalibData_t));
-        return;
-      }
-    }
-    break;
-  }
-  case HMI_SET_CALIB_SPAN_CO2:
-  {
-    if (_CO2.CalibGiaTriThuc(event.f_value))
-    {
-      Serial.printf("Set span calib: %.1f\n", event.f_value);
-    }
-    break;
-  }
-  case HMI_SET_CALIB_ZERO_CO2:
-  {
-    if (_CO2.CalibDiem0(event.f_value) == IRCO2_OK)
-    {
-      Serial.printf("Set zero calib: %.1f\n", event.f_value);
-    }
-    break;
-  }
+  case HMI_SET_CALIB_CO2:
   case HMI_RESET_CALIB_CO2:
-  {
-    if (_CO2.XoaToanBoGiaTriCalib() == IRCO2_OK)
-    {
-      Serial.printf("Xóa toàn bộ hệ số calib\n");
-      // _dwin.setText(_VPAddressCalibCO2TextInfor, "factory success");
-    }
+    vXuLyCalibCamBienVaCuaVanh(event);
     break;
-  }
   case HMI_SET_DELAYOFF:
     if (RunMode == STERILIZATION_MODE)
     {
@@ -1754,7 +1738,7 @@ void TaskMain(void *)
   while (1)
   {
     // chu kỳ record
-    if (chuKyRecord >= 60)
+    if (chuKyRecord >= 1)
     {
       chuKyRecord = 0;
       RecordData_t record = {
@@ -1901,7 +1885,7 @@ void TaskMain(void *)
     _Heater.CaiDatNhietDo(BaseProgram.programData.setPointTemp);
     _Heater.CaiTocDoQuat(BaseProgram.programData.fanSpeed);
     _CO2.CaiNongDoCO2(BaseProgram.programData.setPointCO2);
-    _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
+    // _Heater.CaiGiaTriOfset(GetCalib(BaseProgram.programData.setPointTemp));
     if (machineState != BaseProgram.machineState)
     {
       if (BaseProgram.machineState == true)
@@ -2361,14 +2345,15 @@ void TaskHMI(void *)
       _dwin.HienThiPhut((ProgramList[*((uint8_t *)data.pvData) + listPageStartPosition].delayOffMinute));
       break;
     case HMI_GET_CALIB:
-      _dwin.HienThiHeSoCalib(GetCalib(BaseProgram.programData.setPointTemp));
+      // _dwin.HienThiHeSoCalib(GetCalib(BaseProgram.programData.setPointTemp));
       break;
     case HMI_GET_SCAN_SSID_WIFI:
     {
       std::vector<String> vectorSSID;
       vectorSSID.reserve(4);
       vectorSSID.push_back("Scanning");
-      for (int8_t i = 1; i < 4; i++){
+      for (int8_t i = 1; i < 4; i++)
+      {
         vectorSSID.push_back("");
       }
       _dwin.HienThiListSSIDWifi(vectorSSID);
@@ -2385,7 +2370,8 @@ void TaskHMI(void *)
       int16_t n = WiFi.scanNetworks();
       Serial.printf("scan done %d\n", n);
 
-      if(n == 0){
+      if (n == 0)
+      {
         vectorSSID.at(0) = "no wifi found";
       }
       for (int8_t i = 0; i < 4; i++)

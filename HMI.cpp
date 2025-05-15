@@ -50,13 +50,13 @@
 
 static TaskHandle_t _hmiListenTaskHandle;
 
-HMI::HMI(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, long baud) : DWIN(port, receivePin, transmitPin, baud),
-_hmiSerial(&port),
-_TenChuongTrinh(""),
-_ChiMucChuongTrinhTruocDo(0xffff),
-_ChiMucPhanDoanTruocDo(0xffff),
-_CapslockEnable(false),
-_ChuoiPassword("123456")
+HMI::HMI(HardwareSerial &port, uint8_t receivePin, uint8_t transmitPin, long baud) : DWIN(port, receivePin, transmitPin, baud),
+                                                                                     _hmiSerial(&port),
+                                                                                     _TenChuongTrinh(""),
+                                                                                     _ChiMucChuongTrinhTruocDo(0xffff),
+                                                                                     _ChiMucPhanDoanTruocDo(0xffff),
+                                                                                     _CapslockEnable(false),
+                                                                                     _ChuoiPassword("123456")
 {
 }
 
@@ -110,20 +110,27 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressSetTimeButton, _KeyValueEnterSegmentDelayOff, _NutEnterTrongCaiDatThoiGianTatCuaSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentSelectButton, _AllKeyValue, _NutChonSegment_, this);
 
+
+    // calib 
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueCalib, _NutVaoChucNangChonCalib_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueChooseCalibTemp, _NutVaoChucNangCalibNhiet_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueChooseCalibCO2, _NutVaoChucNangCalibCO2_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEditCalibTemp, _NutEditCalibTemp_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibSpanCO2, _NutEditCalibSpanCO2_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibZeroCO2, _NutEditCalibZeroCO2_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibTemp, _NutEnterTrangCalibNhiet_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibCO2, _NutEnterTrangCalibCO2_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibCO2, _NutResetHeSoCalibCO2_, this);
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibTemp, _NutResetHeSoCalibNhiet_, this);
 
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEditCalibTemp, _NutEditCalibTemp_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibTemp, _NutEnterTrangCalibNhiet_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibTemp, _NutResetHeSoCalibNhiet_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValuePage78_CalibPerimeter, _NutEditHeSoCalibPerimeter_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValuePage78_CalibDoor, _NutEditHeSoCalibDoor_, this);
+
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibSpanCO2, _NutEditCalibCO2_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibCO2, _NutEnterTrangCalibCO2_, this);
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibTemp, _NutResetHeSoCalibCO2_, this);
+
+    //RTC
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetTimeRTC, _NutCaiDatThoiGianRTC_, this);
     DWIN::addButtonEvent(_VPAddressSetTimeButton, _KeyValueEnterSetRTC, _NutEnterTrangCaiRTC_, this);
 
+    //alarm
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueAlarm, _NutCaiCanhBaoNhietDo_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterSetAlarm, _NutEnterTrangCaiCanhBaoNhietDo_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetAlarmBelow, _NutCaiCanhBaoNhietDoThap_, this);
@@ -170,7 +177,7 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueWifi, _NutVaoChucNangWiFi_, this); // truc them
     DWIN::addButtonEvent(_VPAddressCacNutTrangWiFi, _AllKeyValue, _CacNutTrangWiFi_, this);
 
-    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueAdminPassword, _NutVaoChucNangThayDoiAdminPassword_, this); //truc them
+    DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueAdminPassword, _NutVaoChucNangThayDoiAdminPassword_, this); // truc them
     DWIN::addButtonEvent(_VPAddressCacNutTrangAdminPassword, _AllKeyValue, _CacNutTrangThayDoiAdminPassword_, this);
 
     _lock = xSemaphoreCreateMutex();
@@ -186,9 +193,9 @@ void HMI::_hmiUartEvent(void)
     xTaskNotify(_hmiListenTaskHandle, 0x01, eSetBits);
 }
 
-void HMI::_hmiListenTask(void* args)
+void HMI::_hmiListenTask(void *args)
 {
-    HMI* hmiPtr = static_cast<HMI*>(args);
+    HMI *hmiPtr = static_cast<HMI *>(args);
     uint32_t notifyNum;
     for (;;)
     {
@@ -197,11 +204,10 @@ void HMI::_hmiListenTask(void* args)
         // xSemaphoreTake(hmiPtr->_lock, portMAX_DELAY);
         hmiPtr->DWIN::listen();
         // xSemaphoreGive(hmiPtr->_lock);
-
     }
 }
 
-void HMI::_createHmiListenTask(void* args)
+void HMI::_createHmiListenTask(void *args)
 {
     xTaskCreateUniversal(_hmiListenTask, "HMI Task", 5120, this, (configMAX_PRIORITIES - 1), &_hmiListenTaskHandle, -1);
     if (_hmiListenTaskHandle == NULL)
@@ -220,10 +226,10 @@ void HMI::DangKyHamGetCallback(hmiGetData_t function)
     _hmiGetDataCallback = function;
 }
 #pragma region Keyboard
-void HMI::_XuLyBanPhim_(int32_t lastBytes, void* args)
+void HMI::_XuLyBanPhim_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
-    if (lastBytes == 0xF0) // nút back 
+    HMI *hmiPtr = (HMI *)args;
+    if (lastBytes == 0xF0) // nút back
     {
         hmiPtr->DWIN::setPage(hmiPtr->_set_event.pageAfterReturn);
     }
@@ -246,7 +252,7 @@ void HMI::_XuLyBanPhim_(int32_t lastBytes, void* args)
 
         if (hmiPtr->_set_event.displayType == HMI_PASSWORD)
         {
-            if (hmiPtr->_ChuoiBanPhimDangNhap.compareTo(hmiPtr->_ChuoiPassword) == 0)
+            if (hmiPtr->SoSanhPassWord(hmiPtr->_ChuoiBanPhimDangNhap))
             {
                 hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
                 hmiPtr->setPage(hmiPtr->_set_event.pageAfterEnter);
@@ -258,7 +264,7 @@ void HMI::_XuLyBanPhim_(int32_t lastBytes, void* args)
             }
             return;
         }
-        if (hmiPtr->_set_event.displayType == HMI_EXTERNAL_PASSWORD)
+        else if (hmiPtr->_set_event.displayType == HMI_EXTERNAL_PASSWORD)
         {
             hmiPtr->_set_event.text = hmiPtr->_ChuoiBanPhimDangNhap;
             hmiPtr->setText(hmiPtr->_set_event.VPTextDisplayAfterEnter, hmiPtr->_ChuoiBanPhimDangNhap);
@@ -266,7 +272,7 @@ void HMI::_XuLyBanPhim_(int32_t lastBytes, void* args)
             hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
             return;
         }
-        if (hmiPtr->_set_event.displayType == HMI_TEXT)
+        else if (hmiPtr->_set_event.displayType == HMI_TEXT)
         {
             if (hmiPtr->_ChuoiBanPhimDangNhap == "" || hmiPtr->_ChuoiBanPhimDangNhap.indexOf(' ') == 0)
             {
@@ -446,9 +452,9 @@ void HMI::_XuLyBanPhim_(int32_t lastBytes, void* args)
 }
 #pragma endregion
 
-void HMI::_NutCaiNhietDoSetpoint_(int32_t lastBytes, void* args)
+void HMI::_NutCaiNhietDoSetpoint_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_SET_SETPOINT_TEMP;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     uint16_t u16CurrentPage = hmiPtr->getPage();
@@ -465,9 +471,9 @@ void HMI::_NutCaiNhietDoSetpoint_(int32_t lastBytes, void* args)
     hmiPtr->DWIN::setPage(_TempNumericKeypadPage);
 }
 
-void HMI::_NutCaiCO2Setpoint_(int32_t lastBytes, void* args)
+void HMI::_NutCaiCO2Setpoint_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_SET_SETPOINT_CO2;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     uint16_t u16CurrentPage = hmiPtr->getPage();
@@ -484,9 +490,9 @@ void HMI::_NutCaiCO2Setpoint_(int32_t lastBytes, void* args)
     hmiPtr->DWIN::setPage(_CO2NumericKeypadPage);
 }
 
-void HMI::_NutCaiTocDoQuat_(int32_t lastBytes, void* args)
+void HMI::_NutCaiTocDoQuat_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_SET_FAN;
     hmiPtr->_set_event.displayType = HMI_INT;
     uint16_t u16CurrentPage = hmiPtr->getPage();
@@ -503,26 +509,29 @@ void HMI::_NutCaiTocDoQuat_(int32_t lastBytes, void* args)
     hmiPtr->DWIN::setPage(_FanNumericKeypadPage);
 }
 
-void HMI::_NutThucDay_(int32_t lastBytes, void* args)
+void HMI::_NutThucDay_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_EVENT_WAKEUP;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_hmiGetDataCallback(eHMI_EVENT_REFRESH, NULL);
 }
 
-void HMI::_NutSetPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PID;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 }
-void HMI::_NutExitPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutExitPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_EXIT_PID;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 }
-void HMI::_NutSetKpTempPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetKpTempPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_KP_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -538,8 +547,9 @@ void HMI::_NutSetKpTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutSetKiTempPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetKiTempPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_KI_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -555,8 +565,9 @@ void HMI::_NutSetKiTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutSetKdTempPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetKdTempPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_KD_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -571,8 +582,9 @@ void HMI::_NutSetKdTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetKwTempPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetKwTempPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_KW_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -587,8 +599,9 @@ void HMI::_NutSetKwTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetImaxTempPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetImaxTempPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_IMAX_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -603,8 +616,9 @@ void HMI::_NutSetImaxTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetIminTempPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetIminTempPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_IMIN_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -619,8 +633,9 @@ void HMI::_NutSetIminTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetOutmaxTempPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetOutmaxTempPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_OUTMAX_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -635,8 +650,9 @@ void HMI::_NutSetOutmaxTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetOutminTempPID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetOutminTempPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_OUTMIN_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -652,9 +668,9 @@ void HMI::_NutSetOutminTempPID_(int32_t lastBytes, void* args) {
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
 
-
-void HMI::_NutSetKpCO2PID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetKpCO2PID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_KP_CO2_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -670,8 +686,9 @@ void HMI::_NutSetKpCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutSetKiCO2PID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetKiCO2PID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_KI_CO2_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -687,8 +704,9 @@ void HMI::_NutSetKiCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutSetKdCO2PID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetKdCO2PID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_KD_CO2_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -703,8 +721,9 @@ void HMI::_NutSetKdCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetKwCO2PID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetKwCO2PID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_KW_CO2_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -719,8 +738,9 @@ void HMI::_NutSetKwCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetImaxCO2PID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetImaxCO2PID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_IMAX_CO2_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -735,8 +755,9 @@ void HMI::_NutSetImaxCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetIminCO2PID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetIminCO2PID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_IMIN_CO2_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -751,8 +772,9 @@ void HMI::_NutSetIminCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetOutmaxCO2PID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetOutmaxCO2PID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_OUTMAX_CO2_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -767,8 +789,9 @@ void HMI::_NutSetOutmaxCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetOutminCO2PID_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetOutminCO2PID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_OUTMIN_CO2_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -784,8 +807,9 @@ void HMI::_NutSetOutminCO2PID_(int32_t lastBytes, void* args) {
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutSetPerimeterPID_(int32_t lastBytes, void* args){
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetPerimeterPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_PERIMETER_TEMP;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -800,8 +824,9 @@ void HMI::_NutSetPerimeterPID_(int32_t lastBytes, void* args){
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
-void HMI::_NutSetDoorPID_(int32_t lastBytes, void* args){
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutSetDoorPID_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = eHMI_SET_PARAMTER_DOOR_TEMP_PID;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterReturn = _PIDPage;
@@ -817,29 +842,29 @@ void HMI::_NutSetDoorPID_(int32_t lastBytes, void* args){
     hmiPtr->DWIN::setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutCaiThoiGianTatMay_(int32_t lastBytes, void* args)
+void HMI::_NutCaiThoiGianTatMay_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_hmiGetDataCallback(HMI_GET_DELAYOFF, NULL);
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->setPage(_SetDelayOffPage);
 }
 
-void HMI::_NutEnterCaiThoiGianTatMay_(int32_t lastBytes, void* args)
+void HMI::_NutEnterCaiThoiGianTatMay_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_SET_DELAYOFF;
     hmiPtr->_set_event.u32_value = hmiPtr->getText(_VPAddressDayText, 2).toInt() * 86400 +
-        hmiPtr->getText(_VPAddressHourText, 2).toInt() * 3600 +
-        hmiPtr->getText(_VPAddressMinuteText, 2).toInt() * 60;
+                                   hmiPtr->getText(_VPAddressHourText, 2).toInt() * 3600 +
+                                   hmiPtr->getText(_VPAddressMinuteText, 2).toInt() * 60;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->setPage(_HomePage);
 }
 
-void HMI::_NutEditSetpointTrangSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEditSetpointTrangSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
     hmiPtr->_set_event.type = HMI_EDIT_SEG_SETPOINT_TEMP;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
@@ -854,14 +879,14 @@ void HMI::_NutEditSetpointTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->_set_event.indexList = lastBytes;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
         hmiPtr->DWIN::setPage(_TempNumericKeypadPage);
     }
 }
-void HMI::_NutEditSetpointCO2TrangSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEditSetpointCO2TrangSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
     hmiPtr->_set_event.type = HMI_EDIT_SEG_SETPOINT_CO2;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
@@ -876,15 +901,15 @@ void HMI::_NutEditSetpointCO2TrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->_set_event.indexList = lastBytes;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
         hmiPtr->DWIN::setPage(_CO2NumericKeypadPage);
     }
 }
 
-void HMI::_NutEditTocDoQuatTrangSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEditTocDoQuatTrangSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
     hmiPtr->_set_event.type = HMI_EDIT_SEG_FANSPEED;
     hmiPtr->_set_event.displayType = HMI_INT;
@@ -899,15 +924,15 @@ void HMI::_NutEditTocDoQuatTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->_set_event.indexList = lastBytes;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
         hmiPtr->DWIN::setPage(_FanNumericKeypadPage);
     }
 }
 
-void HMI::_NutEditTempMinTrangSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEditTempMinTrangSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
     hmiPtr->_set_event.type = HMI_EDIT_SEG_TEMPMIN;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
@@ -922,14 +947,14 @@ void HMI::_NutEditTempMinTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->_set_event.indexList = lastBytes;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
         hmiPtr->DWIN::setPage(_NumericKeypadPage);
     }
 }
-void HMI::_NutEditCO2MinTrangSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEditCO2MinTrangSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
     hmiPtr->_set_event.type = HMI_EDIT_SEG_CO2MIN;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
@@ -944,14 +969,14 @@ void HMI::_NutEditCO2MinTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->_set_event.indexList = lastBytes;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
         hmiPtr->DWIN::setPage(_NumericKeypadPage);
     }
 }
-void HMI::_NutEditCO2MaxTrangSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEditCO2MaxTrangSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
     hmiPtr->_set_event.type = HMI_EDIT_SEG_CO2MAX;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
@@ -966,14 +991,14 @@ void HMI::_NutEditCO2MaxTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->_set_event.indexList = lastBytes;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
         hmiPtr->DWIN::setPage(_NumericKeypadPage);
     }
 }
-void HMI::_NutEditTempMaxTrangSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEditTempMaxTrangSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
     hmiPtr->_set_event.type = HMI_EDIT_SEG_TEMPMAX;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
@@ -988,18 +1013,18 @@ void HMI::_NutEditTempMaxTrangSegment_(int32_t lastBytes, void* args)
     hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
     hmiPtr->setText(_VPAddressKeyboardWarningText, "");
     hmiPtr->_set_event.indexList = lastBytes;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
         hmiPtr->DWIN::setPage(_NumericKeypadPage);
     }
 }
 
-void HMI::_NutChonSegment_(int32_t lastBytes, void* args)
+void HMI::_NutChonSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     ESP_LOGI(TAG, "Select %d\n", lastBytes);
     hmiPtr->_set_event.indexList = lastBytes;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
         if (hmiPtr->_ChiMucPhanDoanTruocDo != lastBytes)
         {
@@ -1025,9 +1050,9 @@ void HMI::_NutChonSegment_(int32_t lastBytes, void* args)
 //     hmiPtr->DWIN::setPage(21);
 // }
 
-void HMI::_CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void* args)
+void HMI::_CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     switch (lastBytes)
     {
     case _KeyValueSegmentAddButton:
@@ -1080,7 +1105,7 @@ void HMI::_CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void* args)
 }
 
 void HMI::HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoint, float setpointCO2, int delayOffDay, int delayOffHour, int delayOffMinute,
-    int fanSpeed, float tempMin, float tempMax, float CO2Min, float CO2Max)
+                                       int fanSpeed, float tempMin, float tempMax, float CO2Min, float CO2Max)
 {
     this->setText(_VPAddressNumSegmentText1 + row * 2, String(index));
     this->setText(_VPAddressSegmentSetpointText1 + row * 5, String(setpoint, 1));
@@ -1114,14 +1139,14 @@ void HMI::XoaDuLieuHienThiSegmentTrenHang(uint8_t row)
     this->_ChiMucPhanDoanTruocDo = 0xffff;
 }
 
-void HMI::_NutEditThoiGianTatTrangSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEditThoiGianTatTrangSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.indexList = lastBytes;
     hmiPtr->_set_event.type = UNDEFINED;
-    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void*)&hmiPtr->_set_event.indexList) == true)
+    if (hmiPtr->_hmiGetDataCallback(HMI_CHECK_LIST, (void *)&hmiPtr->_set_event.indexList) == true)
     {
-        hmiPtr->_hmiGetDataCallback(HMI_GET_SEGMENT_DELAYOFF, (void*)&hmiPtr->_set_event.indexList);
+        hmiPtr->_hmiGetDataCallback(HMI_GET_SEGMENT_DELAYOFF, (void *)&hmiPtr->_set_event.indexList);
         hmiPtr->setText(_VPAddressKeyboardWarningText, "");
         hmiPtr->DWIN::setPage(_SetSegmentDelayOffPage);
     }
@@ -1152,9 +1177,9 @@ void HMI::HienThiPhut(int phut)
     this->setText(_VPAddressMinuteText, String(phut));
 }
 
-void HMI::_NutVaoTrangNhapNam_(int32_t lastBytes, void* args)
+void HMI::_NutVaoTrangNhapNam_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_INT;
     hmiPtr->_set_event.minValue = MIN_INPUT_YEAR_RTC;
@@ -1173,9 +1198,9 @@ void HMI::_NutVaoTrangNhapNam_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutVaoTrangNhapThang_(int32_t lastBytes, void* args)
+void HMI::_NutVaoTrangNhapThang_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_INT;
     hmiPtr->_set_event.minValue = MIN_INPUT_MONTH_RTC;
@@ -1194,9 +1219,9 @@ void HMI::_NutVaoTrangNhapThang_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutVaoTrangNhapNgay_(int32_t lastBytes, void* args)
+void HMI::_NutVaoTrangNhapNgay_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_INT;
     hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = hmiPtr->getPage();
@@ -1225,9 +1250,9 @@ void HMI::_NutVaoTrangNhapNgay_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_NutVaoTrangNhapGio_(int32_t lastBytes, void* args)
+void HMI::_NutVaoTrangNhapGio_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_INT;
     hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressHourText;
@@ -1261,9 +1286,9 @@ void HMI::_NutVaoTrangNhapGio_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_NutVaoTrangNhapPhut_(int32_t lastBytes, void* args)
+void HMI::_NutVaoTrangNhapPhut_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_INT;
     hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter = hmiPtr->getPage();
@@ -1297,9 +1322,9 @@ void HMI::_NutVaoTrangNhapPhut_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void* args)
+void HMI::_NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
 
     int Day = hmiPtr->getText(_VPAddressDayText, 2).toInt();
     if (Day > MAX_INPUT_DAY_DELAYOFF)
@@ -1335,8 +1360,9 @@ void HMI::_NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void* ar
     hmiPtr->setPage(_SegmentAdjPage);
 }
 
-void HMI::_NutVaoChucNangChonCalib_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutVaoChucNangChonCalib_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_PASSWORD;
     hmiPtr->_set_event.pageAfterEnter = _CalibChoosePage;
@@ -1351,37 +1377,71 @@ void HMI::_NutVaoChucNangChonCalib_(int32_t lastBytes, void* args) {
     hmiPtr->setPage(_KeyboardPage);
 }
 
-void HMI::_NutVaoChucNangCalibNhiet_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutVaoChucNangCalibNhiet_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
     hmiPtr->setPage(_CalibTempPage);
 }
 
-void HMI::_NutVaoChucNangCalibCO2_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_NutVaoChucNangCalibCO2_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     // hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
     hmiPtr->setPage(_CalibCO2Page);
 }
 
-void HMI::_NutResetHeSoCalibNhiet_(int32_t lastBytes, void* args)
+void HMI::_NutResetHeSoCalibNhiet_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_RESET_CALIB_NHIET;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
     // hmiPtr->setPage(_HomePage);
 }
-void HMI::_NutResetHeSoCalibCO2_(int32_t lastBytes, void* args)
+void HMI::_NutResetHeSoCalibCO2_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
-    hmiPtr->_set_event.type = HMI_RESET_CALIB_CO2;
-    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
-    // hmiPtr->setPage(_HomePage);
+
 }
 
-void HMI::_NutEditCalibTemp_(int32_t lastBytes, void* args)
+void HMI::_NutEditHeSoCalibPerimeter_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
+    hmiPtr->_set_event.type = UNDEFINED;
+    hmiPtr->_set_event.displayType = HMI_INT;
+    hmiPtr->_set_event.pageAfterEnter = hmiPtr->getPage();
+    hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterEnter;
+    hmiPtr->_set_event.maxValue = 100;
+    hmiPtr->_set_event.minValue = 0;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressStdTempText;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->setPage(_NumericKeypadPage);
+}
+void HMI::_NutEditHeSoCalibDoor_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
+    hmiPtr->_set_event.type = UNDEFINED;
+    hmiPtr->_set_event.displayType = HMI_INT;
+    hmiPtr->_set_event.pageAfterEnter = hmiPtr->getPage();
+    hmiPtr->_set_event.pageAfterReturn = hmiPtr->_set_event.pageAfterReturn;
+    hmiPtr->_set_event.maxValue = 100;
+    hmiPtr->_set_event.minValue = 0;
+    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressStdTempText;
+    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
+    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
+    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
+    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
+    hmiPtr->_set_event.textLen = 5;
+    hmiPtr->setPage(_NumericKeypadPage);
+}
+
+void HMI::_NutEditCalibTemp_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterEnter = _CalibTempPage;
@@ -1396,9 +1456,9 @@ void HMI::_NutEditCalibTemp_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->setPage(_NumericKeypadPage);
 }
-void HMI::_NutEditCalibSpanCO2_(int32_t lastBytes, void* args)
+void HMI::_NutEditCalibCO2_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.pageAfterEnter = _CalibCO2Page;
@@ -1413,58 +1473,51 @@ void HMI::_NutEditCalibSpanCO2_(int32_t lastBytes, void* args)
     hmiPtr->_set_event.textLen = 5;
     hmiPtr->setPage(_NumericKeypadPage);
 }
-void HMI::_NutEditCalibZeroCO2_(int32_t lastBytes, void* args)
-{
-    HMI* hmiPtr = (HMI*)args;
-    hmiPtr->_set_event.type = UNDEFINED;
-    hmiPtr->_set_event.displayType = HMI_FLOAT;
-    hmiPtr->_set_event.pageAfterEnter = _CalibCO2Page;
-    hmiPtr->_set_event.pageAfterReturn = _CalibCO2Page;
-    hmiPtr->_set_event.maxValue = 0.5;
-    hmiPtr->_set_event.minValue = 0;
-    hmiPtr->_set_event.VPTextDisplayAfterEnter = _VPAddressStdZeroText;
-    hmiPtr->_set_event.VPTextDisplayWhenInput = _VPAddressKeyboardInputText;
-    hmiPtr->_ChuoiBanPhimDangNhap = hmiPtr->getText(hmiPtr->_set_event.VPTextDisplayAfterEnter, 6);
-    hmiPtr->setText(_VPAddressKeyboardInputText, hmiPtr->_ChuoiBanPhimDangNhap);
-    hmiPtr->setText(_VPAddressKeyboardWarningText, "");
-    hmiPtr->_set_event.textLen = 5;
-    hmiPtr->setPage(_NumericKeypadPage);
-}
 
-void HMI::_NutEnterTrangCalibNhiet_(int32_t lastBytes, void* args)
+void HMI::_NutEnterTrangCalibNhiet_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_SET_CALIB_NHIET;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     String giaTriChuan = hmiPtr->getText(_VPAddressStdTempText, 6);
-    if (giaTriChuan == "") return;
-    hmiPtr->_set_event.f_value = giaTriChuan.toFloat();
-    hmiPtr->setText(_VPAddressStdTempText, "");
+    if (giaTriChuan != ""){
+        hmiPtr->setText(_VPAddressStdTempText, "");
+        hmiPtr->_set_event.f_value = giaTriChuan.toFloat();
+        hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+    }
+
+    hmiPtr->_set_event.type = eHMI_SET_PERIMETER;
+    hmiPtr->_set_event.displayType = HMI_INT;
+    hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressPage78_Peremeter, 6).toInt();
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+
+    hmiPtr->_set_event.type = eHMI_SET_DOOR;
+    hmiPtr->_set_event.displayType = HMI_INT;
+    hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressPage78_Door, 6).toInt();
+    hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
+
     hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
-    // hmiPtr->setPage(_SettingsPage);
 }
 
-void HMI::_NutEnterTrangCalibCO2_(int32_t lastBytes, void* args)
+void HMI::_NutEnterTrangCalibCO2_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_SET_CALIB_SPAN_CO2;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressStdSpanCO2Text, 6).toFloat();
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
-    // hmiPtr->setPage(_SettingsPage);
 }
 
-void HMI::_NutCaiDatThoiGianRTC_(int32_t lastBytes, void* args)
+void HMI::_NutCaiDatThoiGianRTC_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_hmiGetDataCallback(HMI_GET_RTC, NULL); // Yêu cầu main gửi thời gian RTC lên HMI
     hmiPtr->setPage(_RTCPage);
 }
 
-void HMI::_NutEnterTrangCaiRTC_(int32_t lastBytes, void* args)
+void HMI::_NutEnterTrangCaiRTC_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     int Day = hmiPtr->getText(_VPAddressDayText, 2).toInt();
     int Month = hmiPtr->getText(_VPAddressMonthText, 2).toInt();
     int Year = hmiPtr->getText(_VPAddressYearText, 4).toInt();
@@ -1478,9 +1531,9 @@ void HMI::_NutEnterTrangCaiRTC_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_SettingsPage);
 }
 
-void HMI::_NutCaiCanhBaoNhietDo_(int32_t lastBytes, void* args)
+void HMI::_NutCaiCanhBaoNhietDo_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_hmiGetDataCallback(HMI_GET_ALARM, NULL); // Yêu cầu main gửi thông số Alarm đang lưu
 
     hmiPtr->setPage(_AlarmPage);
@@ -1511,9 +1564,9 @@ void HMI::HienThiCO2CanhBao(float CO2Duoi, float CO2Tren)
     this->setText(_VPAddressAlarmAboveCO2Text, "+" + String(CO2Tren, 1));
 }
 
-void HMI::_NutCaiCanhBaoNhietDoThap_(int32_t lastBytes, void* args)
+void HMI::_NutCaiCanhBaoNhietDoThap_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.minValue = -10;
@@ -1529,9 +1582,9 @@ void HMI::_NutCaiCanhBaoNhietDoThap_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutCaiCanhBaoNhietDoCao_(int32_t lastBytes, void* args)
+void HMI::_NutCaiCanhBaoNhietDoCao_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.minValue = 0.1;
@@ -1547,9 +1600,9 @@ void HMI::_NutCaiCanhBaoNhietDoCao_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutCaiCanhBaoCO2Thap_(int32_t lastBytes, void* args)
+void HMI::_NutCaiCanhBaoCO2Thap_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.minValue = -10;
@@ -1565,9 +1618,9 @@ void HMI::_NutCaiCanhBaoCO2Thap_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutCaiCanhBaoCO2Cao_(int32_t lastBytes, void* args)
+void HMI::_NutCaiCanhBaoCO2Cao_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.minValue = 0.1;
@@ -1583,9 +1636,9 @@ void HMI::_NutCaiCanhBaoCO2Cao_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void* args)
+void HMI::_NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
 
     float value = hmiPtr->getText(_VPAddressAlarmBelowTempText, 5).toFloat();
     hmiPtr->_set_event.type = HMI_SET_ALARM_TEMP_BELOW;
@@ -1610,7 +1663,7 @@ void HMI::_NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_SettingsPage);
 }
 
-void HMI::HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char* func)
+void HMI::HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char *func)
 {
     Serial.printf("%s\n", func);
     this->setText(_VPAddressNumProgramText1 + row * 2, String(index));
@@ -1628,9 +1681,9 @@ void HMI::XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row)
     this->setText(_VPAddressTotalNumOfSegmentsText1 + row * 2, "");
 }
 
-void HMI::_NutVaoChucNangProgram_(int32_t lastBytes, void* args)
+void HMI::_NutVaoChucNangProgram_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_hmiGetDataCallback(HMI_GET_PROGRAM_LIST, NULL);
     hmiPtr->_TenChuongTrinh = "";
     hmiPtr->_TenChuongTrinhTruocDo = "";
@@ -1638,9 +1691,9 @@ void HMI::_NutVaoChucNangProgram_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_ProgramPage);
 }
 
-void HMI::_NutChonProgram_(int32_t lastBytes, void* args)
+void HMI::_NutChonProgram_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
 
     hmiPtr->_TenChuongTrinh = hmiPtr->getText(_VPAddressProgramNameText1 + lastBytes * 20, 20);
     if (hmiPtr->_TenChuongTrinhTruocDo != hmiPtr->_TenChuongTrinh)
@@ -1664,9 +1717,9 @@ void HMI::_NutChonProgram_(int32_t lastBytes, void* args)
     Serial.println(hmiPtr->_TenChuongTrinh);
 }
 
-void HMI::_CacNutThaoTacTrongTrangProgram_(int32_t lastBytes, void* args)
+void HMI::_CacNutThaoTacTrongTrangProgram_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     Serial.printf("Key value: %d\n", lastBytes);
     switch (lastBytes)
     {
@@ -1735,19 +1788,22 @@ void HMI::_CacNutThaoTacTrongTrangProgram_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_NutThayDoiTrangThaiChucNangHenGioTat_(int32_t lastBytes, void* args)
+void HMI::_NutThayDoiTrangThaiChucNangHenGioTat_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_SET_DELAYOFF_ONOFF;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 }
 
-void HMI::ThoiGianDoThi(time_t time) {
+void HMI::ThoiGianDoThi(time_t time)
+{
     static uint8_t count = 0;
-    if (count > 120) {
+    if (count > 120)
+    {
         count = 0;
     }
-    if (count++ > 0) {
+    if (count++ > 0)
+    {
         return;
     }
 
@@ -1757,27 +1813,33 @@ void HMI::ThoiGianDoThi(time_t time) {
     time_t arrTime[u8BufferSize] = {};
     _bufferThoiGianDoThi.peekAllBuffer(arrTime, u8BufferSize);
 
-    for (uint8_t i = 0; i < u8BufferSize; i++) {
+    for (uint8_t i = 0; i < u8BufferSize; i++)
+    {
         char timeText[10] = {};
-        if (arrTime[i] > 0) {
+        if (arrTime[i] > 0)
+        {
             sprintf(timeText, "%02u:%02u", hour(arrTime[i]), minute(arrTime[i]));
         }
         setText(_VPAddressGraphXValueText1 + 10 * i, timeText);
     }
 }
 
-void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve) {
+void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t &curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve)
+{
 
     curvePrameter.minValue = (uint16_t)(value) * 10;
-    if (curvePrameter.minValue < 0) curvePrameter.minValue = 0;
+    if (curvePrameter.minValue < 0)
+        curvePrameter.minValue = 0;
     curvePrameter.valueArr[0] = curvePrameter.minValue;
-    for (uint8_t i = 1; i < 6; i++) {
+    for (uint8_t i = 1; i < 6; i++)
+    {
         curvePrameter.valueArr[i] = curvePrameter.valueArr[0] + 10 * i;
     }
     curvePrameter.maxValue = curvePrameter.valueArr[5];
     curvePrameter.VDCentral = (curvePrameter.valueArr[5] + curvePrameter.valueArr[0]) / 2;
     curvePrameter.MulY = 240 * 256 / (curvePrameter.valueArr[5] - curvePrameter.valueArr[0]);
-    for (uint8_t i = 0; i < 6; i++) {
+    for (uint8_t i = 0; i < 6; i++)
+    {
         setText(VPyValueBase + i * 5, String(curvePrameter.valueArr[i] / 10.0f, 1));
     }
     setGraphVDCentral(SPCurveMain, curvePrameter.VDCentral);
@@ -1787,26 +1849,33 @@ void HMI::KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyVa
     setGraphVDCentral(PIDCurve, curvePrameter.VDCentral);
     setGraphMulY(PIDCurve, curvePrameter.MulY);
 }
-void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve) {
-    if (curvePrameter.maxValue == curvePrameter.minValue) {
+void HMI::ScaleDoThi(float value, DuLieuDoThi_t &curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve)
+{
+    if (curvePrameter.maxValue == curvePrameter.minValue)
+    {
         KhoiTaoDoThi(value, curvePrameter, VPyValueBase, SPCurveMain, SPCurveZoom, PIDCurve);
     }
 
     int16_t u16Value = (uint16_t)(value * 10);
-    if (curvePrameter.minValue >= u16Value) {
+    if (curvePrameter.minValue >= u16Value)
+    {
         curvePrameter.valueArr[0] -= 10;
-        if (curvePrameter.valueArr[0] < 0) curvePrameter.valueArr[0] = 0;
+        if (curvePrameter.valueArr[0] < 0)
+            curvePrameter.valueArr[0] = 0;
         curvePrameter.minValue = curvePrameter.valueArr[0];
         int16_t step = (curvePrameter.maxValue - curvePrameter.minValue) / 5;
-        if (step < 0) step = 0;
-        for (uint8_t i = 1; i < 6; i++) {
+        if (step < 0)
+            step = 0;
+        for (uint8_t i = 1; i < 6; i++)
+        {
             curvePrameter.valueArr[i] = curvePrameter.valueArr[0] + step * i;
         }
         curvePrameter.maxValue = curvePrameter.valueArr[5];
 
         curvePrameter.MulY = 240 * 256 / (curvePrameter.valueArr[5] - curvePrameter.valueArr[0]);
         curvePrameter.VDCentral = (curvePrameter.valueArr[5] + curvePrameter.valueArr[0]) / 2;
-        for (uint8_t i = 0; i < 6; i++) {
+        for (uint8_t i = 0; i < 6; i++)
+        {
             setText(VPyValueBase + i * 5, String(curvePrameter.valueArr[i] / 10.0f, 1));
         }
         setGraphVDCentral(SPCurveMain, curvePrameter.VDCentral);
@@ -1816,19 +1885,23 @@ void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValu
         setGraphVDCentral(PIDCurve, curvePrameter.VDCentral);
         setGraphMulY(PIDCurve, curvePrameter.MulY);
     }
-    else if (curvePrameter.maxValue <= u16Value) {
+    else if (curvePrameter.maxValue <= u16Value)
+    {
         curvePrameter.maxValue = (uint16_t)(value) * 10 + 10;
         curvePrameter.valueArr[5] = curvePrameter.maxValue;
         int16_t step = (curvePrameter.maxValue - curvePrameter.minValue) / 5;
-        if (step < 0) step = 0;
+        if (step < 0)
+            step = 0;
         curvePrameter.valueArr[0] = curvePrameter.valueArr[5] - step * 5;
         curvePrameter.minValue = curvePrameter.valueArr[0];
-        for (uint8_t i = 1; i < 6; i++) {
+        for (uint8_t i = 1; i < 6; i++)
+        {
             curvePrameter.valueArr[i] = curvePrameter.valueArr[0] + step * i;
         }
         curvePrameter.MulY = 240 * 256 / (curvePrameter.valueArr[5] - curvePrameter.valueArr[0]);
         curvePrameter.VDCentral = (curvePrameter.valueArr[5] + curvePrameter.valueArr[0]) / 2;
-        for (uint8_t i = 0; i < 6; i++) {
+        for (uint8_t i = 0; i < 6; i++)
+        {
             setText(VPyValueBase + i * 5, String(curvePrameter.valueArr[i] / 10.0f, 1));
         }
         setGraphVDCentral(SPCurveMain, curvePrameter.VDCentral);
@@ -1840,7 +1913,8 @@ void HMI::ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValu
     }
 }
 
-void HMI::VeDoThi(BaseProgram_t data, time_t time) {
+void HMI::VeDoThi(BaseProgram_t data, time_t time)
+{
 
     ScaleDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph, _SPAddressPage103PIDGraph);
     ScaleDoThi(data.CO2, _DuLieuDoThiCO2, _VPAddressGraphY_R_ValueText1, _SPAddressSmallGraphCO2, _SPAddressLargeGraphCO2, _SPAddressPage103PIDGraphCO2);
@@ -1848,7 +1922,7 @@ void HMI::VeDoThi(BaseProgram_t data, time_t time) {
 
     int16_t temp = (uint16_t)(data.temperature * 10);
     int16_t CO2 = (uint16_t)(data.CO2 * 10);
-    uint16_t arrayy[] = { 0x0310, 0x5AA5, 0x0200, 0x0001, temp, 0x0101, CO2 };
+    uint16_t arrayy[] = {0x0310, 0x5AA5, 0x0200, 0x0001, temp, 0x0101, CO2};
     // Serial.printf("%u %u\t min % u, max % u, VD % u, Mul % u\tmin % u, max % u, VD % u, Mul % u\t\n", temp, CO2,
     //     _DuLieuDoThiNhietDo.minValue, _DuLieuDoThiNhietDo.maxValue, _DuLieuDoThiNhietDo.VDCentral, _DuLieuDoThiNhietDo.MulY,
     //     _DuLieuDoThiCO2.minValue, _DuLieuDoThiCO2.maxValue, _DuLieuDoThiCO2.VDCentral, _DuLieuDoThiCO2.MulY);
@@ -1864,7 +1938,8 @@ void HMI::XoaDoThi(BaseProgram_t data)
     KhoiTaoDoThi(data.temperature, _DuLieuDoThiNhietDo, _VPAddressGraphYValueText1, _SPAddressSmallGraph1, _SPAddressLargeGraph, _SPAddressPage103PIDGraph);
 }
 
-void HMI::HienThiThongSoPID(uint16_t startVPText, PIDCalcu_t xPIDCalcu, PIDParam_t xPIDParam, float err) {
+void HMI::HienThiThongSoPID(uint16_t startVPText, PIDCalcu_t xPIDCalcu, PIDParam_t xPIDParam, float err)
+{
     setText(startVPText, String(xPIDParam.Kp, xPIDParam.Kp < 1000 ? 3 : 0));
     setText(startVPText + 5, String(xPIDParam.Ki, xPIDParam.Ki < 1000 ? 3 : 0));
     setText(startVPText + 10, String(xPIDParam.Kd, xPIDParam.Kd < 1000 ? 3 : 0));
@@ -1880,9 +1955,9 @@ void HMI::HienThiThongSoPID(uint16_t startVPText, PIDCalcu_t xPIDCalcu, PIDParam
     setText(startVPText + 55, String(xPIDCalcu.DTerm, xPIDCalcu.DTerm < 1000 ? 3 : 0));
     setText(startVPText + 60, String(xPIDCalcu.feedBackWindup, xPIDCalcu.feedBackWindup < 1000 ? 3 : 0));
     setText(startVPText + 75, String(err, 3));
-
 }
-void HMI::HienThiThongSoTrangPID(PIDCalcu_t xPIDCalcuTemp, PIDParam_t xPIDParamTemp, float errTemp, float thoiGianBatCua, float thoiGianBatVanh, PIDCalcu_t xPIDCalcuCO2, PIDParam_t xPIDParamCO2, float errCO2) {
+void HMI::HienThiThongSoTrangPID(PIDCalcu_t xPIDCalcuTemp, PIDParam_t xPIDParamTemp, float errTemp, float thoiGianBatCua, float thoiGianBatVanh, PIDCalcu_t xPIDCalcuCO2, PIDParam_t xPIDParamCO2, float errCO2)
+{
     HienThiThongSoPID(_VPAddressPage103KpTemp, xPIDCalcuTemp, xPIDParamTemp, errTemp);
     HienThiThongSoPID(_VPAddressPage103KpCO2, xPIDCalcuCO2, xPIDParamCO2, errCO2);
     setText(_VPAddressPage103PremeterHeater, String(thoiGianBatVanh));
@@ -1982,9 +2057,9 @@ void HMI::HienThiSegmentDangChay(String text)
     setText(_VPAddressSegmentNumText, text);
 }
 
-void HMI::_NutRun_(int32_t lastBytes, void* args)
+void HMI::_NutRun_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     // static bool state = 0;
     // if(state == false)
     // {
@@ -2041,7 +2116,8 @@ void HMI::HienThiVongLapChuongTrinhConLai(int GiaTri, int Tong)
 }
 
 // truc them
-void HMI::HienThiCheckAdminPasswordState(String text) {
+void HMI::HienThiCheckAdminPasswordState(String text)
+{
     setText(_VPAddressTextPasswordCheckState, text);
 }
 
@@ -2061,20 +2137,22 @@ void HMI::HienThiWarning(std::vector<String> warningVector, uint8_t TrangSauKhiR
     constexpr uint32_t step = _VPAddressWarningText1 - _VPAddressWarningText0;
     uint8_t i = 0;
 
-    for (; i < warningVector.size(); i++) {
+    for (; i < warningVector.size(); i++)
+    {
         setText(_VPAddressWarningText0 + i * step, warningVector.at(i));
     }
-    for (; i < 5; i++) {
+    for (; i < 5; i++)
+    {
         setText(_VPAddressWarningText0 + i * step, "");
     }
     setPage(_WarningPage);
 }
-void HMI::HienThiWarning(String text, uint8_t TrangSauKhiReturn) {
+void HMI::HienThiWarning(String text, uint8_t TrangSauKhiReturn)
+{
     _TrangSauKhiNhanReturnTrenWarning = TrangSauKhiReturn;
     setText(_VPAddressWarningText0, text);
     setPage(_WarningPage);
 }
-
 
 void HMI::HienThiTenProgramDangEdit(String text)
 {
@@ -2126,22 +2204,23 @@ void HMI::HienThiSSIDWiFi(String text)
 {
     setText(_VPAddressTextSSIDWifi, text);
 }
-void HMI::HienThiListSSIDWifi(std::vector<String> vectorSSID) {
-    for (uint16_t i = 0; i < 4; i++) {
+void HMI::HienThiListSSIDWifi(std::vector<String> vectorSSID)
+{
+    for (uint16_t i = 0; i < 4; i++)
+    {
         Serial.println("SSID: " + vectorSSID.at(i));
         setText(_VPAddressPage94SSID1 + 30 * i, vectorSSID.at(i));
     }
 }
-
 
 void HMI::HienThiPasswordWiFi(String text)
 {
     setText(_VPAddressTextPASSWifi, text);
 }
 
-void HMI::_NutEnterTrongTrangProgram_(int32_t lastBytes, void* args)
+void HMI::_NutEnterTrongTrangProgram_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     if (hmiPtr->_TenChuongTrinh != "")
     {
         hmiPtr->_set_event.type = UNDEFINED;
@@ -2160,9 +2239,9 @@ void HMI::_NutEnterTrongTrangProgram_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_NutEnterChayProgramVoiChuKyDuocChon_(int32_t lastBytes, void* args)
+void HMI::_NutEnterChayProgramVoiChuKyDuocChon_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     {
         String strLoop = hmiPtr->getText(_VPAddressProgramLoopText, 3);
         if (strLoop == "Inf")
@@ -2179,9 +2258,9 @@ void HMI::_NutEnterChayProgramVoiChuKyDuocChon_(int32_t lastBytes, void* args)
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 }
 
-void HMI::_NutInfTrongTrangChonChuKyChayProgram_(int32_t lastBytes, void* args)
+void HMI::_NutInfTrongTrangChonChuKyChayProgram_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->setText(_VPAddressProgramLoopText, "Inf");
 }
 
@@ -2203,9 +2282,9 @@ void HMI::_NutInfTrongTrangChonChuKyChayProgram_(int32_t lastBytes, void* args)
 //     hmiPtr->setPage(_NumericKeypadPage);
 // }
 
-void HMI::_NutVaoChucNangTietTrung_(int32_t lastBytes, void* args)
+void HMI::_NutVaoChucNangTietTrung_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_RESET_STER;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->_DemTrangThaiNext = 0;
@@ -2229,9 +2308,9 @@ void HMI::_NutVaoChucNangTietTrung_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_SterilizationPage);
 }
 
-void HMI::_NutCaiThoiGianTietTrung_(int32_t lastBytes, void* args)
+void HMI::_NutCaiThoiGianTietTrung_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     String strHour;
     String strMinute;
     if (hmiPtr->_GioTietTrung < 10)
@@ -2248,9 +2327,9 @@ void HMI::_NutCaiThoiGianTietTrung_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_TrangCaiThoiGianTietTrung);
 }
 
-void HMI::_NutCaiNhietDoTietTrung_(int32_t lastBytes, void* args)
+void HMI::_NutCaiNhietDoTietTrung_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.maxValue = 180;
@@ -2265,9 +2344,9 @@ void HMI::_NutCaiNhietDoTietTrung_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_NumericKeypadPage);
 }
 
-void HMI::_NutNextTrongCaiTietTrung_(int32_t lastBytes, void* args)
+void HMI::_NutNextTrongCaiTietTrung_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     if (hmiPtr->_DemTrangThaiNext < 2)
     {
         hmiPtr->setVP(_VPAddressIconTickRemoveWater + hmiPtr->_DemTrangThaiNext, 1);
@@ -2300,9 +2379,9 @@ void HMI::_NutNextTrongCaiTietTrung_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_NutEnterCaiTietTrung_(int32_t lastBytes, void* args)
+void HMI::_NutEnterCaiTietTrung_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     if (hmiPtr->_DemTrangThaiNext == 4)
     {
         hmiPtr->_set_event.type = HMI_SET_STER_TEMP;
@@ -2321,9 +2400,9 @@ void HMI::_NutEnterCaiTietTrung_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_NutEnterCaiThoiGianTietTrung_(int32_t lastBytes, void* args)
+void HMI::_NutEnterCaiThoiGianTietTrung_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     String strHour, strMinute;
     hmiPtr->_GioTietTrung = hmiPtr->getText(_VPAddressHourText, 2).toInt();
     hmiPtr->_PhutTietTrung = hmiPtr->getText(_VPAddressMinuteText, 2).toInt();
@@ -2336,14 +2415,16 @@ void HMI::_NutEnterCaiThoiGianTietTrung_(int32_t lastBytes, void* args)
     {
         strHour = "0" + String(hmiPtr->_GioTietTrung);
     }
-    else {
+    else
+    {
         strHour = String(hmiPtr->_GioTietTrung);
     }
     if (hmiPtr->_PhutTietTrung < 10)
     {
         strMinute = "0" + String(hmiPtr->_PhutTietTrung);
     }
-    else {
+    else
+    {
         strMinute = String(hmiPtr->_PhutTietTrung);
     }
 
@@ -2351,15 +2432,15 @@ void HMI::_NutEnterCaiThoiGianTietTrung_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_SterilizationPage);
 }
 
-void HMI::_NutTroVeTrongTrangWarning_(int32_t lastBytes, void* args)
+void HMI::_NutTroVeTrongTrangWarning_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->setPage(hmiPtr->_TrangSauKhiNhanReturnTrenWarning);
 }
 
-void HMI::_NutXoaDoThi_(int32_t lastBytes, void* args)
+void HMI::_NutXoaDoThi_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     switch (lastBytes)
     {
     case _KeyValueResetGraphTemp:
@@ -2373,25 +2454,25 @@ void HMI::_NutXoaDoThi_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_NutDataRecord_(int32_t lastBytes, void* args)
+void HMI::_NutDataRecord_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->HienThiThanhLoading(0);
     hmiPtr->HienThiPhanTramThanhLoading(0);
     hmiPtr->setPage(_DataRecordPage);
 }
 
-void HMI::_NutExportData_(int32_t lastBytes, void* args)
+void HMI::_NutExportData_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_EXPORT_DATA;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
     hmiPtr->setPage(_DataRecordPage);
 }
 
-void HMI::_NutVaoChucNangUpdate_(int32_t lastBytes, void* args)
+void HMI::_NutVaoChucNangUpdate_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_PASSWORD;
     hmiPtr->_set_event.pageAfterEnter = _UpdatePage;
@@ -2405,9 +2486,9 @@ void HMI::_NutVaoChucNangUpdate_(int32_t lastBytes, void* args)
     hmiPtr->setPage(_KeyboardPage);
 }
 
-void HMI::_CacNutChonPhuongThucUpdate_(int32_t lastBytes, void* args)
+void HMI::_CacNutChonPhuongThucUpdate_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     switch (lastBytes)
     {
     case _KeyValueNutChonUpdateBangUSB:
@@ -2429,9 +2510,9 @@ void HMI::_CacNutChonPhuongThucUpdate_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_CacNutTrangFOTA_(int32_t lastBytes, void* args)
+void HMI::_CacNutTrangFOTA_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     switch (lastBytes)
     {
     case _KeyValueNutSSIDFOTA:
@@ -2493,27 +2574,27 @@ void HMI::_CacNutTrangFOTA_(int32_t lastBytes, void* args)
     }
 }
 
-void HMI::_ThanhCuonDoThi_(int32_t lastBytes, void* args)
+void HMI::_ThanhCuonDoThi_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = HMI_SET_SCROLLCHART;
     hmiPtr->_set_event.f_value = (float)lastBytes;
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
 }
 
 // truc them
-void HMI::_NutVaoChucNangWiFi_(int32_t lastBytes, void* args)
+void HMI::_NutVaoChucNangWiFi_(int32_t lastBytes, void *args)
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_TEXT;
     hmiPtr->setPage(_WiFiPage);
 }
 
 // truc them
-void HMI::_CacNutTrangWiFi_(int32_t lastBytes, void* arg)
+void HMI::_CacNutTrangWiFi_(int32_t lastBytes, void *arg)
 {
-    HMI* hmiPtr = (HMI*)arg;
+    HMI *hmiPtr = (HMI *)arg;
     switch (lastBytes)
     {
     case _KeyValueNutWiFiID:
@@ -2587,17 +2668,18 @@ void HMI::_CacNutTrangWiFi_(int32_t lastBytes, void* arg)
     }
 }
 
-void HMI::_NutVaoChucNangThayDoiAdminPassword_(int32_t lastBytes, void* args) // truc them
+void HMI::_NutVaoChucNangThayDoiAdminPassword_(int32_t lastBytes, void *args) // truc them
 {
-    HMI* hmiPtr = (HMI*)args;
+    HMI *hmiPtr = (HMI *)args;
     hmiPtr->_set_event.type = UNDEFINED;
     hmiPtr->_set_event.displayType = HMI_TEXT;
     hmiPtr->_set_event.pageAfterEnter = _SettingsPage;
     hmiPtr->_set_event.pageAfterReturn = _SettingsPage;
     hmiPtr->setPage(_AdminPasswordPage);
 }
-void HMI::_CacNutTrangThayDoiAdminPassword_(int32_t lastBytes, void* args) {
-    HMI* hmiPtr = (HMI*)args;
+void HMI::_CacNutTrangThayDoiAdminPassword_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
     switch (lastBytes)
     {
     case _KeyValueNutCaiCurrentAdminPassword:
@@ -2642,32 +2724,38 @@ void HMI::_CacNutTrangThayDoiAdminPassword_(int32_t lastBytes, void* args) {
         break;
 
     case _KeyValueNutChangeAdminPassword:
-        // Lấy old admin pass từ HMI 
+        // Lấy old admin pass từ HMI
         hmiPtr->HienThiCheckAdminPasswordState("");
         hmiPtr->_set_event.text = hmiPtr->getText(_VPAddressTextCurrentAdminPassword, 10);
-        if (hmiPtr->_set_event.text.compareTo("") == 0) {
+        if (hmiPtr->_set_event.text.compareTo("") == 0)
+        {
             hmiPtr->HienThiCheckAdminPasswordState("Missing current password");
             break;
         }
-        if (hmiPtr->SoSanhPassWord(hmiPtr->_set_event.text) == 0) {
+        if (hmiPtr->SoSanhPassWord(hmiPtr->_set_event.text) == 0)
+        {
             hmiPtr->HienThiCheckAdminPasswordState("Incorrect password");
             break;
         }
-        else {
+        else
+        {
             hmiPtr->HienThiCheckAdminPasswordState("Success");
         }
         // Lấy new admin pass từ HMI
         hmiPtr->_set_event.text = hmiPtr->getText(_VPAddressTextNewAdminPassword, 10);
-        if (hmiPtr->_set_event.text.compareTo("") == 0) {
+        if (hmiPtr->_set_event.text.compareTo("") == 0)
+        {
             hmiPtr->HienThiCheckAdminPasswordState("Missing new password");
             break;
         }
         hmiPtr->_set_event.text = hmiPtr->getText(_VPAddressTextConfirmNewAdminPassword, 10);
-        if (hmiPtr->_set_event.text.compareTo("") == 0) {
+        if (hmiPtr->_set_event.text.compareTo("") == 0)
+        {
             hmiPtr->HienThiCheckAdminPasswordState("Please confirm your new password");
             break;
         }
-        if (hmiPtr->getText(_VPAddressTextNewAdminPassword, 10).compareTo(hmiPtr->getText(_VPAddressTextConfirmNewAdminPassword, 10)) != 0) {
+        if (hmiPtr->getText(_VPAddressTextNewAdminPassword, 10).compareTo(hmiPtr->getText(_VPAddressTextConfirmNewAdminPassword, 10)) != 0)
+        {
             hmiPtr->HienThiCheckAdminPasswordState("Incorrect confirmed password");
             break;
         }
@@ -2682,14 +2770,15 @@ void HMI::_CacNutTrangThayDoiAdminPassword_(int32_t lastBytes, void* args) {
         break;
     }
 }
-bool HMI::SoSanhPassWord(String EnteredPassword) {
-    if (EnteredPassword.compareTo(this->_ChuoiPassword) == 0
-        || EnteredPassword.indexOf(MANUFACTURER_PASSWORD) >= 0)
+bool HMI::SoSanhPassWord(String EnteredPassword)
+{
+    if (EnteredPassword.compareTo(this->_ChuoiPassword) == 0 || EnteredPassword.indexOf(userFACTORY_PASSWORD) >= 0)
     {
         return 1;
     }
     return 0;
 }
-void HMI::ThayDoiUserAdminPassword(String EnteredPassword) {
+void HMI::ThayDoiUserAdminPassword(String EnteredPassword)
+{
     this->_ChuoiPassword = EnteredPassword;
 }

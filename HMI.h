@@ -23,9 +23,6 @@
 #include <07_Heater.h>
 #include <09_concentration.h>
 
-
-#define MANUFACTURER_PASSWORD "LABone2025"
-
 typedef enum
 {
     UNDEFINED,
@@ -34,10 +31,11 @@ typedef enum
     HMI_SET_SETPOINT_TEMP,
     HMI_SET_SETPOINT_CO2,
     HMI_SET_CALIB_NHIET,
-    HMI_SET_CALIB_SPAN_CO2,
-    HMI_SET_CALIB_ZERO_CO2,
+    HMI_SET_CALIB_CO2,
     HMI_RESET_CALIB_NHIET,
     HMI_RESET_CALIB_CO2,
+    eHMI_SET_PERIMETER,
+    eHMI_SET_DOOR,
     HMI_SET_DELAYOFF,
     HMI_SET_DELAYOFF_ONOFF,
     HMI_SET_TEMPMAX,
@@ -187,20 +185,20 @@ struct DuLieuDoThi_t
     time_t timeArr[7];
 };
 
-typedef std::function<void(const hmi_set_event_t& event)> hmiSetData_t;
-typedef std::function<bool(hmi_get_type_t get, void* args)> hmiGetData_t;
+typedef std::function<void(const hmi_set_event_t &event)> hmiSetData_t;
+typedef std::function<bool(hmi_get_type_t get, void *args)> hmiGetData_t;
 // typedef std::function<void(hmi_get_type_t get, int start, int length)> hmiGetDataList_t;
 
 class HMI : public DWIN
 {
 public:
-    HMI(HardwareSerial& port, uint8_t receivePin, uint8_t transmitPin, long baud = DWIN_DEFAULT_BAUD_RATE);
+    HMI(HardwareSerial &port, uint8_t receivePin, uint8_t transmitPin, long baud = DWIN_DEFAULT_BAUD_RATE);
     void KhoiTao(void);
     void DangKyHamSetCallback(hmiSetData_t function);
     void DangKyHamGetCallback(hmiGetData_t function);
 
     void HienThiDuLieuSegmentTrenHang(uint8_t row, uint8_t index, float setpoint, float setpointCO2, int delayOffDay, int delayOffHour, int delayOffMinute,
-        int fanSpeed, float tempMin, float tempMax, float CO2Min, float CO2Max);
+                                      int fanSpeed, float tempMin, float tempMax, float CO2Min, float CO2Max);
     void XoaDuLieuHienThiSegmentTrenHang(uint8_t row);
 
     void HienThiNgay(int ngay);
@@ -212,12 +210,12 @@ public:
     void HienThiNhietDoCanhBao(float NhietDuoi, float NhietTren);
     void HienThiCO2CanhBao(float CO2Duoi, float CO2Tren);
 
-    void HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char* func = "");
+    void HienThiTenChuongTrinhTrenHang(uint8_t row, uint8_t index, String name, uint8_t TotalSeg, const char *func = "");
     void XoaDuLieuHienThiTenChuongTrinhTrenHang(uint8_t row);
 
     void VeDoThi(BaseProgram_t data, time_t time);
-    void KhoiTaoDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve);
-    void ScaleDoThi(float value, DuLieuDoThi_t& curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve);
+    void KhoiTaoDoThi(float value, DuLieuDoThi_t &curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve);
+    void ScaleDoThi(float value, DuLieuDoThi_t &curvePrameter, uint16_t VPyValueBase, uint16_t SPCurveMain, uint16_t SPCurveZoom, uint16_t PIDCurve);
     void ThoiGianDoThi(time_t time);
     void XoaDoThi(BaseProgram_t data);
 
@@ -267,8 +265,9 @@ public:
     bool SoSanhPassWord(String EnteredPassword);
     void ThayDoiUserAdminPassword(String EnteredPassword);
     void HienThiCheckAdminPasswordState(String text);
+
 protected:
-    HardwareSerial* _hmiSerial;
+    HardwareSerial *_hmiSerial;
     hmiSetData_t _hmiSetDataCallback;
     hmiGetData_t _hmiGetDataCallback;
     SemaphoreHandle_t _lock;
@@ -288,6 +287,7 @@ protected:
     uint32_t _PhutTietTrung;
     float _NhietDoTietTrung;
     int8_t _DemTrangThaiNext;
+    int8_t _DiemChonCalib;
     String _ChuoiPassword;
     uint8_t _TrangSauKhiNhanReturnTrenWarning;
 
@@ -296,122 +296,120 @@ protected:
 
     RingBuffer _bufferThoiGianDoThi = RingBuffer(7, sizeof(time_t));
 
-    void _createHmiListenTask(void* args);
-    static void _hmiListenTask(void* args);
+    void _createHmiListenTask(void *args);
+    static void _hmiListenTask(void *args);
     static void _hmiUartEvent(void);
 
-    static void _NutVaoChucNangChonCalib_(int32_t lastBytes, void* args);
-    static void _NutVaoChucNangCalibNhiet_(int32_t lastBytes, void* args);
-    static void _NutVaoChucNangCalibCO2_(int32_t lastBytes, void* args);
-    static void _NutEditCalibTemp_(int32_t lastBytes, void* args);
-    static void _NutEditCalibSpanCO2_(int32_t lastBytes, void* args);
-    static void _NutEditCalibZeroCO2_(int32_t lastBytes, void* args);
-    static void _NutEnterTrangCalibNhiet_(int32_t lastBytes, void* args);
-    static void _NutEnterTrangCalibCO2_(int32_t lastBytes, void* args);
-    static void _NutResetHeSoCalibNhiet_(int32_t lastBytes, void* args);
-    static void _NutResetHeSoCalibCO2_(int32_t lastBytes, void* args);
+    static void _NutVaoChucNangChonCalib_(int32_t lastBytes, void *args);
+    static void _NutVaoChucNangCalibNhiet_(int32_t lastBytes, void *args);
+    static void _NutVaoChucNangCalibCO2_(int32_t lastBytes, void *args);
+    static void _NutEditCalibTemp_(int32_t lastBytes, void *args);
+    static void _NutEditCalibCO2_(int32_t lastBytes, void *args);
+    static void _NutEnterTrangCalibNhiet_(int32_t lastBytes, void *args);
+    static void _NutEnterTrangCalibCO2_(int32_t lastBytes, void *args);
+    static void _NutResetHeSoCalibNhiet_(int32_t lastBytes, void *args);
+    static void _NutResetHeSoCalibCO2_(int32_t lastBytes, void *args);
+    static void _NutEditHeSoCalibPerimeter_(int32_t lastBytes, void *args);
+    static void _NutEditHeSoCalibDoor_(int32_t lastBytes, void *args);
 
-    static void _NutThucDay_(int32_t lastBytes, void* args);
-    static void _NutSetPID_(int32_t lastBytes, void* args);
-    static void _NutExitPID_(int32_t lastBytes, void* args);
-    static void _NutSetKpTempPID_(int32_t lastBytes, void* args);
-    static void _NutSetKiTempPID_(int32_t lastBytes, void* args);
-    static void _NutSetKdTempPID_(int32_t lastBytes, void* args);
-    static void _NutSetKwTempPID_(int32_t lastBytes, void* args);
-    static void _NutSetImaxTempPID_(int32_t lastBytes, void* args);
-    static void _NutSetIminTempPID_(int32_t lastBytes, void* args);
-    static void _NutSetOutmaxTempPID_(int32_t lastBytes, void* args);
-    static void _NutSetOutminTempPID_(int32_t lastBytes, void* args);
-    static void _NutSetKpCO2PID_(int32_t lastBytes, void* args);
-    static void _NutSetKiCO2PID_(int32_t lastBytes, void* args);
-    static void _NutSetKdCO2PID_(int32_t lastBytes, void* args);
-    static void _NutSetKwCO2PID_(int32_t lastBytes, void* args);
-    static void _NutSetImaxCO2PID_(int32_t lastBytes, void* args);
-    static void _NutSetIminCO2PID_(int32_t lastBytes, void* args);
-    static void _NutSetOutmaxCO2PID_(int32_t lastBytes, void* args);
-    static void _NutSetOutminCO2PID_(int32_t lastBytes, void* args);
-    static void _NutSetPerimeterPID_(int32_t lastBytes, void* args);
-    static void _NutSetDoorPID_(int32_t lastBytes, void* args);
+    static void _NutThucDay_(int32_t lastBytes, void *args);
+    static void _NutSetPID_(int32_t lastBytes, void *args);
+    static void _NutExitPID_(int32_t lastBytes, void *args);
+    static void _NutSetKpTempPID_(int32_t lastBytes, void *args);
+    static void _NutSetKiTempPID_(int32_t lastBytes, void *args);
+    static void _NutSetKdTempPID_(int32_t lastBytes, void *args);
+    static void _NutSetKwTempPID_(int32_t lastBytes, void *args);
+    static void _NutSetImaxTempPID_(int32_t lastBytes, void *args);
+    static void _NutSetIminTempPID_(int32_t lastBytes, void *args);
+    static void _NutSetOutmaxTempPID_(int32_t lastBytes, void *args);
+    static void _NutSetOutminTempPID_(int32_t lastBytes, void *args);
+    static void _NutSetKpCO2PID_(int32_t lastBytes, void *args);
+    static void _NutSetKiCO2PID_(int32_t lastBytes, void *args);
+    static void _NutSetKdCO2PID_(int32_t lastBytes, void *args);
+    static void _NutSetKwCO2PID_(int32_t lastBytes, void *args);
+    static void _NutSetImaxCO2PID_(int32_t lastBytes, void *args);
+    static void _NutSetIminCO2PID_(int32_t lastBytes, void *args);
+    static void _NutSetOutmaxCO2PID_(int32_t lastBytes, void *args);
+    static void _NutSetOutminCO2PID_(int32_t lastBytes, void *args);
+    static void _NutSetPerimeterPID_(int32_t lastBytes, void *args);
+    static void _NutSetDoorPID_(int32_t lastBytes, void *args);
 
+    static void _NutCaiDatThoiGianRTC_(int32_t lastBytes, void *args);
+    static void _NutEnterTrangCaiRTC_(int32_t lastBytes, void *args);
 
-    static void _NutCaiDatThoiGianRTC_(int32_t lastBytes, void* args);
-    static void _NutEnterTrangCaiRTC_(int32_t lastBytes, void* args);
+    static void _NutCaiCanhBaoNhietDo_(int32_t lastBytes, void *args);
+    static void _NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void *args);
+    static void _NutCaiCanhBaoNhietDoThap_(int32_t lastBytes, void *args);
+    static void _NutCaiCanhBaoNhietDoCao_(int32_t lastBytes, void *args);
+    static void _NutCaiCanhBaoCO2Thap_(int32_t lastBytes, void *args);
+    static void _NutCaiCanhBaoCO2Cao_(int32_t lastBytes, void *args);
 
-    static void _NutCaiCanhBaoNhietDo_(int32_t lastBytes, void* args);
-    static void _NutEnterTrangCaiCanhBaoNhietDo_(int32_t lastBytes, void* args);
-    static void _NutCaiCanhBaoNhietDoThap_(int32_t lastBytes, void* args);
-    static void _NutCaiCanhBaoNhietDoCao_(int32_t lastBytes, void* args);
-    static void _NutCaiCanhBaoCO2Thap_(int32_t lastBytes, void* args);
-    static void _NutCaiCanhBaoCO2Cao_(int32_t lastBytes, void* args);
+    static void _NutVaoChucNangProgram_(int32_t lastBytes, void *args);
+    static void _NutChonProgram_(int32_t lastBytes, void *args);
+    static void _CacNutThaoTacTrongTrangProgram_(int32_t lastBytes, void *args);
+    static void _NutChonSegment_(int32_t lastBytes, void *args);
 
-    static void _NutVaoChucNangProgram_(int32_t lastBytes, void* args);
-    static void _NutChonProgram_(int32_t lastBytes, void* args);
-    static void _CacNutThaoTacTrongTrangProgram_(int32_t lastBytes, void* args);
-    static void _NutChonSegment_(int32_t lastBytes, void* args);
+    static void _NutCaiNhietDoSetpoint_(int32_t lastBytes, void *args);
+    static void _NutCaiCO2Setpoint_(int32_t lastBytes, void *args);
+    static void _NutCaiTocDoQuat_(int32_t lastBytes, void *args);
+    static void _NutCaiThoiGianTatMay_(int32_t lastBytes, void *args);
+    static void _NutEnterCaiThoiGianTatMay_(int32_t lastBytes, void *args);
 
-    static void _NutCaiNhietDoSetpoint_(int32_t lastBytes, void* args);
-    static void _NutCaiCO2Setpoint_(int32_t lastBytes, void* args);
-    static void _NutCaiTocDoQuat_(int32_t lastBytes, void* args);
-    static void _NutCaiThoiGianTatMay_(int32_t lastBytes, void* args);
-    static void _NutEnterCaiThoiGianTatMay_(int32_t lastBytes, void* args);
+    static void _XuLyBanPhim_(int32_t lastBytes, void *args);
 
-    static void _XuLyBanPhim_(int32_t lastBytes, void* args);
-    // static void _SegmentButton_(int32_t lastBytes, void *args);
+    static void _NutEditSetpointTrangSegment_(int32_t lastBytes, void *args);
+    static void _NutEditSetpointCO2TrangSegment_(int32_t lastBytes, void *args);
 
-    static void _NutEditSetpointTrangSegment_(int32_t lastBytes, void* args);
-    static void _NutEditSetpointCO2TrangSegment_(int32_t lastBytes, void* args);
+    static void _NutEditTocDoQuatTrangSegment_(int32_t lastBytes, void *args);
+    static void _NutEditTempMinTrangSegment_(int32_t lastBytes, void *args);
+    static void _NutEditTempMaxTrangSegment_(int32_t lastBytes, void *args);
+    static void _NutEditCO2MinTrangSegment_(int32_t lastBytes, void *args);
+    static void _NutEditCO2MaxTrangSegment_(int32_t lastBytes, void *args);
 
-    static void _NutEditTocDoQuatTrangSegment_(int32_t lastBytes, void* args);
-    // static void _NutEditFlapTrangSegment_(int32_t lastBytes, void *args);
-    static void _NutEditTempMinTrangSegment_(int32_t lastBytes, void* args);
-    static void _NutEditTempMaxTrangSegment_(int32_t lastBytes, void* args);
-    static void _NutEditCO2MinTrangSegment_(int32_t lastBytes, void* args);
-    static void _NutEditCO2MaxTrangSegment_(int32_t lastBytes, void* args);
-
-    static void _NutEditThoiGianTatTrangSegment_(int32_t lastBytes, void* args);
-    static void _NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void* args);
-    static void _CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void* args);
+    static void _NutEditThoiGianTatTrangSegment_(int32_t lastBytes, void *args);
+    static void _NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void *args);
+    static void _CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void *args);
 
     // static void _SegmentDownButton_(int32_t lastBytes, void *args);
     // static void _SegmentUpButton_(int32_t lastBytes, void *args);
     // static void _AddSegment_(int32_t lastBytes, void *args);
     // static void _SubSegment_(int32_t lastBytes, void *args);
 
-    static void _NutVaoTrangNhapNgay_(int32_t lastBytes, void* args);
-    static void _NutVaoTrangNhapThang_(int32_t lastBytes, void* args);
-    static void _NutVaoTrangNhapNam_(int32_t lastBytes, void* args);
-    static void _NutVaoTrangNhapGio_(int32_t lastBytes, void* args);
-    static void _NutVaoTrangNhapPhut_(int32_t lastBytes, void* args);
+    static void _NutVaoTrangNhapNgay_(int32_t lastBytes, void *args);
+    static void _NutVaoTrangNhapThang_(int32_t lastBytes, void *args);
+    static void _NutVaoTrangNhapNam_(int32_t lastBytes, void *args);
+    static void _NutVaoTrangNhapGio_(int32_t lastBytes, void *args);
+    static void _NutVaoTrangNhapPhut_(int32_t lastBytes, void *args);
 
-    static void _NutRun_(int32_t lastBytes, void* args);
-    static void _NutThayDoiTrangThaiChucNangHenGioTat_(int32_t lastBytes, void* args);
+    static void _NutRun_(int32_t lastBytes, void *args);
+    static void _NutThayDoiTrangThaiChucNangHenGioTat_(int32_t lastBytes, void *args);
 
-    static void _NutEnterTrongTrangProgram_(int32_t lastBytes, void* args);
-    static void _NutEnterChayProgramVoiChuKyDuocChon_(int32_t lastBytes, void* args);
-    static void _NutInfTrongTrangChonChuKyChayProgram_(int32_t lastBytes, void* args);
-    static void _NutCaiChuKyChayProgram_(int32_t lastBytes, void* args);
+    static void _NutEnterTrongTrangProgram_(int32_t lastBytes, void *args);
+    static void _NutEnterChayProgramVoiChuKyDuocChon_(int32_t lastBytes, void *args);
+    static void _NutInfTrongTrangChonChuKyChayProgram_(int32_t lastBytes, void *args);
+    static void _NutCaiChuKyChayProgram_(int32_t lastBytes, void *args);
 
-    static void _NutVaoChucNangTietTrung_(int32_t lastBytes, void* args);
-    static void _NutCaiThoiGianTietTrung_(int32_t lastBytes, void* args);
-    static void _NutCaiNhietDoTietTrung_(int32_t lastBytes, void* args);
-    static void _NutNextTrongCaiTietTrung_(int32_t lastBytes, void* args);
-    static void _NutEnterCaiTietTrung_(int32_t lastBytes, void* args);
-    static void _NutEnterCaiThoiGianTietTrung_(int32_t lastBytes, void* args);
-    static void _NutTroVeTrongTrangWarning_(int32_t lastBytes, void* args);
-    static void _NutXoaDoThi_(int32_t lastBytes, void* args);
+    static void _NutVaoChucNangTietTrung_(int32_t lastBytes, void *args);
+    static void _NutCaiThoiGianTietTrung_(int32_t lastBytes, void *args);
+    static void _NutCaiNhietDoTietTrung_(int32_t lastBytes, void *args);
+    static void _NutNextTrongCaiTietTrung_(int32_t lastBytes, void *args);
+    static void _NutEnterCaiTietTrung_(int32_t lastBytes, void *args);
+    static void _NutEnterCaiThoiGianTietTrung_(int32_t lastBytes, void *args);
+    static void _NutTroVeTrongTrangWarning_(int32_t lastBytes, void *args);
+    static void _NutXoaDoThi_(int32_t lastBytes, void *args);
 
-    static void _NutDataRecord_(int32_t lastBytes, void* args);
-    static void _NutExportData_(int32_t lastBytes, void* args);
+    static void _NutDataRecord_(int32_t lastBytes, void *args);
+    static void _NutExportData_(int32_t lastBytes, void *args);
 
-    static void _NutVaoChucNangUpdate_(int32_t lastBytes, void* args);
-    static void _CacNutChonPhuongThucUpdate_(int32_t lastBytes, void* args);
-    static void _CacNutTrangFOTA_(int32_t lastBytes, void* args);
+    static void _NutVaoChucNangUpdate_(int32_t lastBytes, void *args);
+    static void _CacNutChonPhuongThucUpdate_(int32_t lastBytes, void *args);
+    static void _CacNutTrangFOTA_(int32_t lastBytes, void *args);
 
-    static void _ThanhCuonDoThi_(int32_t lastBytes, void* args);
+    static void _ThanhCuonDoThi_(int32_t lastBytes, void *args);
 
-    static void _NutVaoChucNangWiFi_(int32_t lastBytes, void* args); // truc them
-    static void _CacNutTrangWiFi_(int32_t lastBytes, void* args);
-    static void _NutVaoChucNangThayDoiAdminPassword_(int32_t lastBytes, void* args);
-    static void _CacNutTrangThayDoiAdminPassword_(int32_t lastBytes, void* args);
+    static void _NutVaoChucNangWiFi_(int32_t lastBytes, void *args); // truc them
+    static void _CacNutTrangWiFi_(int32_t lastBytes, void *args);
+    static void _NutVaoChucNangThayDoiAdminPassword_(int32_t lastBytes, void *args);
+    static void _CacNutTrangThayDoiAdminPassword_(int32_t lastBytes, void *args);
 };
 #endif

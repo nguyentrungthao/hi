@@ -63,7 +63,10 @@
         "iomanip": "cpp",
         "mutex": "cpp",
         "thread": "cpp",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "charconv": "cpp",
+        "format": "cpp",
+        "compare": "cpp"
     },
     
 }

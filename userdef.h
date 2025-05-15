@@ -10,7 +10,9 @@
 #define PATH_LOG "/log"
 #define PATH_CONTROL_ALGORITHRM "/controlAlgorithrm.data"
 
-#define userEEPROM_PARAMETER_CO2_ADDRESS 50u // byte 
+#define userFACTORY_PASSWORD "LABone2025"
+
+#define userEEPROM_PARAMETER_CO2_ADDRESS 50u // byte
 #define userEEPROM_PARAMETER_TEMP_ADDRESS 0u // byte
 #define userEEPROM_CONFIRM_DATA_STRING "LABone"
 
@@ -57,18 +59,28 @@ typedef struct
     float value;
 } CalibData_t;
 
-union CalibStruct_t
+struct CalibStruct_t
 {
-    struct {
-        CalibData_t point1;
-        CalibData_t point2;
-        CalibData_t point3;
-    };
-    CalibData_t arr[3];
-}
+    CalibData_t point1;
+    CalibData_t point2;
+    CalibData_t point3;
+};
 
-typedef CO2CalibStruct_t CalibStruct_t;
-typedef TempCalibStruct_t CalibStruct_t;
+typedef CalibStruct_t CO2CalibStruct_t;
+typedef CalibStruct_t TempCalibStruct_t;
+
+struct ParameterSaveInSDCard_t {
+    CO2CalibStruct_t xCalibCO2;
+    TempCalibStruct_t xCalibTemp;
+    int16_t i16Perimeter;
+    int16_t i16Door;
+};
+
+struct ParamterSensorlineOutput_t
+{
+    float a;
+    float b;
+};
 
 typedef struct
 {
@@ -86,23 +98,16 @@ typedef struct
     uint8_t second;
 } RecordData_t;
 
-typedef struct {
+typedef struct
+{
     char ssid[30];
     char password[30];
     bool state;
 } WiFiConfig_t;
 
 // Program structure definition
-typedef struct
+struct PIDData
 {
-    float setPoint;
-    float temp;
-    int8_t fanSpeed;
-    int8_t flap;
-    bool runState;
-} MQTTData_t;
-
-struct PIDData {
     float Setpoint;
     float Temperature;
     float Kp;
@@ -119,62 +124,65 @@ struct PIDData {
     int TGgianhiet;
 };
 
-struct FrameDataQueue_t {
+struct FrameDataQueue_t
+{
     int32_t event;
-    void* pvData;
+    void *pvData;
 };
 
-typedef enum {
+typedef enum
+{
     MAIN_UPDATE_USB,
     MAIN_UPDATE_FOTA,
 } MethodUpdates_t;
 
-typedef enum {
+typedef enum
+{
     eEVENT_CONNECT_WIFI,
     eEVENT_DISCONNECT_WIFI,
     eEVENT_CONNECT_WIFI_SUCCESS,
     eEVENT_LOST_WIFI_CONNECTION,
 } WifiEvent_t;
 
-#define _CHECK_AND_WARNING_PAGE(condition, message, returnPage) do { \
-    if (condition) { \
-        _dwin.HienThiWarning(message, returnPage); \
-        _dwin.Buzzer(160); \
-    } \
-} while (0)
+#define _CHECK_AND_WARNING_PAGE(condition, message, returnPage) \
+    do                                                          \
+    {                                                           \
+        if (condition)                                          \
+        {                                                       \
+            _dwin.HienThiWarning(message, returnPage);          \
+            _dwin.Buzzer(160);                                  \
+        }                                                       \
+    } while (0)
 
 #define userCHECK_FLAG(flagGroup, flag) (((flagGroup) & (flag)))
 #define userSET_FLAG(flagGroup, flag) (flagGroup) |= (flag)
 #define userRESET_FLAG(flagGroup, flag) (flagGroup) &= ~(flag)
 
-
-#define userTEMP_DEFAUT_CONTROL_PARAMETER() { \
-                                            .xPID = { \ 
-                                                .Kp = 15.0f,\
-                                                .Ki = 0.01f,\
-                                                .Kd = 0.0f,\
-                                                .Kw = 0.1f,\
-                                                .WindupMax = 15.0f,\
-                                                .WindupMin = -0.001f,\
-                                                .OutMax = 30.0f,\
-                                                .OutMin = 0.0f,\
-                                                }, \
-                                                .Perimter = 220u, \
-                                                .Door = 170u, \
-                                                .pcConfim = userEEPROM_CONFIRM_DATA_STRING\
-                                            }
-#define userCO2_DEFAUT_CONTROL_PARAMETER() {\
-                                            .xPID = {\
-                                                .Kp = 2500.0f,\
-                                                .Ki = 0.01f,\
-                                                .Kd = 0.0f,\
-                                                .Kw = 0.05f,\
-                                                .WindupMax = 1000.0f,\
-                                                .WindupMin = -0.001f,\
-                                                .OutMax = 5000.0f,\
-                                                .OutMin = -0.0f,\
-                                            },\
-                                            .pcConfim = userEEPROM_CONFIRM_DATA_STRING\
-                                        }
+#define userTEMP_DEFAUT_CONTROL_PARAMETER() {                \
+    .xPID = { \ 
+                                                .Kp = 15.0f, \
+              .Ki = 0.01f,                                   \
+              .Kd = 0.0f,                                    \
+              .Kw = 0.1f,                                    \
+              .WindupMax = 15.0f,                            \
+              .WindupMin = -0.001f,                          \
+              .OutMax = 30.0f,                               \
+              .OutMin = 0.0f,                                \
+    },                                                       \
+    .Perimter = 220u,                                        \
+    .Door = 170u,                                            \
+    .pcConfim = userEEPROM_CONFIRM_DATA_STRING}
+#define userCO2_DEFAUT_CONTROL_PARAMETER() { \
+    .xPID = {                                \
+        .Kp = 2500.0f,                       \
+        .Ki = 0.01f,                         \
+        .Kd = 0.0f,                          \
+        .Kw = 0.05f,                         \
+        .WindupMax = 1000.0f,                \
+        .WindupMin = -0.001f,                \
+        .OutMax = 5000.0f,                   \
+        .OutMin = -0.0f,                     \
+    },                                       \
+    .pcConfim = userEEPROM_CONFIRM_DATA_STRING}
 
 #endif

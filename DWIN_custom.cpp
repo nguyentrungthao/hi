@@ -706,9 +706,11 @@ String DWIN::handle() {
       case DWIN_BUTTON:
         if (eventElemen.vpAddr == info.vpAddr && eventElemen.lastBytes == 0xffff) {
           eventElemen.callBack.buttonEvent(lastBytes, eventElemen.args);
+          delay(1);
         }
         else if (eventElemen.vpAddr == info.vpAddr && eventElemen.lastBytes == info.lastBytes) {
           eventElemen.callBack.buttonEvent(lastBytes, eventElemen.args);
+          delay(1);
         }
         break;
       case DWIN_TEXT:
@@ -720,7 +722,6 @@ String DWIN::handle() {
         Serial.println("The event has not been registered");
         break;
       }
-      delay(1);
     }
   }
   if (isFirstByte && _echo) {

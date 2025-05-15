@@ -73,6 +73,7 @@ public:
 
   // truy xuất dữ liệu
   ControlParamaterCO2 xGetControlParamater();
+  CO2CalibStruct_t xGetCalibParamater() const;
   float LayNongDoDatCO2();
   float LayNongDoCO2Thuc();      //
   uint32_t LayThoiGianKichVan(); //
@@ -98,6 +99,7 @@ private:
   ControlParamaterCO2 xControlParamaterCO2;
 
   // cảm biến
+  CO2CalibStruct_t xCO2CalibStruct;
   float thoiGianMoVan;
   float LayGiaTriTuCamBien();
 
