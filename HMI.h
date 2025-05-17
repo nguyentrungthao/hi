@@ -121,7 +121,8 @@ typedef enum
     HMI_GET_NEXT_PROGRAM_LIST,
     HMI_GET_BACK_PROGRAM_LIST,
     HMI_GET_DELAYOFF,
-    HMI_GET_CALIB,
+    HMI_GET_CALIB_TEMP,
+    HMI_GET_CALIB_CO2,
     HMI_CHECK_LIST,
     HMI_GET_SCAN_SSID_WIFI,
 
@@ -138,6 +139,14 @@ typedef enum
     eHMI_EVENT_VE_DO_THI,
     eHMI_EVENT_WARNING,
     eHMI_EVENT_REFRESH,
+
+    eHMI_GET_CALIB_AND_SET_POINT1_TEMP,
+    eHMI_GET_CALIB_AND_SET_POINT2_TEMP,
+    eHMI_GET_CALIB_AND_SET_POINT3_TEMP,
+
+    eHMI_GET_CALIB_AND_SET_POINT1_CO2,
+    eHMI_GET_CALIB_AND_SET_POINT2_CO2,
+    eHMI_GET_CALIB_AND_SET_POINT3_CO2,
 
     eHMI_EVENT_TIMEROUT_OFF,
 
@@ -265,6 +274,7 @@ public:
     bool SoSanhPassWord(String EnteredPassword);
     void ThayDoiUserAdminPassword(String EnteredPassword);
     void HienThiCheckAdminPasswordState(String text);
+    void vHienThiCacDiemCalib(TempCalibStruct_t xCalibTemp, CO2CalibStruct_t xCalibCO2, hmi_get_type_t event);
 
 protected:
     HardwareSerial *_hmiSerial;
@@ -311,6 +321,12 @@ protected:
     static void _NutResetHeSoCalibCO2_(int32_t lastBytes, void *args);
     static void _NutEditHeSoCalibPerimeter_(int32_t lastBytes, void *args);
     static void _NutEditHeSoCalibDoor_(int32_t lastBytes, void *args);
+    static void _NutSetChonDiemCalib1Temp_(int32_t lastBytes, void *args);
+    static void _NutSetChonDiemCalib2Temp_(int32_t lastBytes, void *args);
+    static void _NutSetChonDiemCalib3Temp_(int32_t lastBytes, void *args);
+    static void _NutSetChonDiemCalib1CO2_(int32_t lastBytes, void *args);
+    static void _NutSetChonDiemCalib2CO2_(int32_t lastBytes, void *args);
+    static void _NutSetChonDiemCalib3CO2_(int32_t lastBytes, void *args);
 
     static void _NutThucDay_(int32_t lastBytes, void *args);
     static void _NutSetPID_(int32_t lastBytes, void *args);
@@ -369,11 +385,6 @@ protected:
     static void _NutEditThoiGianTatTrangSegment_(int32_t lastBytes, void *args);
     static void _NutEnterTrongCaiDatThoiGianTatCuaSegment_(int32_t lastBytes, void *args);
     static void _CacNutThaoTacTrongTrangEditSegment_(int32_t lastBytes, void *args);
-
-    // static void _SegmentDownButton_(int32_t lastBytes, void *args);
-    // static void _SegmentUpButton_(int32_t lastBytes, void *args);
-    // static void _AddSegment_(int32_t lastBytes, void *args);
-    // static void _SubSegment_(int32_t lastBytes, void *args);
 
     static void _NutVaoTrangNhapNgay_(int32_t lastBytes, void *args);
     static void _NutVaoTrangNhapThang_(int32_t lastBytes, void *args);

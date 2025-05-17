@@ -110,8 +110,7 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressSetTimeButton, _KeyValueEnterSegmentDelayOff, _NutEnterTrongCaiDatThoiGianTatCuaSegment_, this);
     DWIN::addButtonEvent(_VPAddressSegmentSelectButton, _AllKeyValue, _NutChonSegment_, this);
 
-
-    // calib 
+    // calib
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueCalib, _NutVaoChucNangChonCalib_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueChooseCalibTemp, _NutVaoChucNangCalibNhiet_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueChooseCalibCO2, _NutVaoChucNangCalibCO2_, this);
@@ -125,12 +124,18 @@ void HMI::KhoiTao(void)
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibSpanCO2, _NutEditCalibCO2_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterCalibCO2, _NutEnterTrangCalibCO2_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueResetCalibTemp, _NutResetHeSoCalibCO2_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValuePage78_calib1, _NutSetChonDiemCalib1Temp_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValuePage78_calib1, _NutSetChonDiemCalib2Temp_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValuePage78_calib3, _NutSetChonDiemCalib3Temp_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValuePage102_calib1, _NutSetChonDiemCalib1CO2_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValuePage102_calib2, _NutSetChonDiemCalib2CO2_, this);
+    DWIN::addButtonEvent(_VPAddressPage103PID, _KeyValuePage102_calib3, _NutSetChonDiemCalib3CO2_, this);
 
-    //RTC
+    // RTC
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetTimeRTC, _NutCaiDatThoiGianRTC_, this);
     DWIN::addButtonEvent(_VPAddressSetTimeButton, _KeyValueEnterSetRTC, _NutEnterTrangCaiRTC_, this);
 
-    //alarm
+    // alarm
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueAlarm, _NutCaiCanhBaoNhietDo_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueEnterSetAlarm, _NutEnterTrangCaiCanhBaoNhietDo_, this);
     DWIN::addButtonEvent(_VPAddressCacNutNhan, _KeyValueSetAlarmBelow, _NutCaiCanhBaoNhietDoThap_, this);
@@ -1380,14 +1385,14 @@ void HMI::_NutVaoChucNangChonCalib_(int32_t lastBytes, void *args)
 void HMI::_NutVaoChucNangCalibNhiet_(int32_t lastBytes, void *args)
 {
     HMI *hmiPtr = (HMI *)args;
-    hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
+    hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB_TEMP, NULL);
     hmiPtr->setPage(_CalibTempPage);
 }
 
 void HMI::_NutVaoChucNangCalibCO2_(int32_t lastBytes, void *args)
 {
     HMI *hmiPtr = (HMI *)args;
-    // hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB, NULL);
+    hmiPtr->_hmiGetDataCallback(HMI_GET_CALIB_CO2, NULL);
     hmiPtr->setPage(_CalibCO2Page);
 }
 
@@ -1401,7 +1406,79 @@ void HMI::_NutResetHeSoCalibNhiet_(int32_t lastBytes, void *args)
 }
 void HMI::_NutResetHeSoCalibCO2_(int32_t lastBytes, void *args)
 {
+    HMI *hmiPtr = (HMI *)args;
+}
 
+void HMI::_NutSetChonDiemCalib1Temp_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
+    hmiPtr->_hmiGetDataCallback(eHMI_GET_CALIB_AND_SET_POINT1_TEMP, NULL);
+    hmiPtr->_DiemChonCalib = 1;
+    hmiPtr->setTextColor(_SPAddressPage78_point1Temp, 0x03, _RedColor);
+    hmiPtr->setTextColor(_SPAddressPage78_point2Temp, 0x03, _BlueColor);
+    hmiPtr->setTextColor(_SPAddressPage78_point3Temp, 0x03, _BlueColor);
+}
+void HMI::_NutSetChonDiemCalib2Temp_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
+    hmiPtr->_hmiGetDataCallback(eHMI_GET_CALIB_AND_SET_POINT2_TEMP, NULL);
+    hmiPtr->_DiemChonCalib = 2;
+    hmiPtr->setTextColor(_SPAddressPage78_point1Temp, 0x03, _BlueColor);
+    hmiPtr->setTextColor(_SPAddressPage78_point2Temp, 0x03, _RedColor);
+    hmiPtr->setTextColor(_SPAddressPage78_point3Temp, 0x03, _BlueColor);
+}
+void HMI::_NutSetChonDiemCalib3Temp_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
+    hmiPtr->_hmiGetDataCallback(eHMI_GET_CALIB_AND_SET_POINT2_TEMP, NULL);
+    hmiPtr->_DiemChonCalib = 3;
+    hmiPtr->setTextColor(_SPAddressPage78_point1Temp, 0x03, _BlueColor);
+    hmiPtr->setTextColor(_SPAddressPage78_point2Temp, 0x03, _BlueColor);
+    hmiPtr->setTextColor(_SPAddressPage78_point3Temp, 0x03, _RedColor);
+}
+
+void HMI::_NutSetChonDiemCalib1CO2_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
+    hmiPtr->_hmiGetDataCallback(eHMI_GET_CALIB_AND_SET_POINT1_CO2, NULL);
+    hmiPtr->_DiemChonCalib = 4;
+    hmiPtr->setTextColor(_SPAddressPage102_point1CO2, 0x03, _RedColor);
+    hmiPtr->setTextColor(_SPAddressPage102_point2CO2, 0x03, _BlueColor);
+    hmiPtr->setTextColor(_SPAddressPage102_point3CO2, 0x03, _BlueColor);
+}
+void HMI::_NutSetChonDiemCalib2CO2_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
+    hmiPtr->_hmiGetDataCallback(eHMI_GET_CALIB_AND_SET_POINT2_CO2, NULL);
+    hmiPtr->_DiemChonCalib = 5;
+    hmiPtr->setTextColor(_SPAddressPage102_point1CO2, 0x03, _BlueColor);
+    hmiPtr->setTextColor(_SPAddressPage102_point2CO2, 0x03, _RedColor);
+    hmiPtr->setTextColor(_SPAddressPage102_point3CO2, 0x03, _BlueColor);
+}
+
+void HMI::_NutSetChonDiemCalib3CO2_(int32_t lastBytes, void *args)
+{
+    HMI *hmiPtr = (HMI *)args;
+    hmiPtr->_hmiGetDataCallback(eHMI_GET_CALIB_AND_SET_POINT3_CO2, NULL);
+    hmiPtr->_DiemChonCalib = 6;
+    hmiPtr->setTextColor(_SPAddressPage102_point1CO2, 0x03, _BlueColor);
+    hmiPtr->setTextColor(_SPAddressPage102_point2CO2, 0x03, _BlueColor);
+    hmiPtr->setTextColor(_SPAddressPage102_point3CO2, 0x03, _RedColor);
+}
+
+void HMI::vHienThiCacDiemCalib(TempCalibStruct_t xCalibTemp, CO2CalibStruct_t xCalibCO2, hmi_get_type_t event)
+{
+    if (eHMI_GET_CALIB_AND_SET_POINT1_TEMP <= event && event <= eHMI_GET_CALIB_AND_SET_POINT3_TEMP)
+    {
+        this->setText(_VPAddressPage78_setpointCalib1, String(xCalibTemp.point1.Setpoint, 1));
+        this->setText(_VPAddressPage78_setpointCalib2, String(xCalibTemp.point2.Setpoint, 1));
+        this->setText(_VPAddressPage78_setpointCalib3, String(xCalibTemp.point3.Setpoint, 1));
+    }
+    else if (eHMI_GET_CALIB_AND_SET_POINT1_CO2 <= event && event <= eHMI_GET_CALIB_AND_SET_POINT3_CO2){
+        this->setText(_VPAddressPage102_setpointCalib1, String(xCalibCO2.point1.Setpoint, 1));
+        this->setText(_VPAddressPage102_setpointCalib2, String(xCalibCO2.point2.Setpoint, 1));
+        this->setText(_VPAddressPage102_setpointCalib2, String(xCalibCO2.point3.Setpoint, 1));
+    }
 }
 
 void HMI::_NutEditHeSoCalibPerimeter_(int32_t lastBytes, void *args)
@@ -1480,7 +1557,8 @@ void HMI::_NutEnterTrangCalibNhiet_(int32_t lastBytes, void *args)
     hmiPtr->_set_event.type = HMI_SET_CALIB_NHIET;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     String giaTriChuan = hmiPtr->getText(_VPAddressStdTempText, 6);
-    if (giaTriChuan != ""){
+    if (giaTriChuan != "")
+    {
         hmiPtr->setText(_VPAddressStdTempText, "");
         hmiPtr->_set_event.f_value = giaTriChuan.toFloat();
         hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);
@@ -1502,7 +1580,7 @@ void HMI::_NutEnterTrangCalibNhiet_(int32_t lastBytes, void *args)
 void HMI::_NutEnterTrangCalibCO2_(int32_t lastBytes, void *args)
 {
     HMI *hmiPtr = (HMI *)args;
-    hmiPtr->_set_event.type = HMI_SET_CALIB_SPAN_CO2;
+    hmiPtr->_set_event.type = HMI_SET_CALIB_CO2;
     hmiPtr->_set_event.displayType = HMI_FLOAT;
     hmiPtr->_set_event.f_value = hmiPtr->getText(_VPAddressStdSpanCO2Text, 6).toFloat();
     hmiPtr->_hmiSetDataCallback(hmiPtr->_set_event);

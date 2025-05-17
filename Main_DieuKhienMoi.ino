@@ -683,15 +683,14 @@ void vXuLyCalibCamBienVaCuaVanh(const hmi_set_event_t &event)
     memset((uint8_t *)&xParameterSaveInSDCard.xCalibTemp, 0, sizeof(xParameterSaveInSDCard.xCalibTemp));
     break;
   case HMI_SET_CALIB_CO2:
-    
-  break;
+
+    break;
   case HMI_RESET_CALIB_CO2:
     memset((uint8_t *)&xParameterSaveInSDCard.xCalibCO2, 0, sizeof(xParameterSaveInSDCard.xCalibCO2));
     break;
   }
 
-
-  SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t *)xParameterSaveInSDCard, sizeof(ParameterSaveInSDCard_t));
+  SDMMCFile.writeFile(PATH_CALIB_DATA, (uint8_t *)&xParameterSaveInSDCard, sizeof(ParameterSaveInSDCard_t));
 }
 
 void hmiSetEvent(const hmi_set_event_t &event)
@@ -1738,7 +1737,7 @@ void TaskMain(void *)
   while (1)
   {
     // chu kỳ record
-    if (chuKyRecord >= 1)
+    if (chuKyRecord >= 30)
     {
       chuKyRecord = 0;
       RecordData_t record = {
@@ -1904,6 +1903,34 @@ void TaskMain(void *)
     }
     vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
+}
+
+void vLayDiemCalibTrongDoiTuongVaThayDoiTheoSetPointChuanBiCalib(hmi_get_type_t event)
+{
+  TempCalibStruct_t xCalibTemp = _Heater.xGetCalibParamater();
+  CO2CalibStruct_t xCalibCO2 = _CO2.xGetCalibParamater();
+  switch (event)
+  {
+  case eHMI_GET_CALIB_AND_SET_POINT1_TEMP:
+    xCalibTemp.point1.Setpoint = BaseProgram.programData.setPointTemp;
+    break;
+  case eHMI_GET_CALIB_AND_SET_POINT2_TEMP:
+    xCalibTemp.point2.Setpoint = BaseProgram.programData.setPointTemp;
+    break;
+  case eHMI_GET_CALIB_AND_SET_POINT3_TEMP:
+    xCalibTemp.point3.Setpoint = BaseProgram.programData.setPointTemp;
+    break;
+  case eHMI_GET_CALIB_AND_SET_POINT1_CO2:
+    xCalibCO2.point1.Setpoint = BaseProgram.programData.setPointCO2;
+    break;
+  case eHMI_GET_CALIB_AND_SET_POINT2_CO2:
+    xCalibCO2.point2.Setpoint = BaseProgram.programData.setPointCO2;
+    break;
+  case eHMI_GET_CALIB_AND_SET_POINT3_CO2:
+    xCalibCO2.point3.Setpoint = BaseProgram.programData.setPointCO2;
+    break;
+  }
+  _dwin.vHienThiCacDiemCalib(xCalibTemp, xCalibCO2, event);
 }
 
 void TaskHMI(void *)
@@ -2345,7 +2372,14 @@ void TaskHMI(void *)
       _dwin.HienThiPhut((ProgramList[*((uint8_t *)data.pvData) + listPageStartPosition].delayOffMinute));
       break;
     case HMI_GET_CALIB:
-      // _dwin.HienThiHeSoCalib(GetCalib(BaseProgram.programData.setPointTemp));
+    // _dwin.HienThiHeSoCalib(GetCalib(BaseProgram.programData.setPointTemp));
+    case eHMI_GET_CALIB_AND_SET_POINT1_TEMP:
+    case eHMI_GET_CALIB_AND_SET_POINT2_TEMP:
+    case eHMI_GET_CALIB_AND_SET_POINT3_TEMP:
+    case eHMI_GET_CALIB_AND_SET_POINT1_CO2:
+    case eHMI_GET_CALIB_AND_SET_POINT2_CO2:
+    case eHMI_GET_CALIB_AND_SET_POINT3_CO2:
+      vLayDiemCalibTrongDoiTuongVaThayDoiTheoSetPointChuanBiCalib((hmi_get_type_t)data.event);
       break;
     case HMI_GET_SCAN_SSID_WIFI:
     {

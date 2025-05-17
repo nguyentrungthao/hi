@@ -2,38 +2,38 @@
 #define _HMI_PARAM_H_
 
 // Danh sach cac trang
-#define _EndIntroPage 0x3C // 60
-#define _WarningPage 0x3D  // 61
-#define _HomePage 0x46  // 70
-#define _SettingsPage 0x48  // 72
-#define _ProgramLoopPage 0x4A  // 74
-#define _SterilizationPage 0x4B  // 75
-#define _TrangCaiThoiGianTietTrung 0x4C  // 76
-#define _RTCPage 0x4D  // 77
-#define _CalibTempPage 0x4E  // 78
-#define _ProgramPage 0x4F  // 79
-#define _AlarmPage 0x50  // 80
-#define _SegmentAdjPage 0x51  // 81
-#define _SetSegmentDelayOffPage 0x52  // 82
-#define _SetDelayOffPage 0x53  // 83
-#define _SegmentViewPage 0x54  // 84
-#define _NumericKeypadPage 0x55  // 85
-#define _KeyboardPage 0x56  // 86
-#define _SleepPage 0x58 // 88
-#define _DataRecordPage 0x5A  // 90
-#define _UpdatePage 0x5B  // 91
-#define _FOTAPage 0x5C  // 92
-#define _CheckForUpdatePage 0x5D  // 93
-#define _WiFiPage 0x5E  // 94
-#define _TempNumericKeypadPage 0x5F  // 95
-#define _FanNumericKeypadPage 0x60  // 96
-#define _CO2NumericKeypadPage 0x61  // 97
-#define _AdminPasswordPage 0x62  // 98
-#define _InfoPage 0x64  // 100
-#define _CalibChoosePage 0x65  // 101
-#define _CalibCO2Page 0x66  // 102
-#define _PIDPage 0x67 //103
-#define _DiagnosticsPage 0x68 //104
+#define _EndIntroPage 0x3C              // 60
+#define _WarningPage 0x3D               // 61
+#define _HomePage 0x46                  // 70
+#define _SettingsPage 0x48              // 72
+#define _ProgramLoopPage 0x4A           // 74
+#define _SterilizationPage 0x4B         // 75
+#define _TrangCaiThoiGianTietTrung 0x4C // 76
+#define _RTCPage 0x4D                   // 77
+#define _CalibTempPage 0x4E             // 78
+#define _ProgramPage 0x4F               // 79
+#define _AlarmPage 0x50                 // 80
+#define _SegmentAdjPage 0x51            // 81
+#define _SetSegmentDelayOffPage 0x52    // 82
+#define _SetDelayOffPage 0x53           // 83
+#define _SegmentViewPage 0x54           // 84
+#define _NumericKeypadPage 0x55         // 85
+#define _KeyboardPage 0x56              // 86
+#define _SleepPage 0x58                 // 88
+#define _DataRecordPage 0x5A            // 90
+#define _UpdatePage 0x5B                // 91
+#define _FOTAPage 0x5C                  // 92
+#define _CheckForUpdatePage 0x5D        // 93
+#define _WiFiPage 0x5E                  // 94
+#define _TempNumericKeypadPage 0x5F     // 95
+#define _FanNumericKeypadPage 0x60      // 96
+#define _CO2NumericKeypadPage 0x61      // 97
+#define _AdminPasswordPage 0x62         // 98
+#define _InfoPage 0x64                  // 100
+#define _CalibChoosePage 0x65           // 101
+#define _CalibCO2Page 0x66              // 102
+#define _PIDPage 0x67                   // 103
+#define _DiagnosticsPage 0x68           // 104
 
 /* Sử dụng 0xFFFF để làm mã KeyValue cho việc cấu hình hàm addButtonEvent có nghĩa là với bất kỳ
 /* giá trị KeyValue nào thì hàm đăng ký cũng được gọi
@@ -112,7 +112,6 @@
 #define _VPAddressSegmentTempMaxButton 0x5007
 #define _VPAddressSegmentCO2MinButton 0x501E
 #define _VPAddressSegmentCO2MaxButton 0x501F
-
 
 #define _VPAddressSegmentFunctionButton 0x5009
 #define _KeyValueSegmentAddButton 1
@@ -249,15 +248,14 @@
 #define _VPAddressIconUSB 0x600E
 #define _VPAddressIconVanCO2 0x600F
 
-
 #pragma endregion
 
 #pragma region Địa chỉ TEXT
 
-#define _VPAddressSetpointTempText 0x8000    // Length text 5
-#define _VPAddressFanSpeedText 0x8005    // Length text 5
-#define _VPAddressDelayOffText 0x800A    // Length text 15
-#define _VPAddressTemperatureText 0x8019 // Length text 5
+#define _VPAddressSetpointTempText 0x8000 // Length text 5
+#define _VPAddressFanSpeedText 0x8005     // Length text 5
+#define _VPAddressDelayOffText 0x800A     // Length text 15
+#define _VPAddressTemperatureText 0x8019  // Length text 5
 
 #define _VPAddressDayText 0x8020    // length text 2
 #define _VPAddressMonthText 0x8022  // length text 2
@@ -379,10 +377,10 @@
 
 #define _VPAddressTextVersion 0xAFF0 // 15 ky tu
 //---
-#define _VPAddressCO2Text 0xAFFF // 5 ky tu
-#define _VPAddressSetpointCO2Text 0xB005 // 5 ký tự 
-#define _VPAddressAlarmBelowCO2Text 0xB00A // 5 ký tự 
-#define _VPAddressAlarmAboveCO2Text 0xB00F // 5 ký tự 
+#define _VPAddressCO2Text 0xAFFF           // 5 ky tu
+#define _VPAddressSetpointCO2Text 0xB005   // 5 ký tự
+#define _VPAddressAlarmBelowCO2Text 0xB00A // 5 ký tự
+#define _VPAddressAlarmAboveCO2Text 0xB00F // 5 ký tự
 
 #define _VPAddressSegmentSetpointCO2Text1 0xB014
 #define _VPAddressSegmentSetpointCO2Text2 (_VPAddressSegmentSetpointCO2Text1 + 5)
@@ -402,7 +400,7 @@
 #define _VPAddressSegmentCO2MaxText4 (_VPAddressSegmentCO2MaxText3 + 5)
 #define _VPAddressSegmentCO2MaxText5 (_VPAddressSegmentCO2MaxText4 + 5)
 
-#define _VPAddressStdZeroText 0xB05F // 5 ký tự
+#define _VPAddressStdZeroText 0xB05F    // 5 ký tự
 #define _VPAddressStdSpanCO2Text 0xB064 // 5 ký tự
 
 #define _VPAddressGraphY_R_ValueText1 0xB069
@@ -412,57 +410,57 @@
 #define _VPAddressGraphY_R_ValueText5 0xB07D
 #define _VPAddressGraphY_R_ValueText6 0xB082
 
-#define _VPAddressWarningText0 0xB0B4            // 50 ky tu
-#define _VPAddressWarningText1 0xB0E6            // 50 ky tu
-#define _VPAddressWarningText2 0xB118            // 50 ky tu
-#define _VPAddressWarningText3 0xB14A            // 50 ky tu
-#define _VPAddressWarningText4 0xB17C            // 50 ky tu
+#define _VPAddressWarningText0 0xB0B4 // 50 ky tu
+#define _VPAddressWarningText1 0xB0E6 // 50 ky tu
+#define _VPAddressWarningText2 0xB118 // 50 ky tu
+#define _VPAddressWarningText3 0xB14A // 50 ky tu
+#define _VPAddressWarningText4 0xB17C // 50 ky tu
 
-#define _VPAddressCalibCO2TextInfor 0xB1AE  //20 ký tự
+#define _VPAddressCalibCO2TextInfor 0xB1AE // 20 ký tự
 
 #define _VPAddressPage94SSID1 0xB1C2 // 30 ký tư
 #define _VPAddressPage94SSID2 0xB1E0
 #define _VPAddressPage94SSID3 0xB1FE
-#define _VPAddressPage94SSID4 0xB21C 
+#define _VPAddressPage94SSID4 0xB21C
 
 #define _VPAddressPage70historyEvent 0xB23A // 50 ký tự
 
-#define _VPAddressPage103KpTemp    0xB26C
-#define _VPAddressPage103KiTemp    0xB271  // 0xB26C + 5
-#define _VPAddressPage103KdTemp    0xB276  // 0xB271 + 5
-#define _VPAddressPage103KwTemp    0xB27B  // 0xB276 + 5
-#define _VPAddressPage103OUTTemp   0xB280  // 0xB27B + 5
-#define _VPAddressPage103ImaxTemp  0xB285  // 0xB280 + 5
-#define _VPAddressPage103IminTemp  0xB28A  // 0xB285 + 5
-#define _VPAddressPage103OmaxTemp  0xB28F  // 0xB28A + 5
-#define _VPAddressPage103OminTemp  0xB294  // 0xB28F + 5
-#define _VPAddressPage103PTemp     0xB299  // 0xB294 + 5 
-#define _VPAddressPage10ITemp      0xB29E  // 0xB299 + 5
-#define _VPAddressPage103DTemp     0xB2A3  // 0xB29E + 5
-#define _VPAddressPage103WTemp     0xB2A8  // 0xB2A3 + 5
-#define _VPAddressPage103StartTemp 0xB2AD  // 0xB2A8 + 5
-#define _VPAddressPage103endTemp   0xB2B2  // 0xB2AD + 5
-#define _VPAddressPage103ErrTemp    0xB2B7  // 0xB2B2 + 5
+#define _VPAddressPage103KpTemp 0xB26C
+#define _VPAddressPage103KiTemp 0xB271    // 0xB26C + 5
+#define _VPAddressPage103KdTemp 0xB276    // 0xB271 + 5
+#define _VPAddressPage103KwTemp 0xB27B    // 0xB276 + 5
+#define _VPAddressPage103OUTTemp 0xB280   // 0xB27B + 5
+#define _VPAddressPage103ImaxTemp 0xB285  // 0xB280 + 5
+#define _VPAddressPage103IminTemp 0xB28A  // 0xB285 + 5
+#define _VPAddressPage103OmaxTemp 0xB28F  // 0xB28A + 5
+#define _VPAddressPage103OminTemp 0xB294  // 0xB28F + 5
+#define _VPAddressPage103PTemp 0xB299     // 0xB294 + 5
+#define _VPAddressPage10ITemp 0xB29E      // 0xB299 + 5
+#define _VPAddressPage103DTemp 0xB2A3     // 0xB29E + 5
+#define _VPAddressPage103WTemp 0xB2A8     // 0xB2A3 + 5
+#define _VPAddressPage103StartTemp 0xB2AD // 0xB2A8 + 5
+#define _VPAddressPage103endTemp 0xB2B2   // 0xB2AD + 5
+#define _VPAddressPage103ErrTemp 0xB2B7   // 0xB2B2 + 5
 
-#define _VPAddressPage103KpCO2     0xB2C1  // 0xB2BC + 5
-#define _VPAddressPage103KiCO2     0xB2C6  // 0xB2C1 + 5
-#define _VPAddressPage103KdCO2     0xB2CB  // 0xB2C6 + 5
-#define _VPAddressPage103KwCO2     0xB2D0  // 0xB2CB + 5
-#define _VPAddressPage103OUTCO2    0xB2D5  // 0xB2D0 + 5
-#define _VPAddressPage103ImaxCO2   0xB2DA  // 0xB2D5 + 5
-#define _VPAddressPage103IminCO2   0xB2DF  // 0xB2DA + 5
-#define _VPAddressPage103OmaxCO2   0xB2E4  // 0xB2DF + 5
-#define _VPAddressPage103OminCO2   0xB2E9  // 0xB2E4 + 5
-#define _VPAddressPage103PCO2      0xB2EE  // 0xB2E9 + 5
-#define _VPAddressPage10ICO2       0xB2F3  // 0xB2EE + 5
-#define _VPAddressPage103DCO2      0xB2F8  // 0xB2F3 + 5
-#define _VPAddressPage103WCO2      0xB2FD  // 0xB2F8 + 5
-#define _VPAddressPage103StartCO2  0xB302  // 0xB2FD + 5
-#define _VPAddressPage103endCO2    0xB307  // 0xB302 + 5
-#define _VPAddressPage103ErrC02     0xB30C  // 0xB307 + 5
+#define _VPAddressPage103KpCO2 0xB2C1    // 0xB2BC + 5
+#define _VPAddressPage103KiCO2 0xB2C6    // 0xB2C1 + 5
+#define _VPAddressPage103KdCO2 0xB2CB    // 0xB2C6 + 5
+#define _VPAddressPage103KwCO2 0xB2D0    // 0xB2CB + 5
+#define _VPAddressPage103OUTCO2 0xB2D5   // 0xB2D0 + 5
+#define _VPAddressPage103ImaxCO2 0xB2DA  // 0xB2D5 + 5
+#define _VPAddressPage103IminCO2 0xB2DF  // 0xB2DA + 5
+#define _VPAddressPage103OmaxCO2 0xB2E4  // 0xB2DF + 5
+#define _VPAddressPage103OminCO2 0xB2E9  // 0xB2E4 + 5
+#define _VPAddressPage103PCO2 0xB2EE     // 0xB2E9 + 5
+#define _VPAddressPage10ICO2 0xB2F3      // 0xB2EE + 5
+#define _VPAddressPage103DCO2 0xB2F8     // 0xB2F3 + 5
+#define _VPAddressPage103WCO2 0xB2FD     // 0xB2F8 + 5
+#define _VPAddressPage103StartCO2 0xB302 // 0xB2FD + 5
+#define _VPAddressPage103endCO2 0xB307   // 0xB302 + 5
+#define _VPAddressPage103ErrC02 0xB30C   // 0xB307 + 5
 
 #define _VPAddressPage103PremeterHeater 0xB311 // 5
-#define _VPAddressPage103DoorHeater 0xB316 // 5
+#define _VPAddressPage103DoorHeater 0xB316     // 5
 
 #define _VPAddressPage78_setpointCalib1 0xB31B
 #define _VPAddressPage78_setpointCalib2 0xB320
@@ -496,8 +494,16 @@
 #define _SPAddressLargeGraphCO2 0xC190
 #define _SPAddressPage103PIDGraphCO2 0xC200
 
-#pragma region VP control brightness 
-#define  _VPAddressBrightness 0xC500
+//
+#define _SPAddressPage78_point1Temp 0xF000
+#define _SPAddressPage78_point2Temp 0xF001
+#define _SPAddressPage78_point3Temp 0xF002
+#define _SPAddressPage102_point1CO2 0xF004
+#define _SPAddressPage102_point2CO2 0xF005
+#define _SPAddressPage102_point3CO2 0xF006
+
+#pragma region VP control brightness
+#define _VPAddressBrightness 0xC500
 
 #pragma region Mã màu
 
