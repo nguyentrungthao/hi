@@ -496,11 +496,11 @@
 
 //
 #define _SPAddressPage78_point1Temp 0xF000
-#define _SPAddressPage78_point2Temp 0xF001
-#define _SPAddressPage78_point3Temp 0xF002
-#define _SPAddressPage102_point1CO2 0xF004
-#define _SPAddressPage102_point2CO2 0xF005
-#define _SPAddressPage102_point3CO2 0xF006
+#define _SPAddressPage78_point2Temp 0xF010
+#define _SPAddressPage78_point3Temp 0xF020
+#define _SPAddressPage102_point1CO2 0xF030
+#define _SPAddressPage102_point2CO2 0xF040
+#define _SPAddressPage102_point3CO2 0xF050
 
 #pragma region VP control brightness
 #define _VPAddressBrightness 0xC500

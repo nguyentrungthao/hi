@@ -671,7 +671,10 @@ void vXuLyCalibCamBienVaCuaVanh(const hmi_set_event_t &event)
   switch (event.type)
   {
   case HMI_SET_CALIB_NHIET:
-
+    Serial.println("HMI_SET_CALIB_NHIET");
+    {
+      
+    }
     break;
   case eHMI_SET_PERIMETER:
     xParameterSaveInSDCard.i16Perimeter = event.f_value;
@@ -1929,6 +1932,8 @@ void vLayDiemCalibTrongDoiTuongVaThayDoiTheoSetPointChuanBiCalib(hmi_get_type_t 
   case eHMI_GET_CALIB_AND_SET_POINT3_CO2:
     xCalibCO2.point3.Setpoint = BaseProgram.programData.setPointCO2;
     break;
+  default:
+    break;
   }
   _dwin.vHienThiCacDiemCalib(xCalibTemp, xCalibCO2, event);
 }
@@ -2371,7 +2376,23 @@ void TaskHMI(void *)
       _dwin.HienThiGio((ProgramList[*((uint8_t *)data.pvData) + listPageStartPosition].delayOffHour));
       _dwin.HienThiPhut((ProgramList[*((uint8_t *)data.pvData) + listPageStartPosition].delayOffMinute));
       break;
-    case HMI_GET_CALIB:
+    case HMI_GET_CALIB_TEMP:
+    {
+      TempCalibStruct_t xCalibTemp = _Heater.xGetCalibParamater();
+      _dwin.setText(_VPAddressPage78_setpointCalib1, String(xCalibTemp.point1.Setpoint, 1));
+      _dwin.setText(_VPAddressPage78_setpointCalib2, String(xCalibTemp.point2.Setpoint, 1));
+      _dwin.setText(_VPAddressPage78_setpointCalib3, String(xCalibTemp.point3.Setpoint, 1));
+    }
+    break;
+    case HMI_GET_CALIB_CO2:
+    {
+      TempCalibStruct_t xCalibCO2 = _CO2.xGetCalibParamater();
+      _dwin.setText(_VPAddressPage102_setpointCalib1, String(xCalibCO2.point1.Setpoint, 1));
+      _dwin.setText(_VPAddressPage102_setpointCalib2, String(xCalibCO2.point2.Setpoint, 1));
+      _dwin.setText(_VPAddressPage102_setpointCalib3, String(xCalibCO2.point3.Setpoint, 1));
+    }
+
+    break;
     // _dwin.HienThiHeSoCalib(GetCalib(BaseProgram.programData.setPointTemp));
     case eHMI_GET_CALIB_AND_SET_POINT1_TEMP:
     case eHMI_GET_CALIB_AND_SET_POINT2_TEMP:
@@ -2379,6 +2400,7 @@ void TaskHMI(void *)
     case eHMI_GET_CALIB_AND_SET_POINT1_CO2:
     case eHMI_GET_CALIB_AND_SET_POINT2_CO2:
     case eHMI_GET_CALIB_AND_SET_POINT3_CO2:
+      Serial.println("eHMI_GET_CALIB_AND_SET_POINT");
       vLayDiemCalibTrongDoiTuongVaThayDoiTheoSetPointChuanBiCalib((hmi_get_type_t)data.event);
       break;
     case HMI_GET_SCAN_SSID_WIFI:
